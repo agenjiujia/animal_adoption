@@ -89,6 +89,17 @@ export enum PetSpeciesEnum {
 }
 
 // ===================== 3. 领养申请表（adoption_apply）相关枚举 =====================
+
+/**
+ * 宠物表（pet）- 性别字段（gender）
+ */
+export enum PetGenderEnum {
+  /** 母（pet.gender = 0） */
+  Female = 0,
+  /** 公（pet.gender = 1） */
+  Male = 1,
+}
+
 /**
  * 领养申请表（adoption_apply）- 审核状态字段（audit_status）
  */

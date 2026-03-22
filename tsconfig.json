@@ -35,8 +35,17 @@
       "@/response": [
         "./app/_utils/response/hoc"
       ],
+      "@/constant": [
+        "./app/_constant"
+      ],
       "@/constant/*": [
         "./app/_constant/*"
+      ],
+      "@/utils": [
+        "./app/_utils"
+      ],
+      "@/utils/*": [
+        "./app/_utils/*"
       ]
     }
   },
