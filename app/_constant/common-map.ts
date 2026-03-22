@@ -21,6 +21,7 @@ import {
   // HTTP状态码/业务错误码枚举
   HttpCodeEnum,
   BusinessCodeEnum,
+  PetOperateTypeEnum,
 } from "@/types";
 
 // ===================== 1. 用户表（user）相关枚举映射 =====================
@@ -124,6 +125,15 @@ export const PetSpeciesMap = {
 
 /** 宠物种类 - 数组映射 */
 export const PetSpeciesOptions = Object.values(PetSpeciesMap);
+
+// 新增操作类型映射（前端展示/日志用）
+export const PetOperateTypeMap = {
+  [PetOperateTypeEnum.STATUS_CHANGE]: "管理员修改状态",
+  [PetOperateTypeEnum.CONTENT_EDIT]: "发布者修改内容",
+};
+
+/** 宠物操作类型 - 数组映射 */
+export const PetOperateTypeOptions = Object.values(PetOperateTypeMap);
 
 // ===================== 3. 领养申请表（adoption_apply）相关枚举映射 =====================
 /** 领养申请审核状态 - 对象映射 */
