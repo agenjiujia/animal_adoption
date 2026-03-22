@@ -68,8 +68,11 @@ export default function CreatePet() {
     () =>
       request.get(`/api/pet/detail?pet_id=${urlSearchParams.get("pet_id")}`),
     {
-      onSuccess: (res) => {
-        form.setFieldsValue(res?.data);
+      onSuccess: (res: any) => {
+        form.setFieldsValue({
+          ...res?.data,
+          weight: res?.data?.weight ? Number(res?.data?.weight) : 0,
+        });
       },
     }
   );

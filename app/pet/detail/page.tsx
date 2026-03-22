@@ -57,7 +57,7 @@ export default function PetDetailPage() {
     request.get(`/api/pet/detail?pet_id=${urlSearchParams.get("pet_id")}`)
   );
 
-  const petDetail = data?.data;
+  const petDetail = data?.data as any;
 
   // 3. 枚举值转中文文本（复用你的constant选项）
   const getLabelByValue = (options: any[], value: number) => {
@@ -68,7 +68,7 @@ export default function PetDetailPage() {
   // 4. 处理图片URL（多个URL拆分）
   const getImageUrls = () => {
     if (!petDetail?.image_urls) return [];
-    return petDetail.image_urls.split(",").filter((url) => url.trim());
+    return petDetail.image_urls.split(",").filter((url: string) => url?.trim());
   };
 
   // 5. 状态标签样式
@@ -209,7 +209,7 @@ export default function PetDetailPage() {
             {/* 详细描述 */}
             {petDetail.description && (
               <>
-                <Divider orientation="left">详细描述</Divider>
+                <Divider>详细描述</Divider>
                 <Paragraph
                   style={{ padding: "0 16px", lineHeight: 1.8 }}
                   ellipsis={{ rows: 10, expandable: true, symbol: "展开更多" }}
@@ -222,13 +222,13 @@ export default function PetDetailPage() {
             {/* 图片展示 */}
             {getImageUrls().length > 0 && (
               <>
-                <Divider orientation="left">宠物图片</Divider>
+                <Divider>宠物图片</Divider>
                 <Space
                   wrap
                   size="middle"
                   style={{ padding: "0 16px", marginBottom: 16 }}
                 >
-                  {getImageUrls().map((url, index) => (
+                  {getImageUrls().map((url: string, index: number) => (
                     <div key={index} style={{ textAlign: "center" }}>
                       <Image
                         width={150}

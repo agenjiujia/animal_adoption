@@ -244,7 +244,7 @@ const getPetListHandler = async (
       countSql += ` WHERE ${whereConditions.join(" AND ")}`;
     }
     const [countResult] = await pool.query(countSql, sqlParams);
-    const total = countResult[0]?.total || 0;
+    const total = (countResult as any)?.[0]?.total || 0;
 
     // 4.2 查询列表数据（匹配pet表所有字段，按更新时间降序）
     let listSql = "SELECT * FROM pet";

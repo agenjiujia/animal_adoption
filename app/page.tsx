@@ -365,7 +365,7 @@ export default function PetList() {
         <Spin spinning={loading}>
           <Table
             columns={columns}
-            dataSource={data?.data?.list || []}
+            dataSource={(data?.data as any)?.list || []}
             rowKey="pet_id"
             pagination={false}
             scroll={{ x: "max-content" }}

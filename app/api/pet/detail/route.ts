@@ -68,9 +68,9 @@ const getPetDetailHandler = async (
     );
 
     // 5. 数据不存在处理
-    if (!result || result.length === 0) {
+    if (!result || (result as unknown[])?.length === 0) {
       return {
-        businessCode: BusinessCodeEnum.DataNotFound,
+        businessCode: BusinessCodeEnum.DataNotExist,
         httpCode: HttpCodeEnum.NotFound,
         message: `未找到pet_id为${petId}的宠物发布单`,
         data: null,
@@ -78,7 +78,7 @@ const getPetDetailHandler = async (
     }
 
     // 6. 成功返回详情数据
-    const petDetail = result[0];
+    const petDetail = (result as any)?.[0] || {};
     return {
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,
