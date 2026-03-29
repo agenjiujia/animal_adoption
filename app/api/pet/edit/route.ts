@@ -1,28 +1,17 @@
 import { NextRequest } from "next/server";
 import { withApiHandler } from "@/utils/response/hoc";
-import {
-  BusinessCodeEnum,
-  HttpCodeEnum,
-  UserRoleEnum,
-  PetOperateTypeEnum,
-} from "@/types";
+import { BusinessCodeEnum, HttpCodeEnum, PetOperateTypeEnum } from "@/types"; // ✅ 已删除 UserRoleEnum 导入
 import pool, { withTransaction } from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
 
 /**
- * 发布者修改宠物内容（不含 status）。状态变更请管理员在后台操作。
+ * 发布者修改宠物内容（不含 status）。所有用户（包括管理员）仅能编辑自己发布的记录。
  */
 const editPetHandler = async (req: NextRequest) => {
   const auth = resolveAuth(req);
   if (!auth.ok) return auth.error;
 
-  if (auth.user.role === UserRoleEnum.Admin) {
-    return {
-      businessCode: BusinessCodeEnum.PermissionDenied,
-      httpCode: HttpCodeEnum.Forbidden,
-      message: "管理员请在「管理后台-宠物审批」中修改状态；此处仅支持发布者编辑内容",
-    };
-  }
+  // ✅ 核心改动：删除「管理员不能使用此接口」的权限拦截
 
   let requestData: Record<string, unknown>;
   try {
@@ -51,11 +40,12 @@ const editPetHandler = async (req: NextRequest) => {
     status,
   } = requestData;
 
+  // ✅ 保留：所有用户都不能通过此接口修改 status
   if (status !== undefined) {
     return {
       businessCode: BusinessCodeEnum.PermissionDenied,
       httpCode: HttpCodeEnum.Forbidden,
-      message: "发布者不能修改 status",
+      message: "不能修改 status",
     };
   }
 
@@ -82,6 +72,7 @@ const editPetHandler = async (req: NextRequest) => {
   const petInfo = rows[0] as Record<string, unknown>;
   const oldPetData = { ...petInfo };
 
+  // ✅ 保留：所有用户统一仅能编辑本人发布的宠物
   if (Number(petInfo.user_id) !== auth.user.userId) {
     return {
       businessCode: BusinessCodeEnum.DataPermissionDenied,
@@ -179,8 +170,7 @@ const editPetHandler = async (req: NextRequest) => {
     updateFields.breed = breed ? String(breed).trim() : null;
   if (health_status !== undefined)
     updateFields.health_status = health_status || null;
-  if (description !== undefined)
-    updateFields.description = description || null;
+  if (description !== undefined) updateFields.description = description || null;
 
   if (image_urls !== undefined) {
     let urls = "";
@@ -203,7 +193,9 @@ const editPetHandler = async (req: NextRequest) => {
   try {
     await withTransaction(async (conn) => {
       const keys = Object.keys(updateFields);
-      const sql = `UPDATE pet SET ${keys.map((k) => `${k} = ?`).join(", ")} WHERE pet_id = ?`;
+      const sql = `UPDATE pet SET ${keys
+        .map((k) => `${k} = ?`)
+        .join(", ")} WHERE pet_id = ?`;
       await conn.query(sql, [...Object.values(updateFields), petId]);
       await conn.query(
         `INSERT INTO pet_history (pet_id, old_data, new_data, operator_id, operate_type, operate_time)
