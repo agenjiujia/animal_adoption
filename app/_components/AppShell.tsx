@@ -83,7 +83,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("storage", onStorage);
   }, [checkLogin]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await request.post("/api/auth/logout");
     } catch {
@@ -93,7 +93,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("userInfo");
     setIsLogin(false);
     router.push("/login");
-  };
+  }, [router]);
 
   const isAdmin = userInfo.role === UserRoleEnum.Admin;
 
@@ -102,7 +102,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {
         key: "/",
         icon: <HomeOutlined />,
-        label: <Link href="/">宠物列表</Link>,
+        label: <Link href="/">领养中心</Link>,
       },
       {
         key: "/pet/new",
@@ -110,15 +110,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         label: <Link href="/pet/new">发布宠物</Link>,
       },
     ];
-    if (isAdmin) {
-      items.push({
-        key: "/admin/pets",
-        icon: <SettingOutlined />,
-        label: <Link href="/admin/pets">管理后台</Link>,
-      });
-    }
     return items;
-  }, [isAdmin]);
+  }, []);
 
   const selectedKey = useMemo(() => {
     if (pathname.startsWith("/admin")) return "/admin/pets";
@@ -128,18 +121,35 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return "/";
   }, [pathname]);
 
-  const userMenu = [
-    {
-      key: "/profile",
-      icon: <IdcardOutlined />,
-      label: <Link href="/profile">个人中心</Link>,
-    },
-    {
-      key: "logout",
-      icon: <LogoutOutlined />,
-      label: <span onClick={logout}>退出登录</span>,
-    },
-  ];
+  const userMenu = useMemo(
+    () => [
+      ...(isAdmin
+        ? [
+            {
+              key: "/admin/pets",
+              icon: <SettingOutlined />,
+              label: <Link href="/admin/pets">管理后台</Link>,
+            },
+          ]
+        : []),
+      {
+        key: "/profile",
+        icon: <IdcardOutlined />,
+        label: <Link href="/profile">个人中心</Link>,
+      },
+      {
+        key: "/pet/my-publish",
+        icon: <HomeOutlined />,
+        label: <Link href="/pet/my-publish">我发布的</Link>,
+      },
+      {
+        key: "logout",
+        icon: <LogoutOutlined />,
+        label: <span onClick={logout}>退出登录</span>,
+      },
+    ],
+    [isAdmin, logout]
+  );
 
   if (!ready) {
     return (
