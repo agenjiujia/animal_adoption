@@ -76,6 +76,7 @@ export default function CreatePet() {
         form.setFieldsValue({
           ...d,
           weight: d.weight != null ? Number(d.weight) : undefined,
+          species: d.species !== null ? Number(d.species) : undefined,
         });
       },
     }

@@ -27,6 +27,7 @@ import {
   PetSpeciesOptions,
 } from "@/constant";
 import { PetStatusEnum } from "@/types"; // ✅ 已删除 UserRoleEnum 导入
+import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
 
@@ -141,7 +142,13 @@ export default function PublishPet() {
   const columns: ColumnsType<PetItem> = [
     { title: "宠物ID", dataIndex: "pet_id", width: 80 },
     { title: "名称", dataIndex: "name", width: 120 },
-    { title: "种类", dataIndex: "species", width: 100 },
+    {
+      title: "种类",
+      dataIndex: "species",
+      width: 100,
+      render: (s) =>
+        PetSpeciesOptions.find((o) => o.value === Number(s))?.label ?? "-",
+    },
     {
       title: "性别",
       dataIndex: "gender",
@@ -161,7 +168,12 @@ export default function PublishPet() {
         return opts.find((o) => o.v === s)?.l ?? "-";
       },
     },
-    { title: "更新时间", dataIndex: "update_time", width: 170 },
+    {
+      title: "更新时间",
+      dataIndex: "update_time",
+      width: 170,
+      render: (val) => dayjs(val).format("YYYY-MM-DD HH:mm:ss"),
+    },
     {
       title: "操作",
       key: "op",

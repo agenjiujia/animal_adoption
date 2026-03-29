@@ -5,6 +5,7 @@ import { Card, Descriptions, Spin, Typography } from "antd";
 import { request } from "@/utils/request";
 import { UserRoleMap, UserStatusMap } from "@/constant";
 import { UserRoleEnum, UserStatusEnum } from "@/types";
+import dayjs from "dayjs";
 
 const { Title } = Typography;
 
@@ -59,10 +60,10 @@ export default function ProfilePage() {
               {UserStatusMap[u.status as UserStatusEnum]?.label}
             </Descriptions.Item>
             <Descriptions.Item label="注册时间">
-              {u.create_time}
+              {dayjs(u.create_time).format("YYYY-MM-DD HH:mm:ss")}
             </Descriptions.Item>
             <Descriptions.Item label="更新时间">
-              {u.update_time || "-"}
+              {dayjs(u.update_time).format("YYYY-MM-DD HH:mm:ss")}
             </Descriptions.Item>
           </Descriptions>
         )}

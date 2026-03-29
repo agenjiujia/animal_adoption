@@ -20,8 +20,10 @@ import {
   PetGenderOptions,
   PetVaccineStatusOptions,
   PetNeuteredOptions,
+  PetSpeciesMap,
 } from "@/constant";
-import { PetStatusEnum } from "@/types";
+import { PetSpeciesEnum, PetStatusEnum } from "@/types";
+import dayjs from "dayjs";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -137,7 +139,10 @@ export default function PetDetailPage() {
                 {petDetail.name}
               </Descriptions.Item>
               <Descriptions.Item label="种类">
-                {petDetail.species}
+                {
+                  PetSpeciesMap[petDetail.species as unknown as PetSpeciesEnum]
+                    ?.label
+                }
               </Descriptions.Item>
               <Descriptions.Item label="品种">
                 {petDetail.breed || "-"}
@@ -152,10 +157,10 @@ export default function PetDetailPage() {
                 {petDetail.weight ?? "-"}
               </Descriptions.Item>
               <Descriptions.Item label="创建时间">
-                {petDetail.create_time}
+                {dayjs(petDetail.create_time).format("YYYY-MM-DD HH:mm:ss")}
               </Descriptions.Item>
               <Descriptions.Item label="更新时间">
-                {petDetail.update_time}
+                {dayjs(petDetail.update_time).format("YYYY-MM-DD HH:mm:ss")}
               </Descriptions.Item>
             </Descriptions>
             <Descriptions
