@@ -101,19 +101,28 @@ export default function CreatePet() {
     isCreate ? submitPet(values) : editPet(values);
 
   return (
-    <div style={{ maxWidth: 800, margin: "20px auto", padding: "0 20px" }}>
-      <Card
-        title={<Title level={4}>发布宠物领养信息</Title>}
-        style={{ boxShadow: "0 2px 12px 0 rgba(0,0,0,0.1)" }}
-        loading={detailLoading}
+    <Card
+      title={
+        <Title level={4} style={{ marginBottom: 0 }}>
+          发布宠物领养信息
+        </Title>
+      }
+      loading={detailLoading}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={onFinish}
+        initialValues={{
+          vaccine_status: PetVaccineStatusEnum.Unknown,
+          neutered: PetNeuteredEnum.Unknown,
+        }}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-          initialValues={{
-            vaccine_status: PetVaccineStatusEnum.Unknown,
-            neutered: PetNeuteredEnum.Unknown,
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 16,
           }}
         >
           {/* 宠物名称 */}
@@ -137,6 +146,21 @@ export default function CreatePet() {
             <Select options={PetSpeciesOptions} placeholder="请选择宠物种类" />
           </Form.Item>
 
+          <Form.Item
+            name="gender"
+            label="性别"
+            style={{ flex: 1 }}
+            rules={[{ required: true }]}
+          >
+            <Radio.Group>
+              {PetGenderOptions.map((option) => (
+                <Radio key={option.value} value={option.value}>
+                  {option.label}
+                </Radio>
+              ))}
+            </Radio.Group>
+          </Form.Item>
+
           {/* 宠物品种 */}
           <Form.Item name="breed" label="宠物品种">
             <Input placeholder="例如：金毛、布偶猫、柯基（可选）" />
@@ -154,21 +178,6 @@ export default function CreatePet() {
               precision={0}
               style={{ width: "100%" }}
             />
-          </Form.Item>
-
-          <Form.Item
-            name="gender"
-            label="性别"
-            style={{ flex: 1 }}
-            rules={[{ required: true }]}
-          >
-            <Radio.Group>
-              {PetGenderOptions.map((option) => (
-                <Radio key={option.value} value={option.value}>
-                  {option.label}
-                </Radio>
-              ))}
-            </Radio.Group>
           </Form.Item>
 
           {/* 体重 */}
@@ -192,71 +201,71 @@ export default function CreatePet() {
               style={{ width: "100%" }}
             />
           </Form.Item>
+        </div>
 
-          {/* 健康状况 */}
-          <Form.Item name="health_status" label="健康状况描述">
-            <Input.TextArea
-              placeholder="描述宠物健康状况、是否有疾病等（可选）"
-              rows={3}
+        {/* 健康状况 */}
+        <Form.Item name="health_status" label="健康状况描述">
+          <Input.TextArea
+            placeholder="描述宠物健康状况、是否有疾病等（可选）"
+            rows={3}
+          />
+        </Form.Item>
+
+        {/* 疫苗状态 + 绝育状态 一行布局 */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: 16,
+          }}
+        >
+          <Form.Item name="vaccine_status" label="疫苗状态">
+            <Select
+              options={PetVaccineStatusOptions}
+              placeholder="请选择疫苗状态"
+              style={{ width: "100%" }}
             />
           </Form.Item>
 
-          {/* 疫苗状态 + 绝育状态 一行布局 */}
-          <Space.Compact style={{ width: "100%" }}>
-            <Form.Item
-              name="vaccine_status"
-              label="疫苗状态"
-              style={{ flex: 1 }}
-            >
-              <Select
-                options={PetVaccineStatusOptions}
-                placeholder="请选择疫苗状态"
-                style={{ width: "100%" }}
-              />
-            </Form.Item>
-
-            <Form.Item name="neutered" label="绝育状态" style={{ flex: 1 }}>
-              <Select
-                options={PetNeuteredOptions}
-                placeholder="请选择绝育状态"
-                style={{ width: "100%" }}
-              />
-            </Form.Item>
-          </Space.Compact>
-
-          {/* 详细描述 */}
-          <Form.Item name="description" label="宠物详细描述">
-            <Input.TextArea
-              placeholder="描述宠物性格、习性、领养要求等（可选）"
-              rows={5}
+          <Form.Item name="neutered" label="绝育状态">
+            <Select
+              options={PetNeuteredOptions}
+              placeholder="请选择绝育状态"
+              style={{ width: "100%" }}
             />
           </Form.Item>
+        </div>
 
-          {/* 图片URL */}
-          <Form.Item
-            name="image_urls"
-            label="图片URL"
-            extra={
-              <Text type="secondary">多个URL请用英文逗号分隔（可选）</Text>
-            }
+        {/* 详细描述 */}
+        <Form.Item name="description" label="宠物详细描述">
+          <Input.TextArea
+            placeholder="描述宠物性格、习性、领养要求等（可选）"
+            rows={5}
+          />
+        </Form.Item>
+
+        {/* 图片URL */}
+        <Form.Item
+          name="image_urls"
+          label="图片URL"
+          extra={<Text type="secondary">多个URL请用英文逗号分隔（可选）</Text>}
+        >
+          <Input placeholder="例如：https://xxx.jpg,https://yyy.jpg" />
+        </Form.Item>
+
+        {/* 提交按钮 */}
+        <Form.Item style={{ textAlign: "center" }}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading || editLoading}
+            size="large"
+            style={{ width: 200 }}
           >
-            <Input placeholder="例如：https://xxx.jpg,https://yyy.jpg" />
-          </Form.Item>
-
-          {/* 提交按钮 */}
-          <Form.Item style={{ textAlign: "center" }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading || editLoading}
-              size="large"
-              style={{ width: 200 }}
-            >
-              {isCreate ? "发布" : "编辑"}宠物信息
-            </Button>
-          </Form.Item>
-        </Form>
-      </Card>
-    </div>
+            {isCreate ? "发布" : "编辑"}宠物信息
+          </Button>
+        </Form.Item>
+      </Form>
+    </Card>
   );
 }

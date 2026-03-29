@@ -204,78 +204,82 @@ export default function PublishPet() {
   ];
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-      <Card title={<Title level={4}>宠物发布单</Title>}>
-        <Form
-          form={form}
-          layout="inline"
-          onFinish={onSearch}
-          style={{
-            marginBottom: 16,
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 16,
-          }}
-          labelCol={{ span: 4 }}
-        >
-          <Form.Item name="pet_id" label="宠物ID">
-            <InputNumber min={1} style={{ width: "100%" }} />
-          </Form.Item>
-          {/* ✅ 已删除：管理员专属的「发布者ID」表单项 */}
-          <Form.Item name="name" label="名称">
-            <Input allowClear />
-          </Form.Item>
-          <Form.Item name="species" label="种类">
-            <Select allowClear options={PetSpeciesOptions} />
-          </Form.Item>
-          <Form.Item name="gender" label="性别">
-            <Select allowClear options={PetGenderOptions} />
-          </Form.Item>
-          <Form.Item name="status" label="状态">
-            <Select
-              allowClear
-              options={[
-                { label: "待领养", value: PetStatusEnum.ForAdoption },
-                { label: "已领养", value: PetStatusEnum.Adopted },
-                { label: "下架", value: PetStatusEnum.Offline },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item name="vaccine_status" label="疫苗">
-            <Select allowClear options={PetVaccineStatusOptions} />
-          </Form.Item>
-          <Form.Item name="neutered" label="绝育">
-            <Select allowClear options={PetNeuteredOptions} />
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                查询
-              </Button>
-              <Button onClick={onReset}>重置</Button>
-              <Button onClick={() => router.push("/pet/new")}>发布宠物</Button>
-            </Space>
-          </Form.Item>
-        </Form>
+    <Card
+      title={
+        <Title level={4} style={{ marginBottom: 0 }}>
+          宠物发布单
+        </Title>
+      }
+    >
+      <Form
+        form={form}
+        layout="inline"
+        onFinish={onSearch}
+        style={{
+          marginBottom: 16,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 16,
+        }}
+        labelCol={{ span: 4 }}
+      >
+        <Form.Item name="pet_id" label="宠物ID">
+          <InputNumber min={1} style={{ width: "100%" }} />
+        </Form.Item>
+        {/* ✅ 已删除：管理员专属的「发布者ID」表单项 */}
+        <Form.Item name="name" label="名称">
+          <Input allowClear />
+        </Form.Item>
+        <Form.Item name="species" label="种类">
+          <Select allowClear options={PetSpeciesOptions} />
+        </Form.Item>
+        <Form.Item name="gender" label="性别">
+          <Select allowClear options={PetGenderOptions} />
+        </Form.Item>
+        <Form.Item name="status" label="状态">
+          <Select
+            allowClear
+            options={[
+              { label: "待领养", value: PetStatusEnum.ForAdoption },
+              { label: "已领养", value: PetStatusEnum.Adopted },
+              { label: "下架", value: PetStatusEnum.Offline },
+            ]}
+          />
+        </Form.Item>
+        <Form.Item name="vaccine_status" label="疫苗">
+          <Select allowClear options={PetVaccineStatusOptions} />
+        </Form.Item>
+        <Form.Item name="neutered" label="绝育">
+          <Select allowClear options={PetNeuteredOptions} />
+        </Form.Item>
+        <Form.Item>
+          <Space>
+            <Button type="primary" htmlType="submit" loading={loading}>
+              查询
+            </Button>
+            <Button onClick={onReset}>重置</Button>
+            <Button onClick={() => router.push("/pet/new")}>发布宠物</Button>
+          </Space>
+        </Form.Item>
+      </Form>
 
-        <Table
-          loading={loading}
-          rowKey="pet_id"
-          columns={columns}
-          dataSource={list}
-          pagination={{
-            current: pageNum,
-            pageSize,
-            total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (t) => <Text type="secondary">共 {t} 条</Text>,
-            onChange: onPageChange,
-            onShowSizeChange: (c, s) => onPageChange(c, s),
-          }}
-          scroll={{ x: 1100 }}
-        />
-      </Card>
-    </div>
+      <Table
+        loading={loading}
+        rowKey="pet_id"
+        columns={columns}
+        dataSource={list}
+        pagination={{
+          current: pageNum,
+          pageSize,
+          total,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (t) => <Text type="secondary">共 {t} 条</Text>,
+          onChange: onPageChange,
+          onShowSizeChange: (c, s) => onPageChange(c, s),
+        }}
+        scroll={{ x: 1100 }}
+      />
+    </Card>
   );
 }

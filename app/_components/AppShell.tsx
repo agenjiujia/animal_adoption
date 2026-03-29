@@ -236,7 +236,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Content
               style={{
                 margin: 20,
-                padding: 24,
+                // padding: 24,
                 background: "#fff",
                 borderRadius: 4,
                 border: "1px solid #f0f0f0",

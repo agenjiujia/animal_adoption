@@ -151,7 +151,7 @@ export default function AdminUsersPage() {
   ];
 
   return (
-    <div style={{ paddingTop: 16 }}>
+    <div style={{ padding: "16px 24px" }}>
       <Form
         form={form}
         layout="inline"
@@ -162,6 +162,7 @@ export default function AdminUsersPage() {
           gridTemplateColumns: "repeat(3, 1fr)",
           gap: 16,
         }}
+        labelCol={{ span: 4 }}
       >
         <Form.Item name="username" label="用户名">
           <Input allowClear />

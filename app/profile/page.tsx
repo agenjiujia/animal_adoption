@@ -30,27 +30,40 @@ export default function ProfilePage() {
   const u = data?.data as Me | undefined;
 
   return (
-    <Card>
-      <Title level={4} style={{ marginTop: 0 }}>
-        个人中心
-      </Title>
+    <Card
+      title={
+        <Title level={4} style={{ marginTop: 0, marginBottom: 0 }}>
+          个人中心
+        </Title>
+      }
+    >
       <Spin spinning={loading}>
         {u && (
           <Descriptions bordered column={1} size="middle">
             <Descriptions.Item label="用户名">{u.username}</Descriptions.Item>
             <Descriptions.Item label="手机">{u.phone}</Descriptions.Item>
             <Descriptions.Item label="邮箱">{u.email}</Descriptions.Item>
-            <Descriptions.Item label="真实姓名">{u.real_name || "-"}</Descriptions.Item>
-            <Descriptions.Item label="证件号">{u.id_card || "-"}</Descriptions.Item>
-            <Descriptions.Item label="地址">{u.address || "-"}</Descriptions.Item>
+            <Descriptions.Item label="真实姓名">
+              {u.real_name || "-"}
+            </Descriptions.Item>
+            <Descriptions.Item label="证件号">
+              {u.id_card || "-"}
+            </Descriptions.Item>
+            <Descriptions.Item label="地址">
+              {u.address || "-"}
+            </Descriptions.Item>
             <Descriptions.Item label="角色">
               {UserRoleMap[u.role as UserRoleEnum]?.label}
             </Descriptions.Item>
             <Descriptions.Item label="账号状态">
               {UserStatusMap[u.status as UserStatusEnum]?.label}
             </Descriptions.Item>
-            <Descriptions.Item label="注册时间">{u.create_time}</Descriptions.Item>
-            <Descriptions.Item label="更新时间">{u.update_time || "-"}</Descriptions.Item>
+            <Descriptions.Item label="注册时间">
+              {u.create_time}
+            </Descriptions.Item>
+            <Descriptions.Item label="更新时间">
+              {u.update_time || "-"}
+            </Descriptions.Item>
           </Descriptions>
         )}
       </Spin>

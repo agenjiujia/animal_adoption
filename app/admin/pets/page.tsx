@@ -187,7 +187,7 @@ export default function AdminPetsPage() {
   ];
 
   return (
-    <div style={{ paddingTop: 16 }}>
+    <div style={{ padding: "16px 24px" }}>
       <Form
         form={form}
         layout="inline"
@@ -198,6 +198,7 @@ export default function AdminPetsPage() {
           gridTemplateColumns: "repeat(3, 1fr)",
           gap: 16,
         }}
+        labelCol={{ span: 4 }}
       >
         <Form.Item name="name" label="名称">
           <Input allowClear placeholder="模糊" />

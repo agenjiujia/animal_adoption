@@ -16,7 +16,11 @@ import {
 } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { request } from "@/utils/request";
-import { PetGenderOptions, PetVaccineStatusOptions, PetNeuteredOptions } from "@/constant";
+import {
+  PetGenderOptions,
+  PetVaccineStatusOptions,
+  PetNeuteredOptions,
+} from "@/constant";
 import { PetStatusEnum } from "@/types";
 
 const { Title, Text, Paragraph } = Typography;
@@ -84,28 +88,32 @@ export default function PetDetailPage() {
     : [];
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto" }}>
-      <Space.Compact style={{ width: "100%", marginBottom: 16 }}>
-        <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => router.back()}>
-          返回
-        </Button>
-        <Title level={4} style={{ margin: 0, flex: 1, textAlign: "center" }}>
+    <Card
+      title={
+        <Title level={4} style={{ marginBottom: 0 }}>
           宠物详情
         </Title>
-        {canEdit ? (
-          <Button type="primary" onClick={() => router.push(`/pet/edit/?pet_id=${petId}`)}>
+      }
+      extra={
+        canEdit ? (
+          <Button
+            type="primary"
+            onClick={() => router.push(`/pet/edit/?pet_id=${petId}`)}
+          >
             编辑
           </Button>
-        ) : (
-          <span style={{ width: 88 }} />
-        )}
-      </Space.Compact>
-
+        ) : null
+      }
+    >
       <Card loading={loading}>
         {error ? (
           <div style={{ textAlign: "center", padding: 40 }}>
             <Text type="danger">{error.message}</Text>
-            <Button type="primary" style={{ marginTop: 16 }} onClick={() => refresh()}>
+            <Button
+              type="primary"
+              style={{ marginTop: 16 }}
+              onClick={() => refresh()}
+            >
               重试
             </Button>
           </div>
@@ -114,25 +122,49 @@ export default function PetDetailPage() {
         ) : (
           <>
             <Descriptions title="基本信息" bordered column={2} size="small">
-              <Descriptions.Item label="ID">{petDetail.pet_id}</Descriptions.Item>
-              <Descriptions.Item label="发布者">{petDetail.user_id}</Descriptions.Item>
+              <Descriptions.Item label="ID">
+                {petDetail.pet_id}
+              </Descriptions.Item>
+              <Descriptions.Item label="发布者">
+                {petDetail.user_id}
+              </Descriptions.Item>
               <Descriptions.Item label="状态">
                 <Tag color={statusStyle(petDetail.status).c}>
                   {statusStyle(petDetail.status).t}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="名称">{petDetail.name}</Descriptions.Item>
-              <Descriptions.Item label="种类">{petDetail.species}</Descriptions.Item>
-              <Descriptions.Item label="品种">{petDetail.breed || "-"}</Descriptions.Item>
-              <Descriptions.Item label="年龄(月)">{petDetail.age ?? "-"}</Descriptions.Item>
+              <Descriptions.Item label="名称">
+                {petDetail.name}
+              </Descriptions.Item>
+              <Descriptions.Item label="种类">
+                {petDetail.species}
+              </Descriptions.Item>
+              <Descriptions.Item label="品种">
+                {petDetail.breed || "-"}
+              </Descriptions.Item>
+              <Descriptions.Item label="年龄(月)">
+                {petDetail.age ?? "-"}
+              </Descriptions.Item>
               <Descriptions.Item label="性别">
                 {label(PetGenderOptions, petDetail.gender)}
               </Descriptions.Item>
-              <Descriptions.Item label="体重">{petDetail.weight ?? "-"}</Descriptions.Item>
-              <Descriptions.Item label="创建时间">{petDetail.create_time}</Descriptions.Item>
-              <Descriptions.Item label="更新时间">{petDetail.update_time}</Descriptions.Item>
+              <Descriptions.Item label="体重">
+                {petDetail.weight ?? "-"}
+              </Descriptions.Item>
+              <Descriptions.Item label="创建时间">
+                {petDetail.create_time}
+              </Descriptions.Item>
+              <Descriptions.Item label="更新时间">
+                {petDetail.update_time}
+              </Descriptions.Item>
             </Descriptions>
-            <Descriptions title="健康" bordered column={2} size="small" style={{ marginTop: 16 }}>
+            <Descriptions
+              title="健康"
+              bordered
+              column={2}
+              size="small"
+              style={{ marginTop: 16 }}
+            >
               <Descriptions.Item label="疫苗">
                 {label(PetVaccineStatusOptions, petDetail.vaccine_status)}
               </Descriptions.Item>
@@ -162,6 +194,6 @@ export default function PetDetailPage() {
           </>
         )}
       </Card>
-    </div>
+    </Card>
   );
 }
