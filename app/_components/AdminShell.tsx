@@ -14,7 +14,11 @@ export default function AdminShell({
 }) {
   const pathname = usePathname();
   const selected =
-    pathname.startsWith("/admin/users") ? "/admin/users" : "/admin/pets";
+    pathname.startsWith("/admin/users")
+      ? "/admin/users"
+      : pathname.startsWith("/admin/adoptions")
+      ? "/admin/adoptions"
+      : "/admin/pets";
 
   return (
     <div>
@@ -32,8 +36,9 @@ export default function AdminShell({
           selectedKeys={[selected]}
           style={{ borderBottom: "none", background: "transparent" }}
           items={[
-            { key: "/admin/pets", label: <Link href="/admin/pets">宠物审批</Link> },
+            { key: "/admin/pets", label: <Link href="/admin/pets">宠物管理</Link> },
             { key: "/admin/users", label: <Link href="/admin/users">用户管理</Link> },
+            { key: "/admin/adoptions", label: <Link href="/admin/adoptions">审批管理</Link> },
           ]}
         />
       </Header>

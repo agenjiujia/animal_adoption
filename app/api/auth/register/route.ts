@@ -27,7 +27,7 @@ const registerHandler = async (req: NextRequest) => {
       message: parsed.error.issues[0]?.message ?? "参数错误",
     };
   }
-  const { username, phone, password, identityCard, address, email } =
+  const { username, phone, password, identityCard, address, email, avatar } =
     parsed.data;
 
   // 唯一字段重复校验
@@ -90,9 +90,9 @@ const registerHandler = async (req: NextRequest) => {
   // 9. 插入用户数据
   await pool.query(
     `INSERT INTO user (
-      username, phone, id_card, address, email, password, role, status
-    ) VALUES (?, ?, ?, ?, ?, ?, 0, 1)`,
-    [username, phone, identityCard, address, email, hashedPassword]
+      username, avatar, phone, id_card, address, email, password, role, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)`,
+    [username, avatar || null, phone, identityCard, address, email, hashedPassword]
   );
 
   // 10. 返回注册成功响应

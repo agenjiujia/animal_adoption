@@ -8,6 +8,7 @@ const openApiPaths = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/logout",
+  "/api/upload", // 允许上传接口，内部自行校验 Referer 或 Token
 ];
 
 function isOpenApi(path: string) {

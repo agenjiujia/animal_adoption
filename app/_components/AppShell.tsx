@@ -1,6 +1,5 @@
 "use client";
 
-import { Geist, Geist_Mono } from "next/font/google";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Layout, Menu, Avatar, Space, Dropdown } from "antd";
 import {
@@ -11,24 +10,15 @@ import {
   IdcardOutlined,
   SettingOutlined,
   UpSquareOutlined,
+  HeartOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { UserRoleEnum } from "@/types";
 import { request } from "@/utils/request";
-import "antd/dist/antd.css";
 import "@/app/globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const { Header, Sider, Content } = Layout;
+const { Header, Content } = Layout;
 
 type StoredUser = {
   user_id: number;
@@ -140,6 +130,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         label: <Link href="/profile">个人中心</Link>,
       },
       {
+        key: "/my/favorites",
+        icon: <HeartOutlined />,
+        label: <Link href="/my/favorites">我的收藏</Link>,
+      },
+      {
+        key: "/my/adoptions",
+        icon: <IdcardOutlined />,
+        label: <Link href="/my/adoptions">我的领养</Link>,
+      },
+      {
         key: "/pet/my-publish",
         icon: <UpSquareOutlined />,
         label: <Link href="/pet/my-publish">我发布的</Link>,
@@ -154,14 +154,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   if (!ready) {
-    return (
-      <html
-        lang="zh-CN"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      >
-        <body className="min-h-full" />
-      </html>
-    );
+    return <div className="min-h-full" />;
   }
 
   const authPage = AUTH_FREE.includes(pathname);
@@ -169,88 +162,98 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // 未登录访问受保护路由：不渲染子页面，避免子组件抢先请求 API 触发 401 与多余跳转
   if (!isLogin && !authPage) {
     return (
-      <html
-        lang="zh-CN"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      >
-        <body className="min-h-full flex items-center justify-center text-gray-500">
-          正在跳转登录…
-        </body>
-      </html>
+      <div className="min-h-full flex items-center justify-center text-gray-500">
+        正在跳转登录…
+      </div>
     );
   }
 
   return (
-    <html
-      lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full">
-        {isLogin ? (
-          <Layout style={{ minHeight: "100vh" }}>
-            <Header
-              style={{
-                height: 60,
-                padding: "0 24px",
-                background: "#fff",
-                borderBottom: "1px solid #f0f0f0",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                position: "sticky",
-                top: 0,
-                zIndex: 100,
-                overflow: "hidden",
-              }}
-            >
-              <div style={{ display: "flex" }}>
-                <div style={{ width: 200 }}>
-                  <Link
-                    href="/"
-                    style={{
-                      fontSize: 18,
-                      fontWeight: "bold",
-                      color: "#1890ff",
-                    }}
-                  >
-                    宠物领养平台
-                  </Link>
-                </div>
-                <Menu
-                  mode="horizontal"
-                  selectedKeys={[selectedKey]}
-                  items={menuItems}
-                  style={{ borderRight: 0 }}
-                />
+    <div className="min-h-full">
+      {isLogin ? (
+        <Layout style={{ minHeight: "100vh", background: "#F8FAFC" }}>
+          <Header
+            style={{
+              height: 64,
+              padding: "0 24px",
+              background: "#fff",
+              borderBottom: "1px solid #E2E8F0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              position: "sticky",
+              top: 0,
+              zIndex: 100,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
+              <div style={{ marginRight: 40 }}>
+                <Link
+                  href="/"
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 600,
+                    color: "#2A9D8F",
+                    letterSpacing: "-0.5px",
+                  }}
+                >
+                  🐾 萌宠之家
+                </Link>
               </div>
-              <Dropdown menu={{ items: userMenu }} placement="bottomRight">
-                <Space style={{ cursor: "pointer" }}>
-                  <Avatar
-                    icon={<UserOutlined />}
-                    style={{ backgroundColor: "#1890ff" }}
-                  />
-                  <span>{userInfo.username}</span>
-                </Space>
-              </Dropdown>
-            </Header>
-            <Content
-              style={{
-                margin: 20,
-                // padding: 24,
-                background: "#fff",
-                borderRadius: 4,
-                border: "1px solid #f0f0f0",
-                overflow: "auto",
-                minHeight: "calc(100vh - 100px)",
-              }}
-            >
-              {children}
-            </Content>
-          </Layout>
-        ) : (
-          children
-        )}
-      </body>
-    </html>
+              <Menu
+                mode="horizontal"
+                selectedKeys={[selectedKey]}
+                items={menuItems}
+                style={{
+                  borderBottom: 0,
+                  background: "transparent",
+                  flex: 1,
+                  lineHeight: "64px",
+                }}
+              />
+            </div>
+            <Dropdown menu={{ items: userMenu }} placement="bottomRight" arrow>
+              <Space
+                style={{
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                  borderRadius: 8,
+                  transition: "background 0.2s",
+                }}
+                className="hover:bg-slate-50"
+              >
+                <Avatar
+                  icon={<UserOutlined />}
+                  style={{ backgroundColor: "#2A9D8F" }}
+                  size="small"
+                />
+                <span
+                  style={{ fontSize: 14, fontWeight: 500, color: "#334155" }}
+                >
+                  {userInfo.username}
+                </span>
+              </Space>
+            </Dropdown>
+          </Header>
+          <Content
+            style={{
+              padding: "20px 24px",
+              background: "transparent",
+              minHeight: "calc(100vh - 64px)",
+              maxWidth: 1280,
+              margin: "0 auto",
+              width: "100%",
+            }}
+          >
+            {children}
+          </Content>
+        </Layout>
+      ) : (
+        <Content style={{ background: "#F8FAFC", minHeight: "100vh" }}>
+          {children}
+        </Content>
+      )}
+    </div>
   );
 }

@@ -14,4 +14,5 @@ export const registerSchema = z.object({
   identityCard: z.string().regex(/^\d{17}[\dXx]$/, "请输入正确的18位身份证号"),
   address: z.string().min(1, "地址为必填项"),
   email: z.string().email("请输入正确的邮箱"),
+  avatar: z.string().optional(),
 });

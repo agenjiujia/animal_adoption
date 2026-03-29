@@ -31,3 +31,59 @@ export const GET = withApiHandler(async (req: NextRequest) => {
     data: list[0],
   };
 });
+
+/**
+ * 更新个人资料
+ */
+export const PATCH = withApiHandler(async (req: NextRequest) => {
+  const auth = resolveAuth(req);
+  if (!auth.ok) return auth.error;
+
+  const body = await req.json();
+  const { avatar, username, email, address, real_name } = body;
+
+  const fields: string[] = [];
+  const values: unknown[] = [];
+
+  if (avatar !== undefined) {
+    fields.push("avatar = ?");
+    values.push(avatar);
+  }
+  if (username !== undefined) {
+    fields.push("username = ?");
+    values.push(username);
+  }
+  if (email !== undefined) {
+    fields.push("email = ?");
+    values.push(email);
+  }
+  if (address !== undefined) {
+    fields.push("address = ?");
+    values.push(address);
+  }
+  if (real_name !== undefined) {
+    fields.push("real_name = ?");
+    values.push(real_name);
+  }
+
+  if (fields.length === 0) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "请提供要更新的字段",
+    };
+  }
+
+  values.push(auth.user.userId);
+
+  await pool.query(
+    `UPDATE user SET ${fields.join(", ")}, update_time = CURRENT_TIMESTAMP WHERE user_id = ?`,
+    values
+  );
+
+  return {
+    businessCode: BusinessCodeEnum.Success,
+    httpCode: HttpCodeEnum.Success,
+    message: "资料更新成功",
+  };
+});
