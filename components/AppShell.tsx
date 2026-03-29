@@ -190,12 +190,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 zIndex: 100,
               }}
             >
-              <Link href="/" style={{ fontSize: 18, fontWeight: "bold", color: "#1890ff" }}>
+              <Link
+                href="/"
+                style={{ fontSize: 18, fontWeight: "bold", color: "#1890ff" }}
+              >
                 宠物领养平台
               </Link>
               <Dropdown menu={{ items: userMenu }} placement="bottomRight">
                 <Space style={{ cursor: "pointer" }}>
-                  <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1890ff" }} />
+                  <Avatar
+                    icon={<UserOutlined />}
+                    style={{ backgroundColor: "#1890ff" }}
+                  />
                   <span>{userInfo.username}</span>
                 </Space>
               </Dropdown>
