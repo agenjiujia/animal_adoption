@@ -47,10 +47,14 @@ const statusTag: Record<number, { text: string; color: string }> = {
 
 export default function AdminPetsPage() {
   const [form] = Form.useForm();
-  const [statusPet, setStatusPet] = useState<PetRow | null>(null);
+  const [statusPet, setStatusPet] = useState<{
+    rowId?: PetRow["pet_id"];
+    status?: PetStatusEnum;
+  }>({});
   const [histPet, setHistPet] = useState<PetRow | null>(null);
   const [histRows, setHistRows] = useState<HistoryRow[]>([]);
   const [histLoading, setHistLoading] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
 
   const fetchList = useCallback(
     async (
@@ -101,16 +105,20 @@ export default function AdminPetsPage() {
     }
   };
 
-  const applyStatus = async (st: number) => {
-    if (!statusPet) return;
+  const applyStatus = async (status: number, rowId: PetRow["pet_id"]) => {
+    setUpdateLoading(true);
+    setStatusPet({ status, rowId });
     try {
-      await request.patch(`/api/admin/pets/${statusPet.pet_id}/status`, {
-        status: st,
+      await request.patch(`/api/admin/pets/${rowId}/status`, {
+        status,
       });
       message.success("已更新");
-      setStatusPet(null);
+      setStatusPet({});
+      setUpdateLoading(false);
       submit();
     } catch {
+      setStatusPet({});
+      setUpdateLoading(false);
       /* request 已 toast */
     }
   };
@@ -133,17 +141,48 @@ export default function AdminPetsPage() {
     {
       title: "操作",
       key: "op",
-      width: 200,
-      render: (_, row) => (
-        <Space wrap>
-          <Button type="link" size="small" onClick={() => setStatusPet(row)}>
-            改状态
-          </Button>
-          <Button type="link" size="small" onClick={() => openHist(row)}>
-            修改历史
-          </Button>
-        </Space>
-      ),
+      width: 240,
+      render: (_, row) => {
+        const loading = updateLoading && statusPet.rowId === row.pet_id;
+        return (
+          <Space wrap>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              loading={
+                loading && statusPet.status === PetStatusEnum.ForAdoption
+              }
+              onClick={() => applyStatus(PetStatusEnum.ForAdoption, row.pet_id)}
+            >
+              待领养
+            </Button>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              loading={loading && statusPet.status === PetStatusEnum.Adopted}
+              onClick={() => applyStatus(PetStatusEnum.Adopted, row.pet_id)}
+            >
+              已领养
+            </Button>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              loading={loading && statusPet.status === PetStatusEnum.Offline}
+              onClick={() => applyStatus(PetStatusEnum.Offline, row.pet_id)}
+            >
+              下架
+            </Button>
+            <Button
+              style={{ padding: 0 }}
+              type="link"
+              size="small"
+              onClick={() => openHist(row)}
+            >
+              修改历史
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -202,26 +241,6 @@ export default function AdminPetsPage() {
           showTotal: (total) => <Text type="secondary">共 {total} 条</Text>,
         }}
       />
-
-      <Modal
-        title={statusPet ? `修改状态 — ${statusPet.name}` : ""}
-        open={!!statusPet}
-        onCancel={() => setStatusPet(null)}
-        footer={null}
-        destroyOnHidden
-      >
-        <Space wrap>
-          <Button onClick={() => applyStatus(PetStatusEnum.ForAdoption)}>
-            待领养
-          </Button>
-          <Button onClick={() => applyStatus(PetStatusEnum.Adopted)}>
-            已领养
-          </Button>
-          <Button onClick={() => applyStatus(PetStatusEnum.Offline)}>
-            下架
-          </Button>
-        </Space>
-      </Modal>
 
       <Modal
         title={histPet ? `修改历史 — ${histPet.name}` : ""}

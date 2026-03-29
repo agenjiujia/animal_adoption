@@ -96,6 +96,7 @@ export default function AdminUsersPage() {
         : UserStatusEnum.Normal;
     const verb = next === UserStatusEnum.Normal ? "启用" : "禁用";
     Modal.confirm({
+      centered: true,
       title: `确认${verb}用户 ${row.username}？`,
       onOk: async () => {
         await request.patch(`/api/admin/users/${row.user_id}/status`, {
@@ -219,6 +220,7 @@ export default function AdminUsersPage() {
         footer={null}
         width={640}
         destroyOnHidden
+        centered
       >
         {detailLoading ? (
           <div style={{ padding: 24, textAlign: "center" }}>加载中…</div>
