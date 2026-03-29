@@ -249,6 +249,7 @@ export default function AdminPetsPage() {
         width={700}
         footer={null}
         destroyOnHidden
+        centered
       >
         <Table<HistoryRow>
           loading={histLoading}
