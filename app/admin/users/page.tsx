@@ -193,7 +193,7 @@ export default function AdminUsersPage() {
         }}
         footer={null}
         width={640}
-        destroyOnClose
+        destroyOnHidden
       >
         {detailLoading ? (
           <div style={{ padding: 24, textAlign: "center" }}>加载中…</div>

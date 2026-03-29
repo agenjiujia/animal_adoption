@@ -189,7 +189,7 @@ export default function AdminPetsPage() {
         open={!!statusPet}
         onCancel={() => setStatusPet(null)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Space wrap>
           <Button onClick={() => applyStatus(PetStatusEnum.ForAdoption)}>待领养</Button>
@@ -204,7 +204,7 @@ export default function AdminPetsPage() {
         onCancel={() => setHistPet(null)}
         width={700}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Table<HistoryRow>
           loading={histLoading}
