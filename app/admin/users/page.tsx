@@ -54,9 +54,14 @@ export default function AdminUsersPage() {
           pageSize,
           username: formData.username || undefined,
           phone: formData.phone || undefined,
-          role: formData.role === "" || formData.role === undefined ? undefined : formData.role,
+          role:
+            formData.role === "" || formData.role === undefined
+              ? undefined
+              : formData.role,
           status:
-            formData.status === "" || formData.status === undefined ? undefined : formData.status,
+            formData.status === "" || formData.status === undefined
+              ? undefined
+              : formData.status,
         }
       );
       const d = res.data as { list: UserRow[]; total: number } | undefined;
@@ -129,7 +134,11 @@ export default function AdminUsersPage() {
       width: 180,
       render: (_, row) => (
         <Space wrap>
-          <Button type="link" size="small" onClick={() => loadDetail(row.user_id)}>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => loadDetail(row.user_id)}
+          >
             详情
           </Button>
           <Button type="link" size="small" onClick={() => toggle(row)}>
@@ -141,21 +150,27 @@ export default function AdminUsersPage() {
   ];
 
   return (
-    <div>
-      <Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
-        筛选并管理用户账号 status（0 禁用 / 1 正常）。
-      </Text>
-      <Form form={form} layout="inline" onFinish={submit} style={{ marginBottom: 16 }}>
+    <div style={{ paddingTop: 16 }}>
+      <Form
+        form={form}
+        layout="inline"
+        onFinish={submit}
+        style={{
+          marginBottom: 16,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 16,
+        }}
+      >
         <Form.Item name="username" label="用户名">
-          <Input allowClear style={{ width: 120 }} />
+          <Input allowClear />
         </Form.Item>
         <Form.Item name="phone" label="手机">
-          <Input allowClear style={{ width: 120 }} />
+          <Input allowClear />
         </Form.Item>
         <Form.Item name="role" label="角色">
           <Select
             allowClear
-            style={{ width: 110 }}
             options={[
               { label: "普通用户", value: UserRoleEnum.OrdinaryAdopter },
               { label: "管理员", value: UserRoleEnum.Admin },
@@ -165,7 +180,6 @@ export default function AdminUsersPage() {
         <Form.Item name="status" label="状态">
           <Select
             allowClear
-            style={{ width: 110 }}
             options={[
               { label: "禁用", value: UserStatusEnum.Disabled },
               { label: "正常", value: UserStatusEnum.Normal },
@@ -182,7 +196,12 @@ export default function AdminUsersPage() {
         </Form.Item>
       </Form>
 
-      <Table<UserRow> rowKey="user_id" columns={columns} {...tableProps} scroll={{ x: 960 }} />
+      <Table<UserRow>
+        rowKey="user_id"
+        columns={columns}
+        {...tableProps}
+        scroll={{ x: 960 }}
+      />
 
       <Modal
         title="用户详情"
@@ -199,21 +218,35 @@ export default function AdminUsersPage() {
           <div style={{ padding: 24, textAlign: "center" }}>加载中…</div>
         ) : detail ? (
           <Descriptions bordered size="small" column={1}>
-            <Descriptions.Item label="用户ID">{detail.user_id}</Descriptions.Item>
-            <Descriptions.Item label="用户名">{detail.username}</Descriptions.Item>
+            <Descriptions.Item label="用户ID">
+              {detail.user_id}
+            </Descriptions.Item>
+            <Descriptions.Item label="用户名">
+              {detail.username}
+            </Descriptions.Item>
             <Descriptions.Item label="手机">{detail.phone}</Descriptions.Item>
             <Descriptions.Item label="邮箱">{detail.email}</Descriptions.Item>
-            <Descriptions.Item label="真实姓名">{detail.real_name || "-"}</Descriptions.Item>
-            <Descriptions.Item label="证件号">{detail.id_card || "-"}</Descriptions.Item>
-            <Descriptions.Item label="地址">{detail.address || "-"}</Descriptions.Item>
+            <Descriptions.Item label="真实姓名">
+              {detail.real_name || "-"}
+            </Descriptions.Item>
+            <Descriptions.Item label="证件号">
+              {detail.id_card || "-"}
+            </Descriptions.Item>
+            <Descriptions.Item label="地址">
+              {detail.address || "-"}
+            </Descriptions.Item>
             <Descriptions.Item label="角色">
               {UserRoleMap[detail.role as UserRoleEnum]?.label}
             </Descriptions.Item>
             <Descriptions.Item label="状态">
               {UserStatusMap[detail.status as UserStatusEnum]?.label}
             </Descriptions.Item>
-            <Descriptions.Item label="创建时间">{detail.create_time}</Descriptions.Item>
-            <Descriptions.Item label="更新时间">{detail.update_time || "-"}</Descriptions.Item>
+            <Descriptions.Item label="创建时间">
+              {detail.create_time}
+            </Descriptions.Item>
+            <Descriptions.Item label="更新时间">
+              {detail.update_time || "-"}
+            </Descriptions.Item>
           </Descriptions>
         ) : null}
       </Modal>

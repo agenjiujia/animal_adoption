@@ -66,7 +66,9 @@ export default function AdminPetsPage() {
           species: formData.species || undefined,
           user_id: formData.user_id || undefined,
           status:
-            formData.status === "" || formData.status === undefined || formData.status === null
+            formData.status === "" ||
+            formData.status === undefined ||
+            formData.status === null
               ? undefined
               : formData.status,
         }
@@ -146,25 +148,31 @@ export default function AdminPetsPage() {
   ];
 
   return (
-    <div>
-      <Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
-        状态变更写入 pet_history，operate_type = STATUS_CHANGE。
-      </Text>
-      <Form form={form} layout="inline" onFinish={submit} style={{ marginBottom: 16 }}>
+    <div style={{ paddingTop: 16 }}>
+      <Form
+        form={form}
+        layout="inline"
+        onFinish={submit}
+        style={{
+          marginBottom: 16,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 16,
+        }}
+      >
         <Form.Item name="name" label="名称">
-          <Input allowClear placeholder="模糊" style={{ width: 130 }} />
+          <Input allowClear placeholder="模糊" />
         </Form.Item>
         <Form.Item name="species" label="种类">
-          <Input allowClear style={{ width: 110 }} />
+          <Input allowClear />
         </Form.Item>
         <Form.Item name="user_id" label="发布者ID">
-          <Input allowClear style={{ width: 100 }} />
+          <Input allowClear />
         </Form.Item>
         <Form.Item name="status" label="状态">
           <Select
             allowClear
             placeholder="全部"
-            style={{ width: 120 }}
             options={[
               { label: "待领养", value: PetStatusEnum.ForAdoption },
               { label: "已领养", value: PetStatusEnum.Adopted },
@@ -182,7 +190,12 @@ export default function AdminPetsPage() {
         </Form.Item>
       </Form>
 
-      <Table<PetRow> rowKey="pet_id" columns={columns} {...tableProps} scroll={{ x: 880 }} />
+      <Table<PetRow>
+        rowKey="pet_id"
+        columns={columns}
+        {...tableProps}
+        scroll={{ x: 880 }}
+      />
 
       <Modal
         title={statusPet ? `修改状态 — ${statusPet.name}` : ""}
@@ -192,9 +205,15 @@ export default function AdminPetsPage() {
         destroyOnHidden
       >
         <Space wrap>
-          <Button onClick={() => applyStatus(PetStatusEnum.ForAdoption)}>待领养</Button>
-          <Button onClick={() => applyStatus(PetStatusEnum.Adopted)}>已领养</Button>
-          <Button onClick={() => applyStatus(PetStatusEnum.Offline)}>下架</Button>
+          <Button onClick={() => applyStatus(PetStatusEnum.ForAdoption)}>
+            待领养
+          </Button>
+          <Button onClick={() => applyStatus(PetStatusEnum.Adopted)}>
+            已领养
+          </Button>
+          <Button onClick={() => applyStatus(PetStatusEnum.Offline)}>
+            下架
+          </Button>
         </Space>
       </Modal>
 
@@ -225,7 +244,9 @@ export default function AdminPetsPage() {
             {
               title: "new_data",
               render: (_, r) => (
-                <pre style={{ margin: 0, fontSize: 12, whiteSpace: "pre-wrap" }}>
+                <pre
+                  style={{ margin: 0, fontSize: 12, whiteSpace: "pre-wrap" }}
+                >
                   {JSON.stringify(r.new_data, null, 2)}
                 </pre>
               ),
