@@ -109,11 +109,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         icon: <FormOutlined />,
         label: <Link href="/pet/new">发布宠物</Link>,
       },
-      {
-        key: "/profile",
-        icon: <IdcardOutlined />,
-        label: <Link href="/profile">个人中心</Link>,
-      },
     ];
     if (isAdmin) {
       items.push({
@@ -134,6 +129,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   const userMenu = [
+    {
+      key: "/profile",
+      icon: <IdcardOutlined />,
+      label: <Link href="/profile">个人中心</Link>,
+    },
     {
       key: "logout",
       icon: <LogoutOutlined />,
@@ -188,14 +188,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 position: "sticky",
                 top: 0,
                 zIndex: 100,
+                overflow: "hidden",
               }}
             >
-              <Link
-                href="/"
-                style={{ fontSize: 18, fontWeight: "bold", color: "#1890ff" }}
-              >
-                宠物领养平台
-              </Link>
+              <div style={{ display: "flex" }}>
+                <div style={{ width: 200 }}>
+                  <Link
+                    href="/"
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "bold",
+                      color: "#1890ff",
+                    }}
+                  >
+                    宠物领养平台
+                  </Link>
+                </div>
+                <Menu
+                  mode="horizontal"
+                  selectedKeys={[selectedKey]}
+                  items={menuItems}
+                  style={{ borderRight: 0 }}
+                />
+              </div>
               <Dropdown menu={{ items: userMenu }} placement="bottomRight">
                 <Space style={{ cursor: "pointer" }}>
                   <Avatar
@@ -206,32 +221,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </Space>
               </Dropdown>
             </Header>
-            <Layout style={{ minHeight: "calc(100vh - 60px)" }}>
-              <Sider
-                width={200}
-                style={{ background: "#fff", borderRight: "1px solid #f0f0f0" }}
-              >
-                <Menu
-                  mode="inline"
-                  selectedKeys={[selectedKey]}
-                  items={menuItems}
-                  style={{ borderRight: 0, paddingTop: 16 }}
-                />
-              </Sider>
-              <Content
-                style={{
-                  margin: 20,
-                  padding: 24,
-                  background: "#fff",
-                  borderRadius: 4,
-                  border: "1px solid #f0f0f0",
-                  overflow: "auto",
-                  minHeight: "calc(100vh - 100px)",
-                }}
-              >
-                {children}
-              </Content>
-            </Layout>
+            <Content
+              style={{
+                margin: 20,
+                padding: 24,
+                background: "#fff",
+                borderRadius: 4,
+                border: "1px solid #f0f0f0",
+                overflow: "auto",
+                minHeight: "calc(100vh - 100px)",
+              }}
+            >
+              {children}
+            </Content>
           </Layout>
         ) : (
           children
