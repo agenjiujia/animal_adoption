@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { withPaginationApiHandler } from "@/utils/response/hoc";
-import { BusinessCodeEnum, HttpCodeEnum, UserRoleEnum } from "@/types";
+import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import type { BusinessPaginationResponse } from "@/types";
 import pool from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
@@ -13,7 +13,7 @@ const empty = (pageNum: number, pageSize: number) => ({
 });
 
 /**
- * 宠物分页列表。普通用户仅能看到自己发布的记录；管理员可查全部并可按 user_id 筛选。
+ * 宠物分页列表（仅看自己发布的记录）
  */
 const getPetListHandler = async (
   req: NextRequest
@@ -41,21 +41,11 @@ const getPetListHandler = async (
   const sqlParams: unknown[] = [];
   const whereConditions: string[] = [];
 
-  const isAdminUser = auth.user.role === UserRoleEnum.Admin;
-  if (!isAdminUser) {
-    whereConditions.push("user_id = ?");
-    sqlParams.push(auth.user.userId);
-  } else if (
-    requestData.user_id !== undefined &&
-    requestData.user_id !== null &&
-    requestData.user_id !== ""
-  ) {
-    const uid = Number(requestData.user_id);
-    if (!isNaN(uid) && uid >= 1) {
-      whereConditions.push("user_id = ?");
-      sqlParams.push(uid);
-    }
-  }
+  // ✅ 核心改动：所有用户统一只看自己的记录，删除管理员逻辑
+  whereConditions.push("user_id = ?");
+  sqlParams.push(auth.user.userId);
+
+  // ✅ 已删除：管理员专属的 user_id 筛选逻辑
 
   const numericFields = [
     "pet_id",
