@@ -2,8 +2,9 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { withAdminApiHandler } from "@/utils/response/hoc";
 import { wrapBusinessResponse } from "@/utils/response/core";
-import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
+import { BusinessCodeEnum, HttpCodeEnum, UserRoleEnum } from "@/types";
 import pool from "@/lib/db";
+import { resolveAuth } from "@/lib/auth"; // ✅ 新增：引入当前用户解析
 
 export async function PATCH(
   req: NextRequest,
@@ -21,6 +22,10 @@ export async function PATCH(
   }
 
   return withAdminApiHandler(async (r) => {
+    // ✅ 核心改动1：解析当前登录的管理员信息
+    const auth = resolveAuth(r);
+    if (!auth.ok) return auth.error;
+
     let body: { status?: number };
     try {
       body = await r.json();
@@ -39,6 +44,19 @@ export async function PATCH(
         message: "status 须为 0 禁用 / 1 正常",
       };
     }
+
+    // ✅ 核心改动2：禁止管理员禁用自己的账号
+    if (
+      auth.user?.role === UserRoleEnum.Admin &&
+      userId === auth.user?.userId
+    ) {
+      return {
+        businessCode: BusinessCodeEnum.PermissionDenied,
+        httpCode: HttpCodeEnum.Forbidden,
+        message: "管理员不能禁用自己的账号",
+      };
+    }
+
     const [result] = await pool.query(
       "UPDATE user SET status = ? WHERE user_id = ?",
       [st, userId]
