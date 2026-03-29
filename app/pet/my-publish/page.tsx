@@ -26,7 +26,7 @@ import {
   PetNeuteredOptions,
   PetSpeciesOptions,
 } from "@/constant";
-import { PetStatusEnum, UserRoleEnum } from "@/types";
+import { PetStatusEnum } from "@/types"; // ✅ 已删除 UserRoleEnum 导入
 
 const { Title, Text } = Typography;
 
@@ -48,7 +48,6 @@ interface PetItem {
 
 interface QueryParams {
   pet_id?: number;
-  user_id?: number;
   name?: string;
   species?: string;
   gender?: number;
@@ -65,19 +64,18 @@ export default function PublishPet() {
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
+  // ✅ 核心改动：仅保留 currentUserId，删除 isAdmin 相关逻辑
   useEffect(() => {
     try {
       const raw = localStorage.getItem("userInfo");
       if (raw) {
-        const u = JSON.parse(raw) as { role?: number; user_id?: number };
-        setIsAdmin(u.role === UserRoleEnum.Admin);
+        const u = JSON.parse(raw) as { user_id?: number };
         setCurrentUserId(u.user_id ?? null);
       }
     } catch {
-      setIsAdmin(false);
+      setCurrentUserId(null);
     }
   }, []);
 
@@ -124,9 +122,9 @@ export default function PublishPet() {
     load({ ...form.getFieldsValue(), pageNum: pn, pageSize: nextPs });
   };
 
+  // ✅ 核心改动：删除管理员删除权限，仅自己的记录可删除
   const remove = (record: PetItem) => {
-    const can =
-      isAdmin || (currentUserId !== null && record.user_id === currentUserId);
+    const can = currentUserId !== null && record.user_id === currentUserId;
     if (!can) return;
     Modal.confirm({
       title: "确认删除该宠物发布单？",
@@ -139,11 +137,9 @@ export default function PublishPet() {
 
   const list = (data?.data as { list?: PetItem[] })?.list ?? [];
 
+  // ✅ 核心改动：删除管理员专属的「发布者」列
   const columns: ColumnsType<PetItem> = [
     { title: "宠物ID", dataIndex: "pet_id", width: 80 },
-    ...(isAdmin
-      ? [{ title: "发布者", dataIndex: "user_id", width: 80 } as const]
-      : []),
     { title: "名称", dataIndex: "name", width: 120 },
     { title: "种类", dataIndex: "species", width: 100 },
     {
@@ -173,7 +169,6 @@ export default function PublishPet() {
       fixed: "right",
       render: (_, row) => {
         const owner = currentUserId !== null && row.user_id === currentUserId;
-        const canDel = isAdmin || owner;
         return (
           <Space size="small">
             <Button
@@ -192,7 +187,7 @@ export default function PublishPet() {
                 编辑
               </Button>
             ) : null}
-            {canDel ? (
+            {owner ? (
               <Button
                 type="link"
                 size="small"
@@ -226,11 +221,7 @@ export default function PublishPet() {
           <Form.Item name="pet_id" label="宠物ID">
             <InputNumber min={1} style={{ width: "100%" }} />
           </Form.Item>
-          {isAdmin ? (
-            <Form.Item name="user_id" label="发布者ID">
-              <InputNumber min={1} style={{ width: "100%" }} />
-            </Form.Item>
-          ) : null}
+          {/* ✅ 已删除：管理员专属的「发布者ID」表单项 */}
           <Form.Item name="name" label="名称">
             <Input allowClear />
           </Form.Item>

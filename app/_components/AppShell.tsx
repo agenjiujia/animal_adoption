@@ -10,6 +10,7 @@ import {
   LogoutOutlined,
   IdcardOutlined,
   SettingOutlined,
+  UpSquareOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -118,6 +119,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/profile")) return "/profile";
     if (pathname.startsWith("/pet/new") || pathname.startsWith("/pet/edit"))
       return "/pet/new";
+    if (pathname.startsWith("/pet/my-publish")) return "/pet/my-publish";
     return "/";
   }, [pathname]);
 
@@ -139,7 +141,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       },
       {
         key: "/pet/my-publish",
-        icon: <HomeOutlined />,
+        icon: <UpSquareOutlined />,
         label: <Link href="/pet/my-publish">我发布的</Link>,
       },
       {
