@@ -195,6 +195,12 @@ export default function AdminPetsPage() {
         columns={columns}
         {...tableProps}
         scroll={{ x: 880 }}
+        pagination={{
+          ...tableProps.pagination,
+          showQuickJumper: true,
+          showSizeChanger: true,
+          showTotal: (total) => <Text type="secondary">共 {total} 条</Text>,
+        }}
       />
 
       <Modal
