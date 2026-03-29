@@ -1,219 +1,144 @@
 import { NextRequest } from "next/server";
-import { withPaginationApiHandler } from "@/utils/response/hoc"; // 替换为分页高阶函数
-import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
-import type { BusinessPaginationResponse } from "@/types"; // 引入分页响应类型
+import { withPaginationApiHandler } from "@/utils/response/hoc";
+import { BusinessCodeEnum, HttpCodeEnum, UserRoleEnum } from "@/types";
+import type { BusinessPaginationResponse } from "@/types";
 import pool from "@/lib/db";
-import { verifyToken } from "@/utils/verifyToken";
+import { resolveAuth } from "@/lib/auth";
+
+const empty = (pageNum: number, pageSize: number) => ({
+  list: [] as unknown[],
+  total: 0,
+  pageNum,
+  pageSize,
+});
 
 /**
- * 宠物发布单列表查询接口（POST + 分页高阶函数封装）
- * 支持查询参数：pet_id、user_id、name、species、breed、age、gender、weight、vaccine_status、neutered、status
- * 内置分页：page（默认1）、pageSize（默认10）
- * 响应适配：BusinessPaginationResponse 类型（匹配withPaginationApiHandler）
+ * 宠物分页列表。普通用户仅能看到自己发布的记录；管理员可查全部并可按 user_id 筛选。
  */
 const getPetListHandler = async (
   req: NextRequest
-): Promise<BusinessPaginationResponse<any>> => {
-  // 1. 解析Token（登录态校验，中间件已处理过期）
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return {
-      businessCode: BusinessCodeEnum.NotLoggedIn,
-      httpCode: HttpCodeEnum.Unauthorized,
-      message: "未登录，无法查询宠物列表",
-      data: {
-        list: [], // 分页响应必须返回list字段
-        pageNum: 1,
-        pageSize: 10,
-        total: 0,
-      },
-    };
-  }
-  const token = authHeader.replace("Bearer ", "");
-  const userInfo = verifyToken(token);
-
-  if (!userInfo.payload?.user_id) {
-    return {
-      businessCode: BusinessCodeEnum.NotLoggedIn,
-      httpCode: HttpCodeEnum.Unauthorized,
-      message: "登录状态失效，请重新登录",
-      data: {
-        list: [], // 分页响应必须返回list字段
-        pageNum: 1,
-        pageSize: 10,
-        total: 0,
-      },
-    };
+): Promise<BusinessPaginationResponse<unknown>> => {
+  const auth = resolveAuth(req);
+  if (!auth.ok) {
+    return { ...auth.error, data: empty(1, 10) };
   }
 
-  // 2. 解析POST请求体参数
-  let requestData: any;
+  let requestData: Record<string, unknown>;
   try {
     requestData = await req.json();
-  } catch (error) {
+  } catch {
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
-      message: "请求参数格式错误，请传入合法JSON",
-      data: {
-        list: [], // 分页响应必须返回list字段
-        pageNum: 1,
-        pageSize: 10,
-        total: 0,
-      },
+      message: "请求体须为 JSON",
+      data: empty(1, 10),
     };
   }
 
-  // 2.1 提取所有查询参数 + 分页参数（默认值兜底）
-  const {
-    // 核心查询参数（匹配数据库字段）
-    pet_id,
-    user_id,
-    name,
-    species,
-    breed,
-    age,
-    gender,
-    weight,
-    vaccine_status,
-    neutered,
-    status,
-    // 分页参数（默认值）
-    page = 1,
-    pageSize = 10,
-  } = requestData || {};
+  const pageNum = Number(requestData.pageNum ?? requestData.page ?? 1);
+  const pageSizeNum = Number(requestData.pageSize ?? 10);
 
-  // 3. 参数类型校验 + 格式化
-  const formattedParams: Record<string, any> = {};
-  const sqlParams: any[] = []; // 参数化查询数组（防SQL注入）
+  const sqlParams: unknown[] = [];
   const whereConditions: string[] = [];
 
-  // 3.1 数字类型参数校验（精确查询：pet_id/user_id/age/gender等）
+  const isAdminUser = auth.user.role === UserRoleEnum.Admin;
+  if (!isAdminUser) {
+    whereConditions.push("user_id = ?");
+    sqlParams.push(auth.user.userId);
+  } else if (
+    requestData.user_id !== undefined &&
+    requestData.user_id !== null &&
+    requestData.user_id !== ""
+  ) {
+    const uid = Number(requestData.user_id);
+    if (!isNaN(uid) && uid >= 1) {
+      whereConditions.push("user_id = ?");
+      sqlParams.push(uid);
+    }
+  }
+
   const numericFields = [
     "pet_id",
-    "user_id",
     "age",
     "gender",
     "vaccine_status",
     "neutered",
     "status",
-  ];
+  ] as const;
   for (const field of numericFields) {
     const value = requestData[field];
-    if (value !== undefined && value !== null) {
+    if (value !== undefined && value !== null && value !== "") {
       const numValue = Number(value);
-      // 基础数字校验：非负
       if (isNaN(numValue) || numValue < 0) {
         return {
           businessCode: BusinessCodeEnum.ParameterValidationFailed,
           httpCode: HttpCodeEnum.BadRequest,
           message: `${field}必须为非负数字`,
-          data: {
-            list: [], // 分页响应必须返回list字段
-            pageNum: 1,
-            pageSize: 10,
-            total: 0,
-          },
+          data: empty(pageNum, pageSizeNum),
         };
       }
-      // 枚举值范围校验（匹配数据库TINYINT约束）
-      const validValueMap = {
-        gender: [0, 1], // 0-母/1-公
-        vaccine_status: [0, 1, 2], // 0-未知/1-已打/2-未打
-        neutered: [0, 1, 2], // 0-未知/1-已绝育/2-未绝育
-        status: [0, 1, 2], // 0-待领养/1-已领养/2-下架
+      const valid: Record<string, number[]> = {
+        gender: [0, 1],
+        vaccine_status: [0, 1, 2],
+        neutered: [0, 1, 2],
+        status: [0, 1, 2],
       };
-      if (validValueMap[field as keyof typeof validValueMap]) {
-        if (
-          !validValueMap[field as keyof typeof validValueMap].includes(numValue)
-        ) {
-          return {
-            businessCode: BusinessCodeEnum.ParameterValidationFailed,
-            httpCode: HttpCodeEnum.BadRequest,
-            message: `${field}取值非法，仅支持：${validValueMap[
-              field as keyof typeof validValueMap
-            ].join("、")}`,
-            data: {
-              list: [], // 分页响应必须返回list字段
-              pageNum: 1,
-              pageSize: 10,
-              total: 0,
-            },
-          };
-        }
-      }
-      // 整数校验（pet_id/user_id/age为INT，必须是整数）
-      if (
-        ["pet_id", "user_id", "age"].includes(field) &&
-        !Number.isInteger(numValue)
-      ) {
+      if (valid[field] && !valid[field].includes(numValue)) {
         return {
           businessCode: BusinessCodeEnum.ParameterValidationFailed,
           httpCode: HttpCodeEnum.BadRequest,
-          message: `${field}必须为非负整数`,
-          data: {
-            list: [], // 分页响应必须返回list字段
-            pageNum: 1,
-            pageSize: 10,
-            total: 0,
-          },
+          message: `${field}取值非法`,
+          data: empty(pageNum, pageSizeNum),
         };
       }
-      formattedParams[field] = numValue;
+      if (["pet_id", "age"].includes(field) && !Number.isInteger(numValue)) {
+        return {
+          businessCode: BusinessCodeEnum.ParameterValidationFailed,
+          httpCode: HttpCodeEnum.BadRequest,
+          message: `${field}须为非负整数`,
+          data: empty(pageNum, pageSizeNum),
+        };
+      }
       whereConditions.push(`${field} = ?`);
       sqlParams.push(numValue);
     }
   }
 
-  // 3.2 体重参数校验（DECIMAL(5,2)：0-999.99）
-  if (weight !== undefined && weight !== null) {
-    const weightNum = Number(weight);
+  if (
+    requestData.weight !== undefined &&
+    requestData.weight !== null &&
+    requestData.weight !== ""
+  ) {
+    const weightNum = Number(requestData.weight);
     if (isNaN(weightNum) || weightNum < 0 || weightNum > 999.99) {
       return {
         businessCode: BusinessCodeEnum.ParameterValidationFailed,
         httpCode: HttpCodeEnum.BadRequest,
-        message: "weight需为0-999.99之间的数字（单位：kg）",
-        data: {
-          list: [], // 分页响应必须返回list字段
-          pageNum: 1,
-          pageSize: 10,
-          total: 0,
-        },
+        message: "weight范围非法",
+        data: empty(pageNum, pageSizeNum),
       };
     }
-    formattedParams.weight = weightNum;
     whereConditions.push("weight = ?");
     sqlParams.push(weightNum);
   }
 
-  // 3.3 字符串参数校验（模糊查询：name/species/breed）
-  const stringFields = ["name", "species", "breed"];
-  for (const field of stringFields) {
+  for (const field of ["name", "species", "breed"] as const) {
     const value = requestData[field];
     if (value !== undefined && value !== null) {
-      const strValue = value.toString().trim();
+      const strValue = String(value).trim();
       if (strValue) {
-        formattedParams[field] = strValue;
         whereConditions.push(`${field} LIKE ?`);
-        sqlParams.push(`%${strValue}%`); // 模糊匹配（包含关键词）
+        sqlParams.push(`%${strValue}%`);
       }
     }
   }
 
-  // 3.4 分页参数校验
-  const pageNum = Number(page);
-  const pageSizeNum = Number(pageSize);
   if (isNaN(pageNum) || pageNum < 1 || !Number.isInteger(pageNum)) {
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
-      message: "page必须为正整数",
-      data: {
-        list: [], // 分页响应必须返回list字段
-        pageNum: 1,
-        pageSize: 10,
-        total: 0,
-      },
+      message: "pageNum须为正整数",
+      data: empty(1, pageSizeNum),
     };
   }
   if (
@@ -225,64 +150,52 @@ const getPetListHandler = async (
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
-      message: "pageSize必须为1-100之间的正整数",
-      data: {
-        list: [], // 分页响应必须返回list字段
-        pageNum: 1,
-        pageSize: 10,
-        total: 0,
-      },
+      message: "pageSize须为1-100的正整数",
+      data: empty(pageNum, 10),
     };
   }
-  const offset = (pageNum - 1) * pageSizeNum; // 计算分页偏移量
 
-  // 4. 动态拼接SQL（参数化查询，防注入）
+  const offset = (pageNum - 1) * pageSizeNum;
+
   try {
-    // 4.1 查询总数（用于分页）
     let countSql = "SELECT COUNT(*) as total FROM pet";
     if (whereConditions.length > 0) {
       countSql += ` WHERE ${whereConditions.join(" AND ")}`;
     }
     const [countResult] = await pool.query(countSql, sqlParams);
-    const total = (countResult as any)?.[0]?.total || 0;
+    const total = (countResult as { total: number }[])[0]?.total || 0;
 
-    // 4.2 查询列表数据（匹配pet表所有字段，按更新时间降序）
     let listSql = "SELECT * FROM pet";
     if (whereConditions.length > 0) {
       listSql += ` WHERE ${whereConditions.join(" AND ")}`;
     }
     listSql += " ORDER BY update_time DESC LIMIT ? OFFSET ?";
-    // 拼接分页参数到SQL参数数组
-    const listSqlParams = [...sqlParams, pageSizeNum, offset];
-    const [listResult] = await pool.query(listSql, listSqlParams);
+    const [listResult] = await pool.query(listSql, [
+      ...sqlParams,
+      pageSizeNum,
+      offset,
+    ]);
 
-    // 5. 构造分页响应（严格匹配BusinessPaginationResponse类型）
     return {
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,
-      message: "宠物列表查询成功",
+      message: "查询成功",
       data: {
-        list: listResult as unknown[], // 列表数据
-        pageNum: pageNum,
+        list: listResult as unknown[],
+        pageNum,
         pageSize: pageSizeNum,
-        total, // 总条数
+        total,
       },
     };
-  } catch (error) {
-    console.error("查询宠物列表失败：", error);
+  } catch (e) {
+    console.error(e);
     return {
       businessCode: BusinessCodeEnum.InternalServerError,
       httpCode: HttpCodeEnum.ServerError,
-      message: "查询宠物列表失败，请重试",
-      data: {
-        list: [],
-        pageNum: 1,
-        pageSize: 10,
-        total: 0,
-      },
+      message: "查询失败",
+      data: empty(pageNum, pageSizeNum),
     };
   }
 };
 
-// 核心修改：使用分页高阶函数包装
 export const POST = withPaginationApiHandler(getPetListHandler);

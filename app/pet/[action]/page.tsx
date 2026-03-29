@@ -46,6 +46,7 @@ export default function CreatePet() {
   const params = useParams<{ action: string }>();
   const urlSearchParams = useSearchParams();
   const isCreate = params.action === "new";
+  const petIdForEdit = urlSearchParams.get("pet_id");
 
   // 发布接口调用
   const { run: submitPet, loading } = useRequest(
@@ -65,13 +66,16 @@ export default function CreatePet() {
   );
 
   const { loading: detailLoading } = useRequest(
-    () =>
-      request.get(`/api/pet/detail?pet_id=${urlSearchParams.get("pet_id")}`),
+    () => request.get(`/api/pet/detail?pet_id=${petIdForEdit}`),
     {
-      onSuccess: (res: any) => {
+      ready: !isCreate && !!petIdForEdit,
+      refreshDeps: [petIdForEdit, isCreate],
+      onSuccess: (res) => {
+        const d = res.data as Record<string, unknown> | undefined;
+        if (!d) return;
         form.setFieldsValue({
-          ...res?.data,
-          weight: res?.data?.weight ? Number(res?.data?.weight) : 0,
+          ...d,
+          weight: d.weight != null ? Number(d.weight) : undefined,
         });
       },
     }
@@ -81,9 +85,8 @@ export default function CreatePet() {
     (values) =>
       request.put("/api/pet/edit", {
         ...values,
-        // 处理图片URL（逗号分隔）
         image_urls: values.image_urls?.replace(/，/g, ",") || "",
-        pet_id: urlSearchParams.get("pet_id"),
+        pet_id: petIdForEdit,
       }),
     {
       onSuccess: () => {
@@ -109,7 +112,7 @@ export default function CreatePet() {
           layout="vertical"
           onFinish={onFinish}
           initialValues={{
-            vaccine_status: PetVaccineStatusEnum.Unvaccinated,
+            vaccine_status: PetVaccineStatusEnum.Unknown,
             neutered: PetNeuteredEnum.Unknown,
           }}
         >

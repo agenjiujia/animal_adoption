@@ -11,11 +11,10 @@ import {
   generateRequestId,
   wrapBusinessPaginationResponse,
 } from "./core";
+import { resolveAuth, isAdmin, type AuthUser } from "@/lib/auth";
 
 /**
- * API 处理高阶函数（核心）
- * @param handler 开发人员编写的业务处理函数（返回纯业务对象）
- * @returns NextResponse（自动包装）
+ * 通用 API：业务函数返回纯业务对象，自动包装 JSON、捕获未处理异常
  */
 export const withApiHandler = <T = unknown>(
   handler: (
@@ -28,7 +27,6 @@ export const withApiHandler = <T = unknown>(
       const apiRes = wrapBusinessResponse(businessRes);
       return NextResponse.json(apiRes, { status: Number(apiRes.httpCode) });
     } catch (error) {
-      // 全局异常捕获（统一返回服务器错误）
       console.error("API 处理异常：", error);
       const errorRes: ApiResponse<null> = {
         httpCode: HttpCodeEnum.ServerError,
@@ -43,9 +41,7 @@ export const withApiHandler = <T = unknown>(
   };
 };
 
-/**
- * 分页 API 专用高阶函数（简化分页响应）
- */
+/** 分页列表 API */
 export const withPaginationApiHandler = <T = unknown>(
   handler: (
     req: NextRequest
@@ -57,7 +53,6 @@ export const withPaginationApiHandler = <T = unknown>(
       const apiRes = wrapBusinessPaginationResponse(businessRes);
       return NextResponse.json(apiRes, { status: Number(apiRes.httpCode) });
     } catch (error) {
-      // 全局异常捕获（统一返回服务器错误）
       console.error("分页 API 处理异常：", error);
       const errorRes: ApiResponse<null> = {
         httpCode: HttpCodeEnum.ServerError,
@@ -72,10 +67,58 @@ export const withPaginationApiHandler = <T = unknown>(
   };
 };
 
-// ========== 快捷高阶函数（针对常见错误场景） ==========
-/**
- * 权限校验失败的快捷响应（直接返回，无需业务函数）
- */
+/** 管理员接口：必须已登录且 role=1 */
+export const withAdminApiHandler = <T = unknown>(
+  handler: (
+    req: NextRequest,
+    auth: AuthUser
+  ) => Promise<BusinessResponse<T>> | BusinessResponse<T>
+) => {
+  return withApiHandler(async (req) => {
+    const r = resolveAuth(req);
+    if (!r.ok) return { ...r.error, data: r.error.data };
+    if (!isAdmin(r.user)) {
+      return {
+        businessCode: BusinessCodeEnum.AdminPermissionDenied,
+        httpCode: HttpCodeEnum.Forbidden,
+        message: "需要管理员权限",
+        data: null as T | undefined,
+      };
+    }
+    return handler(req, r.user);
+  });
+};
+
+/** 管理员分页接口 */
+export const withAdminPaginationApiHandler = <T = unknown>(
+  handler: (
+    req: NextRequest,
+    auth: AuthUser
+  ) =>
+    | Promise<BusinessPaginationResponse<T>>
+    | BusinessPaginationResponse<T>
+) => {
+  return withPaginationApiHandler(async (req) => {
+    const r = resolveAuth(req);
+    if (!r.ok) {
+      return {
+        ...r.error,
+        data: { list: [], total: 0, pageNum: 1, pageSize: 10 },
+      };
+    }
+    if (!isAdmin(r.user)) {
+      return {
+        businessCode: BusinessCodeEnum.AdminPermissionDenied,
+        httpCode: HttpCodeEnum.Forbidden,
+        message: "需要管理员权限",
+        data: { list: [], total: 0, pageNum: 1, pageSize: 10 },
+      };
+    }
+    return handler(req, r.user);
+  });
+};
+
+/** 403 JSON（中间件等使用） */
 export const authErrorHandler = (message = "权限不足，无法访问") => {
   const res: ApiResponse<null> = {
     httpCode: HttpCodeEnum.Forbidden,
@@ -88,9 +131,7 @@ export const authErrorHandler = (message = "权限不足，无法访问") => {
   return NextResponse.json(res, { status: 403 });
 };
 
-/**
- * Token 错误快捷响应
- */
+/** 401 JSON */
 export const tokenErrorHandler = (isExpired = false, message?: string) => {
   const businessCode = isExpired
     ? BusinessCodeEnum.TokenExpired

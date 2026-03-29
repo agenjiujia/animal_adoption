@@ -3,7 +3,7 @@ import { Form, Input, Button, message, Card } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRequest } from "ahooks";
-import { request } from "@/app/_utils/request";
+import { request } from "@/utils/request";
 
 const RegisterPage = () => {
   const [form] = Form.useForm();
@@ -13,8 +13,8 @@ const RegisterPage = () => {
     (params) => request.post("/api/auth/register", params),
     {
       manual: true,
-      onSuccess: (data: { message: string }) => {
-        message.success(data.message);
+      onSuccess: (res) => {
+        message.success(res.message);
         router.push("/login");
       },
     }

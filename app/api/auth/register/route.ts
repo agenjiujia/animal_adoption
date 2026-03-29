@@ -1,65 +1,36 @@
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
-import { withApiHandler } from "@/response";
+import { withApiHandler } from "@/utils/response/hoc";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types/common/enum";
+import { registerSchema } from "@/lib/schemas/auth";
 
 /**
- * 注册接口核心业务逻辑
- * 仅返回纯业务对象，由 withApiHandler 自动包装通用响应格式
+ * 用户注册（Zod 校验 + 唯一约束检查）
  */
 const registerHandler = async (req: NextRequest) => {
-  // 1. 解析请求参数
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return {
+      businessCode: BusinessCodeEnum.DataFormatError,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "请求体须为 JSON",
+    };
+  }
+  const parsed = registerSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: parsed.error.issues[0]?.message ?? "参数错误",
+    };
+  }
   const { username, phone, password, identityCard, address, email } =
-    await req.json();
+    parsed.data;
 
-  // 2. 基础参数校验
-  if (!username || !phone || !password || !identityCard || !address || !email) {
-    return {
-      businessCode: BusinessCodeEnum.ParameterValidationFailed,
-      httpCode: HttpCodeEnum.BadRequest,
-      message: "用户名、手机号、密码、身份证号、地址、邮箱都为必填项！",
-    };
-  }
-
-  // 3. 手机号格式校验
-  const phoneReg = /^1[3-9]\d{9}$/;
-  if (!phoneReg.test(phone)) {
-    return {
-      businessCode: BusinessCodeEnum.ParameterValidationFailed,
-      httpCode: HttpCodeEnum.BadRequest,
-      message: "请输入正确的11位手机号！",
-    };
-  }
-
-  // 4. 密码长度校验
-  if (password.length < 6) {
-    return {
-      businessCode: BusinessCodeEnum.ParameterValidationFailed,
-      httpCode: HttpCodeEnum.BadRequest,
-      message: "密码长度不能少于6位！",
-    };
-  }
-  // 5.身份证号格式简易校验（18位）
-  const idCardReg = /^\d{17}[\dXx]$/;
-  if (!idCardReg.test(identityCard)) {
-    return {
-      businessCode: BusinessCodeEnum.ParameterValidationFailed,
-      httpCode: HttpCodeEnum.BadRequest,
-      message: "请输入正确的18位身份证号！",
-    };
-  }
-  // 6. 邮箱格式校验
-  const emailReg = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  if (!emailReg.test(email)) {
-    return {
-      businessCode: BusinessCodeEnum.ParameterValidationFailed,
-      httpCode: HttpCodeEnum.BadRequest,
-      message: "请输入正确的邮箱格式！",
-    };
-  }
-
-  // 7. 唯一字段重复校验
+  // 唯一字段重复校验
   // 7.1 校验用户名是否已存在（对应 uk_username 唯一索引）
   const [usernameExist] = await pool.query(
     "SELECT user_id FROM user WHERE username = ?",

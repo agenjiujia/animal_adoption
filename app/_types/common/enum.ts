@@ -37,43 +37,30 @@ export enum UserGenderEnum {
 
 // ===================== 2. 宠物表（pet）相关枚举 =====================
 /**
- * 宠物表（pet）- 状态字段（status）
+ * 宠物表 pet.status（与 DDL 一致：0 待领养 / 1 已领养 / 2 下架）
  */
 export enum PetStatusEnum {
-  /** 待审核（pet.status = 0，发布后待审核） */
-  Pending = 0,
-  /** 可领养（pet.status = 1，审核通过可领养） */
-  Available = 1,
-  /** 已领养（pet.status = 2，被领养后状态） */
-  Adopted = 2,
-  /** 已下架（pet.status = 3，管理员/发布者手动下架） */
-  Offline = 3,
-  /** 审核驳回（pet.status = 4，审核不通过） */
-  Rejected = 4,
+  ForAdoption = 0,
+  Adopted = 1,
+  Offline = 2,
 }
 
 /**
- * 宠物表（pet）- 疫苗状态字段（vaccine_status）
+ * pet.vaccine_status：0 未知 / 1 已打 / 2 未打
  */
 export enum PetVaccineStatusEnum {
-  /** 未接种（pet.vaccine_status = 0） */
-  Unvaccinated = 0,
-  /** 部分接种（pet.vaccine_status = 1） */
-  Partial = 1,
-  /** 完全接种（pet.vaccine_status = 2） */
-  Complete = 2,
+  Unknown = 0,
+  Vaccinated = 1,
+  Unvaccinated = 2,
 }
 
 /**
- * 宠物表（pet）- 绝育状态字段（neutered）
+ * pet.neutered：0 未知 / 1 已绝育 / 2 未绝育
  */
 export enum PetNeuteredEnum {
-  /** 未绝育（pet.neutered = 0） */
-  No = 0,
-  /** 已绝育（pet.neutered = 1） */
-  Yes = 1,
-  /** 未知（pet.neutered = 2） */
-  Unknown = 2,
+  Unknown = 0,
+  Neutered = 1,
+  NotNeutered = 2,
 }
 
 /**

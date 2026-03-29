@@ -69,48 +69,47 @@ export const PetGenderMap = {
 /** 宠物性别 - 数组映射 */
 export const PetGenderOptions = Object.values(PetGenderMap);
 
-/** 宠物状态 - 对象映射 */
+/** pet.status */
 export const PetStatusMap = {
-  [PetStatusEnum.Pending]: { label: "待审核", value: PetStatusEnum.Pending },
-  [PetStatusEnum.Available]: {
-    label: "可领养",
-    value: PetStatusEnum.Available,
+  [PetStatusEnum.ForAdoption]: {
+    label: "待领养",
+    value: PetStatusEnum.ForAdoption,
   },
   [PetStatusEnum.Adopted]: { label: "已领养", value: PetStatusEnum.Adopted },
-  [PetStatusEnum.Offline]: { label: "已下架", value: PetStatusEnum.Offline },
-  [PetStatusEnum.Rejected]: {
-    label: "审核驳回",
-    value: PetStatusEnum.Rejected,
-  },
+  [PetStatusEnum.Offline]: { label: "下架", value: PetStatusEnum.Offline },
 };
 
 /** 宠物状态 - 数组映射 */
 export const PetStatusOptions = Object.values(PetStatusMap);
 
-/** 宠物疫苗状态 - 对象映射 */
 export const PetVaccineStatusMap = {
+  [PetVaccineStatusEnum.Unknown]: {
+    label: "未知",
+    value: PetVaccineStatusEnum.Unknown,
+  },
+  [PetVaccineStatusEnum.Vaccinated]: {
+    label: "已打",
+    value: PetVaccineStatusEnum.Vaccinated,
+  },
   [PetVaccineStatusEnum.Unvaccinated]: {
-    label: "未接种",
+    label: "未打",
     value: PetVaccineStatusEnum.Unvaccinated,
-  },
-  [PetVaccineStatusEnum.Partial]: {
-    label: "部分接种",
-    value: PetVaccineStatusEnum.Partial,
-  },
-  [PetVaccineStatusEnum.Complete]: {
-    label: "完全接种",
-    value: PetVaccineStatusEnum.Complete,
   },
 };
 
 /** 宠物疫苗状态 - 数组映射 */
 export const PetVaccineStatusOptions = Object.values(PetVaccineStatusMap);
 
-/** 宠物绝育状态 - 对象映射 */
 export const PetNeuteredMap = {
-  [PetNeuteredEnum.No]: { label: "未绝育", value: PetNeuteredEnum.No },
-  [PetNeuteredEnum.Yes]: { label: "已绝育", value: PetNeuteredEnum.Yes },
   [PetNeuteredEnum.Unknown]: { label: "未知", value: PetNeuteredEnum.Unknown },
+  [PetNeuteredEnum.Neutered]: {
+    label: "已绝育",
+    value: PetNeuteredEnum.Neutered,
+  },
+  [PetNeuteredEnum.NotNeutered]: {
+    label: "未绝育",
+    value: PetNeuteredEnum.NotNeutered,
+  },
 };
 
 /** 宠物绝育状态 - 数组映射 */

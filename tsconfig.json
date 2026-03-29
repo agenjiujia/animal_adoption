@@ -23,6 +23,9 @@
       }
     ],
     "paths": {
+      "@/components/*": [
+        "./components/*"
+      ],
       "@/*": [
         "./*"
       ],
@@ -33,7 +36,7 @@
         "./app/_types/*"
       ],
       "@/response": [
-        "./app/_utils/response/hoc"
+        "./utils/response/hoc"
       ],
       "@/constant": [
         "./app/_constant"
@@ -42,10 +45,10 @@
         "./app/_constant/*"
       ],
       "@/utils": [
-        "./app/_utils"
+        "./utils"
       ],
       "@/utils/*": [
-        "./app/_utils/*"
+        "./utils/*"
       ]
     }
   },

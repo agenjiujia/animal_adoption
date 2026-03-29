@@ -10,26 +10,13 @@ import {
 } from "@/types";
 import { PetVaccineStatusMap, PetNeuteredMap, PetGenderMap } from "@/constant";
 import pool from "@/lib/db";
+import { resolveAuth } from "@/lib/auth";
 
-import { verifyToken } from "@/utils/verifyToken";
-
-/**
- * 发布宠物领养接口（管理员专属）
- */
+/** 登录用户发布宠物，默认 status=待领养 */
 const createPetHandler = async (req: NextRequest) => {
-  // 1. 解析Token，校验管理员权限
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return {
-      businessCode: BusinessCodeEnum.NotLoggedIn,
-      httpCode: HttpCodeEnum.Unauthorized,
-      message: "未登录，无法发布宠物信息",
-    };
-  }
-  const token = authHeader.replace("Bearer ", "");
-  const userInfo = verifyToken(token);
+  const auth = resolveAuth(req);
+  if (!auth.ok) return auth.error;
 
-  // 2. 解析请求参数
   const {
     name,
     species,
@@ -44,8 +31,7 @@ const createPetHandler = async (req: NextRequest) => {
     image_urls,
   } = await req.json();
 
-  // 3. 核心字段校验（新增宠物性别枚举校验）
-  if (!name || !species || gender === undefined) {
+  if (!name || species === undefined || species === null || gender === undefined) {
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
@@ -61,7 +47,15 @@ const createPetHandler = async (req: NextRequest) => {
     };
   }
 
-  // 宠物性别枚举校验
+  const speciesStr = String(species).trim();
+  if (!speciesStr || speciesStr.length > 30) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "种类长度需在1-30字符内",
+    };
+  }
+
   const validGender = Object.keys(PetGenderMap).map(Number);
   if (!validGender.includes(Number(gender))) {
     const validLabels = validGender
@@ -74,38 +68,31 @@ const createPetHandler = async (req: NextRequest) => {
     };
   }
 
-  // 疫苗状态校验
   const validVaccineStatus = Object.keys(PetVaccineStatusMap).map(Number);
   if (
     vaccine_status !== undefined &&
     !validVaccineStatus.includes(Number(vaccine_status))
   ) {
-    const validLabels = validVaccineStatus
-      .map((v) => PetVaccineStatusMap[v as PetVaccineStatusEnum].label)
-      .join("、");
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
-      message: `疫苗状态只能为：${validLabels}`,
+      message: "疫苗状态取值非法",
     };
   }
 
-  // 绝育状态校验
   const validNeutered = Object.keys(PetNeuteredMap).map(Number);
   if (neutered !== undefined && !validNeutered.includes(Number(neutered))) {
-    const validLabels = validNeutered
-      .map((v) => PetNeuteredMap[v as PetNeuteredEnum].label)
-      .join("、");
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
-      message: `绝育状态只能为：${validLabels}`,
+      message: "绝育状态取值非法",
     };
   }
 
-  // 体重格式校验
   if (
-    weight &&
+    weight !== undefined &&
+    weight !== null &&
+    weight !== "" &&
     (isNaN(Number(weight)) || Number(weight) < 0 || Number(weight) > 999.99)
   ) {
     return {
@@ -115,24 +102,26 @@ const createPetHandler = async (req: NextRequest) => {
     };
   }
 
-  // 年龄格式校验
-  if (age && (isNaN(Number(age)) || Number(age) < 0)) {
+  if (
+    age !== undefined &&
+    age !== null &&
+    age !== "" &&
+    (isNaN(Number(age)) || Number(age) < 0 || !Number.isInteger(Number(age)))
+  ) {
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
-      message: "宠物年龄需为非负整数（单位：月）",
+      message: "年龄需为非负整数（月）",
     };
   }
 
-  // 4. 处理图片URL
   let finalImageUrls = "";
-  if (image_urls && image_urls.trim()) {
+  if (image_urls && String(image_urls).trim()) {
     finalImageUrls = Array.isArray(image_urls)
       ? image_urls.join(",")
-      : image_urls.replace(/，/g, ",");
+      : String(image_urls).replace(/，/g, ",");
   }
 
-  // 5. 插入数据库
   try {
     await pool.query(
       `INSERT INTO pet (
@@ -141,33 +130,37 @@ const createPetHandler = async (req: NextRequest) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
-        species,
-        breed || null,
-        age ? Number(age) : null,
-        Number(gender), // 宠物性别（PetGenderEnum值）
-        weight ? Number(weight) : null,
+        speciesStr,
+        breed ? String(breed).trim() : null,
+        age !== undefined && age !== null && age !== ""
+          ? Number(age)
+          : null,
+        Number(gender),
+        weight !== undefined && weight !== null && weight !== ""
+          ? Number(weight)
+          : null,
         health_status || null,
-        Number(vaccine_status) || PetVaccineStatusEnum.Unvaccinated,
+        Number(vaccine_status) || PetVaccineStatusEnum.Unknown,
         Number(neutered) || PetNeuteredEnum.Unknown,
         description || null,
         finalImageUrls,
-        PetStatusEnum.Pending,
-        userInfo.payload?.user_id,
+        PetStatusEnum.ForAdoption,
+        auth.user.userId,
       ]
     );
-  } catch (error) {
+  } catch (e) {
+    console.error(e);
     return {
-      businessCode: BusinessCodeEnum.InternalServerError,
+      businessCode: BusinessCodeEnum.DataInsertFailed,
       httpCode: HttpCodeEnum.ServerError,
-      message: "发布宠物信息失败，请重试",
+      message: "发布失败，请重试",
     };
   }
 
-  // 6. 返回成功响应
   return {
     businessCode: BusinessCodeEnum.Success,
     httpCode: HttpCodeEnum.Created,
-    message: "宠物领养信息发布成功（待审核）",
+    message: "发布成功",
     data: null,
   };
 };

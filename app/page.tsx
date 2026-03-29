@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRequest } from "ahooks";
 import { useRouter } from "next/navigation";
 import {
@@ -14,11 +14,11 @@ import {
   Space,
   Typography,
   Card,
-  message,
+  Modal,
   Spin,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { FormProps } from "antd";
+import type { FormProps } from "antd";
 import { request } from "@/utils/request";
 import {
   PetGenderOptions,
@@ -26,11 +26,10 @@ import {
   PetNeuteredOptions,
   PetSpeciesOptions,
 } from "@/constant";
-import { PetStatusEnum } from "@/types";
+import { PetStatusEnum, UserRoleEnum } from "@/types";
 
 const { Title, Text } = Typography;
 
-// 1. 类型定义（贴合你的创建页风格）
 interface PetItem {
   pet_id: number;
   user_id: number;
@@ -40,11 +39,8 @@ interface PetItem {
   age?: number;
   gender: number;
   weight?: number;
-  health_status?: string;
   vaccine_status: number;
   neutered: number;
-  description?: string;
-  image_urls?: string;
   status: number;
   create_time: string;
   update_time: string;
@@ -55,337 +51,222 @@ interface QueryParams {
   user_id?: number;
   name?: string;
   species?: string;
-  breed?: string;
-  age?: number;
   gender?: number;
-  weight?: number;
+  status?: number;
   vaccine_status?: number;
   neutered?: number;
-  status?: number;
   pageNum: number;
   pageSize: number;
 }
 
-interface PaginationResult {
-  pageNum: number;
-  pageSize: number;
-  total: number;
-}
-
-interface PetListResponse {
-  list: PetItem[];
-  pagination: PaginationResult;
-}
-
-export default function PetList() {
+export default function HomePage() {
   const router = useRouter();
   const [form] = Form.useForm();
-  const [pagination, setPagination] = useState<PaginationResult>({
-    pageNum: 1,
-    pageSize: 10,
-    total: 0,
-  });
+  const [pageNum, setPageNum] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
-  // 2. 列表查询请求（复用你的request工具 + ahooks useRequest）
-  const {
-    run: fetchPetList,
-    loading,
-    data,
-  } = useRequest((params: QueryParams) =>
-    request.post("/api/pet/list", params || {})
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("userInfo");
+      if (raw) {
+        const u = JSON.parse(raw) as { role?: number; user_id?: number };
+        setIsAdmin(u.role === UserRoleEnum.Admin);
+        setCurrentUserId(u.user_id ?? null);
+      }
+    } catch {
+      setIsAdmin(false);
+    }
+  }, []);
+
+  const { run: load, loading, data } = useRequest(
+    (p: QueryParams) => request.post("/api/pet/list", p),
+    { manual: true }
   );
 
-  // 4. 表单查询/重置处理（贴合你的创建页逻辑）
-  const handleSearch: FormProps["onFinish"] = (values) => {
-    const queryParams: QueryParams = {
-      ...values,
-      pageNum: 1,
-      pageSize: 10,
-    };
-    setPagination((prev) => ({ ...prev, pageNum: 1 }));
-    fetchPetList(queryParams);
+  useEffect(() => {
+    const d = data?.data as
+      | { list: PetItem[]; total: number; pageNum: number; pageSize: number }
+      | undefined;
+    if (d && "total" in d) {
+      setTotal(d.total);
+      setPageNum(d.pageNum);
+      setPageSize(d.pageSize);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (!localStorage.getItem("token")) return;
+    load({ pageNum: 1, pageSize: 10 });
+  }, [load]);
+
+  const onSearch: FormProps["onFinish"] = (values) => {
+    load({ ...values, pageNum: 1, pageSize });
+    setPageNum(1);
   };
 
-  const handleReset = () => {
+  const onReset = () => {
     form.resetFields();
-    setPagination({ pageNum: 1, pageSize: 10, total: 0 });
-    // 重置后清空数据（可选）
-    fetchPetList({
-      pageNum: 1,
-      pageSize: 10,
+    setPageNum(1);
+    setPageSize(10);
+    load({ pageNum: 1, pageSize: 10 });
+  };
+
+  const onPageChange = (pn: number, ps?: number) => {
+    const nextPs = ps ?? pageSize;
+    setPageNum(pn);
+    setPageSize(nextPs);
+    load({ ...form.getFieldsValue(), pageNum: pn, pageSize: nextPs });
+  };
+
+  const remove = (record: PetItem) => {
+    const can =
+      isAdmin || (currentUserId !== null && record.user_id === currentUserId);
+    if (!can) return;
+    Modal.confirm({
+      title: "确认删除该宠物发布单？",
+      onOk: async () => {
+        await request.delete(`/api/pet/${record.pet_id}`);
+        load({ ...form.getFieldsValue(), pageNum, pageSize });
+      },
     });
   };
 
-  // 5. 分页切换处理
-  const handlePageChange = (pageNum: number, pageSize?: number) => {
-    const newPagination = {
-      ...pagination,
-      pageNum,
-      ...(pageSize ? { pageSize } : {}),
-    };
-    setPagination(newPagination);
+  const list = (data?.data as { list?: PetItem[] })?.list ?? [];
 
-    // 获取当前表单查询条件
-    const formValues = form.getFieldsValue();
-    fetchPetList({
-      ...formValues,
-      pageNum: newPagination.pageNum,
-      pageSize: newPagination.pageSize,
-    });
-  };
-
-  // 6. 表格列定义（复用你的constant枚举选项）
   const columns: ColumnsType<PetItem> = [
-    {
-      title: "宠物ID",
-      dataIndex: "pet_id",
-      key: "pet_id",
-      width: 80,
-    },
-    {
-      title: "发布者ID",
-      dataIndex: "user_id",
-      key: "user_id",
-      width: 80,
-    },
-    {
-      title: "宠物名称",
-      dataIndex: "name",
-      key: "name",
-      width: 120,
-    },
-    {
-      title: "种类",
-      dataIndex: "species",
-      key: "species",
-      width: 100,
-    },
-    {
-      title: "品种",
-      dataIndex: "breed",
-      key: "breed",
-      width: 120,
-      render: (breed) => breed || "-",
-    },
-    {
-      title: "年龄（月）",
-      dataIndex: "age",
-      key: "age",
-      width: 100,
-      render: (age) => age || "-",
-    },
+    { title: "宠物ID", dataIndex: "pet_id", width: 80 },
+    ...(isAdmin
+      ? [{ title: "发布者", dataIndex: "user_id", width: 80 } as const]
+      : []),
+    { title: "名称", dataIndex: "name", width: 120 },
+    { title: "种类", dataIndex: "species", width: 100 },
     {
       title: "性别",
       dataIndex: "gender",
-      key: "gender",
-      width: 80,
-      render: (gender) => {
-        const option = PetGenderOptions.find((item) => item.value === gender);
-        return option?.label || "-";
-      },
+      width: 72,
+      render: (g) => PetGenderOptions.find((o) => o.value === g)?.label ?? "-",
     },
     {
-      title: "体重（kg）",
-      dataIndex: "weight",
-      key: "weight",
-      width: 100,
-      render: (weight) => (weight ? weight : "-"),
-    },
-    {
-      title: "疫苗状态",
-      dataIndex: "vaccine_status",
-      key: "vaccine_status",
-      width: 100,
-      render: (status) => {
-        const option = PetVaccineStatusOptions.find(
-          (item) => item.value === status
-        );
-        return option?.label || "-";
-      },
-    },
-    {
-      title: "绝育状态",
-      dataIndex: "neutered",
-      key: "neutered",
-      width: 100,
-      render: (status) => {
-        const option = PetNeuteredOptions.find((item) => item.value === status);
-        return option?.label || "-";
-      },
-    },
-    {
-      title: "领养状态",
+      title: "状态",
       dataIndex: "status",
-      key: "status",
-      width: 100,
-      render: (status) => {
-        const statusOptions = [
-          { label: "待领养", value: PetStatusEnum.Pending },
-          { label: "已领养", value: PetStatusEnum.Adopted },
-          { label: "下架", value: PetStatusEnum.Offline },
+      width: 88,
+      render: (s) => {
+        const opts = [
+          { l: "待领养", v: PetStatusEnum.ForAdoption },
+          { l: "已领养", v: PetStatusEnum.Adopted },
+          { l: "下架", v: PetStatusEnum.Offline },
         ];
-        const option = statusOptions.find((item) => item.value === status);
-        return option?.label || "-";
+        return opts.find((o) => o.v === s)?.l ?? "-";
       },
     },
-    {
-      title: "发布时间",
-      dataIndex: "create_time",
-      key: "create_time",
-      width: 180,
-    },
-    {
-      title: "更新时间",
-      dataIndex: "update_time",
-      key: "update_time",
-      width: 180,
-    },
+    { title: "更新时间", dataIndex: "update_time", width: 170 },
     {
       title: "操作",
-      key: "action",
-      width: 120,
-      render: (_: unknown, record: PetItem) => (
-        <Space size="small">
-          <Button
-            type="link"
-            onClick={() => router.push(`/pet/detail/?pet_id=${record.pet_id}`)}
-          >
-            详情
-          </Button>
-          <Button
-            type="link"
-            onClick={() => router.push(`/pet/edit/?pet_id=${record.pet_id}`)}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            danger
-            onClick={() => handleDelete(record.pet_id)}
-          >
-            删除
-          </Button>
-        </Space>
-      ),
+      key: "op",
+      width: 180,
+      fixed: "right",
+      render: (_, row) => {
+        const owner = currentUserId !== null && row.user_id === currentUserId;
+        const canDel = isAdmin || owner;
+        return (
+          <Space size="small">
+            <Button
+              type="link"
+              size="small"
+              onClick={() => router.push(`/pet/detail/?pet_id=${row.pet_id}`)}
+            >
+              详情
+            </Button>
+            {owner ? (
+              <Button
+                type="link"
+                size="small"
+                onClick={() => router.push(`/pet/edit/?pet_id=${row.pet_id}`)}
+              >
+                编辑
+              </Button>
+            ) : null}
+            {canDel ? (
+              <Button type="link" size="small" danger onClick={() => remove(row)}>
+                删除
+              </Button>
+            ) : null}
+          </Space>
+        );
+      },
     },
   ];
 
-  // 7. 删除功能（可选扩展）
-  const handleDelete = async (petId: number) => {
-    try {
-      await request.delete(`/api/pet/${petId}`);
-      message.success("删除成功");
-      handleSearch(form.getFieldsValue()); // 重新查询列表
-    } catch (error) {
-      message.error("删除失败");
-    }
-  };
-
-  // 8. 页面渲染（完全匹配你的创建页样式）
   return (
-    <div style={{ maxWidth: 1400, margin: "20px auto", padding: "0 20px" }}>
-      <Card
-        title={<Title level={4}>宠物发布单列表</Title>}
-        style={{ boxShadow: "0 2px 12px 0 rgba(0,0,0,0.1)", marginBottom: 16 }}
-      >
-        {/* 查询表单 */}
-        <Form
-          form={form}
-          layout="inline"
-          onFinish={handleSearch}
-          style={{ marginBottom: 16 }}
-        >
+    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+      <Card title={<Title level={4}>宠物发布单</Title>}>
+        <Form form={form} layout="inline" onFinish={onSearch} style={{ marginBottom: 16 }}>
           <Form.Item name="pet_id" label="宠物ID">
-            <InputNumber min={0} style={{ width: 120 }} placeholder="请输入" />
+            <InputNumber min={1} style={{ width: 110 }} />
           </Form.Item>
-          <Form.Item name="user_id" label="发布者ID">
-            <InputNumber min={0} style={{ width: 120 }} placeholder="请输入" />
-          </Form.Item>
-          <Form.Item name="name" label="宠物名称">
-            <Input placeholder="请输入关键词" style={{ width: 150 }} />
+          {isAdmin ? (
+            <Form.Item name="user_id" label="发布者ID">
+              <InputNumber min={1} style={{ width: 110 }} />
+            </Form.Item>
+          ) : null}
+          <Form.Item name="name" label="名称">
+            <Input allowClear style={{ width: 140 }} />
           </Form.Item>
           <Form.Item name="species" label="种类">
-            <Select
-              options={PetSpeciesOptions}
-              placeholder="请选择"
-              style={{ width: 120 }}
-              allowClear
-            />
+            <Select allowClear options={PetSpeciesOptions} style={{ width: 120 }} />
           </Form.Item>
           <Form.Item name="gender" label="性别">
-            <Select
-              options={PetGenderOptions}
-              placeholder="请选择"
-              style={{ width: 100 }}
-              allowClear
-            />
+            <Select allowClear options={PetGenderOptions} style={{ width: 100 }} />
           </Form.Item>
-          <Form.Item name="status" label="领养状态">
+          <Form.Item name="status" label="状态">
             <Select
+              allowClear
+              style={{ width: 110 }}
               options={[
-                { label: "待领养", value: PetStatusEnum.Pending },
+                { label: "待领养", value: PetStatusEnum.ForAdoption },
                 { label: "已领养", value: PetStatusEnum.Adopted },
                 { label: "下架", value: PetStatusEnum.Offline },
               ]}
-              placeholder="请选择"
-              style={{ width: 100 }}
-              allowClear
             />
           </Form.Item>
-          <Form.Item name="vaccine_status" label="疫苗状态">
-            <Select
-              options={PetVaccineStatusOptions}
-              placeholder="请选择"
-              style={{ width: 100 }}
-              allowClear
-            />
+          <Form.Item name="vaccine_status" label="疫苗">
+            <Select allowClear options={PetVaccineStatusOptions} style={{ width: 100 }} />
           </Form.Item>
-          <Form.Item name="neutered" label="绝育状态">
-            <Select
-              options={PetNeuteredOptions}
-              placeholder="请选择"
-              style={{ width: 100 }}
-              allowClear
-            />
+          <Form.Item name="neutered" label="绝育">
+            <Select allowClear options={PetNeuteredOptions} style={{ width: 100 }} />
           </Form.Item>
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={loading}>
                 查询
               </Button>
-              <Button onClick={handleReset}>重置</Button>
-              <Button type="default" onClick={() => router.push("/pet/new")}>
-                新增发布单
-              </Button>
+              <Button onClick={onReset}>重置</Button>
+              <Button onClick={() => router.push("/pet/new")}>发布宠物</Button>
             </Space>
           </Form.Item>
         </Form>
 
-        {/* 列表区域 */}
         <Spin spinning={loading}>
           <Table
-            columns={columns}
-            dataSource={(data?.data as any)?.list || []}
             rowKey="pet_id"
+            columns={columns}
+            dataSource={list}
             pagination={false}
-            scroll={{ x: "max-content" }}
+            scroll={{ x: 1100 }}
           />
-
-          {/* 分页控件 */}
           <div style={{ marginTop: 16, textAlign: "right" }}>
             <Pagination
-              current={pagination.pageNum}
-              pageSize={pagination.pageSize}
-              total={pagination.total}
+              current={pageNum}
+              pageSize={pageSize}
+              total={total}
               showSizeChanger
               showQuickJumper
-              showTotal={(total) => (
-                <Text type="secondary">共 {total} 条记录</Text>
-              )}
-              onChange={handlePageChange}
-              onShowSizeChange={(current, size) =>
-                handlePageChange(current, size)
-              }
+              showTotal={(t) => <Text type="secondary">共 {t} 条</Text>}
+              onChange={onPageChange}
+              onShowSizeChange={(c, s) => onPageChange(c, s)}
             />
           </div>
         </Spin>

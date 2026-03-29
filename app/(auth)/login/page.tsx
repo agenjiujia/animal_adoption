@@ -1,37 +1,42 @@
-"use client"; // 必须标记为客户端组件
-import { useEffect } from "react";
+"use client";
+
+import { useEffect, Suspense } from "react";
 import { Form, Input, Button, message, Card } from "antd";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { request } from "@/app/_utils/request";
+import { useRouter, useSearchParams } from "next/navigation";
+import { request } from "@/utils/request";
 import { useRequest } from "ahooks";
-const LoginPage = () => {
+
+function LoginForm() {
   const [form] = Form.useForm();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/";
 
-  // 页面加载时，检查是否已登录（可选）
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      message.info("您已登录，即将跳转到首页");
-      router.push("/");
+      router.replace(redirectTo);
     }
-  }, [router]);
+  }, [router, redirectTo]);
 
   const { run, loading } = useRequest(
-    (params) =>
+    (params: { phone: string; password: string }) =>
       request.post<{
-        message: string;
         token: string;
-        user: string;
+        user: Record<string, unknown>;
       }>("/api/auth/login", params),
     {
       manual: true,
-      onSuccess: (data) => {
-        message.success(data.message);
-        localStorage.setItem("token", data?.data?.token as string);
-        localStorage.setItem("userInfo", JSON.stringify(data.data?.user));
-        router.push("/");
+      onSuccess: (res) => {
+        message.success(res.message);
+        const payload = res.data as
+          | { token?: string; user?: Record<string, unknown> }
+          | undefined;
+        if (payload?.token) localStorage.setItem("token", payload.token);
+        if (payload?.user)
+          localStorage.setItem("userInfo", JSON.stringify(payload.user));
+        router.replace(redirectTo.startsWith("/") ? redirectTo : "/");
       },
     }
   );
@@ -43,7 +48,6 @@ const LoginPage = () => {
         className="w-full max-w-md p-4 shadow-lg"
       >
         <Form form={form} name="userLogin" onFinish={run} layout="vertical">
-          {/* 手机号输入框（必填+格式校验） */}
           <Form.Item
             label="手机号"
             name="phone"
@@ -52,14 +56,8 @@ const LoginPage = () => {
               { pattern: /^1[3-9]\d{9}$/, message: "请输入正确的11位手机号！" },
             ]}
           >
-            <Input
-              placeholder="请输入11位手机号"
-              maxLength={11}
-              autoComplete="off"
-            />
+            <Input placeholder="11位手机号" maxLength={11} autoComplete="off" />
           </Form.Item>
-
-          {/* 密码输入框（必填+长度校验） */}
           <Form.Item
             label="密码"
             name="password"
@@ -68,23 +66,13 @@ const LoginPage = () => {
               { min: 6, message: "密码长度不能少于6位！" },
             ]}
           >
-            <Input.Password placeholder="请输入密码" autoComplete="off" />
+            <Input.Password placeholder="密码" autoComplete="off" />
           </Form.Item>
-
-          {/* 登录按钮 */}
           <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              block
-              size="large"
-            >
+            <Button type="primary" htmlType="submit" loading={loading} block size="large">
               登录
             </Button>
           </Form.Item>
-
-          {/* 跳转到注册页 */}
           <div className="text-center mt-2 text-gray-600">
             还没有账号？
             <Link href="/register" className="text-blue-500 hover:underline">
@@ -95,6 +83,12 @@ const LoginPage = () => {
       </Card>
     </div>
   );
-};
+}
 
-export default LoginPage;
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
