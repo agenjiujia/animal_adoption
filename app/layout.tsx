@@ -1,4 +1,4 @@
-import AppShell from "@/components/AppShell";
+import AppShell from "@/app/_components/AppShell";
 
 export default function RootLayout({
   children,

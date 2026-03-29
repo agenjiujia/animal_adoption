@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { redirect } from "next/navigation";
 import { AUTH_COOKIE_NAME } from "@/lib/constants/auth";
 import { UserRoleEnum } from "@/types";
-import AdminShell from "@/components/AdminShell";
+import AdminShell from "@/app/_components/AdminShell";
 
 /**
  * 服务端强制校验：仅 role=1 可访问 /admin/*（配合登录时 HttpOnly Cookie）
