@@ -146,18 +146,6 @@ export default function AdminPetsPage() {
         const loading = updateLoading && statusPet.rowId === row.pet_id;
         return (
           <Space wrap>
-            {![PetStatusEnum.Offline, PetStatusEnum.Adopted].includes(
-              row.status
-            ) && (
-              <Button
-                style={{ padding: 0 }}
-                type="link"
-                loading={loading && statusPet.status === PetStatusEnum.Adopted}
-                onClick={() => applyStatus(PetStatusEnum.Adopted, row.pet_id)}
-              >
-                已领养
-              </Button>
-            )}
             {row?.status !== PetStatusEnum.Offline && (
               <Button
                 style={{ padding: 0 }}
