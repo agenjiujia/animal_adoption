@@ -164,14 +164,16 @@ export default function AdminPetsPage() {
             >
               已领养
             </Button>
-            <Button
-              style={{ padding: 0 }}
-              type="link"
-              loading={loading && statusPet.status === PetStatusEnum.Offline}
-              onClick={() => applyStatus(PetStatusEnum.Offline, row.pet_id)}
-            >
-              下架
-            </Button>
+            {row?.status !== PetStatusEnum.Offline && (
+              <Button
+                style={{ padding: 0 }}
+                type="link"
+                loading={loading && statusPet.status === PetStatusEnum.Offline}
+                onClick={() => applyStatus(PetStatusEnum.Offline, row.pet_id)}
+              >
+                下架
+              </Button>
+            )}
             <Button
               style={{ padding: 0 }}
               type="link"
