@@ -33,20 +33,34 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-/**
- * Prisma 查询引擎会校验 schema 中的 env("DATABASE_URL")，仅传 datasources 仍会报
- * "Environment variable not found: DATABASE_URL"。必须在实例化前写入 process.env。
- */
-const resolvedDatabaseUrl = resolveDatabaseUrl();
-process.env.DATABASE_URL = resolvedDatabaseUrl;
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createPrismaClient(): PrismaClient {
+  const url = resolveDatabaseUrl();
+  process.env.DATABASE_URL = url;
+  return new PrismaClient({
     log:
       process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
 }
+
+/**
+ * 延迟初始化：Turbopack 可能在 import 阶段就把 env 内联成 undefined，
+ * 顶层 new PrismaClient 时 DATABASE_URL 仍为空。放到首次访问时（请求已加载 .env）再创建。
+ */
+function getPrismaClient(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+  }
+  return globalForPrisma.prisma;
+}
+
+/** 与 PrismaClient 相同用法；属性访问时再做单例初始化 */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getPrismaClient();
+    const value = Reflect.get(client, prop) as unknown;
+    if (typeof value === "function") {
+      return value.bind(client);
+    }
+    return value;
+  },
+});
