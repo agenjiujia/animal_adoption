@@ -193,22 +193,19 @@ export default function CreatePet() {
     isCreate ? submitPet(values) : editPet(values);
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 0" }}>
+    <div style={{  margin: "0 auto", }}>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <div style={{ marginBottom: 40, textAlign: "center" }}>
           <Title
-            level={1}
-            style={{ fontSize: 36, fontWeight: 850, marginBottom: 12 }}
+            level={2}
           >
             {isCreate ? "发布" : "编辑"}
             <span className="text-gradient">领养信息</span>
           </Title>
-          <Text style={{ color: "var(--text-tertiary)", fontSize: 16 }}>
-            您的每一份详细描述，都能帮助小生命更快找到家
-          </Text>
+          <Text className="page-title-sub">您的每一份详细描述，都能帮助小生命更快找到家</Text>
         </div>
 
         <Card

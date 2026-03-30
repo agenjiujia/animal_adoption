@@ -330,7 +330,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {!isAuthPage && (
         <Footer
           style={{
-            padding: "80px 40px",
+            padding: "32px 40px",
             background: "white",
             borderTop: "1px solid var(--border-light)",
           }}
@@ -408,7 +408,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <div
               style={{
-                marginTop: 80,
+                marginTop: 32,
                 paddingTop: 32,
                 borderTop: "1px solid var(--border-light)",
                 textAlign: "center",

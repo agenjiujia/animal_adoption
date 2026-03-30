@@ -13,7 +13,6 @@ import {
   PetVaccineStatusMap,
   PetNeuteredMap,
   PetGenderMap,
-  PetSpeciesMap,
 } from "@/constant";
 import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
@@ -74,8 +73,12 @@ const createPetHandler = async (req: NextRequest) => {
   }
 
   const speciesEnum = Number(species);
-  const speciesLabel =
-    PetSpeciesMap[speciesEnum as PetSpeciesEnum]?.label || "其他";
+  // species 统一按枚举值入库（"1" | "2" | "3"），与列表筛选参数保持一致
+  const speciesValue = [PetSpeciesEnum.Cat, PetSpeciesEnum.Dog, PetSpeciesEnum.Other].includes(
+    speciesEnum as PetSpeciesEnum
+  )
+    ? String(speciesEnum)
+    : String(PetSpeciesEnum.Other);
 
   const genderNum = Number(gender);
   if (PetGenderMap[genderNum as PetGenderEnum] === undefined) {
@@ -136,7 +139,7 @@ const createPetHandler = async (req: NextRequest) => {
       data: {
         user_id: auth.user.userId,
         name,
-        species: speciesLabel,
+        species: speciesValue,
         breed: String(breed).trim(),
         age: ageNum,
         gender: genderNum,

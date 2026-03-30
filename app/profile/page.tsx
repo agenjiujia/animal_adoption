@@ -160,17 +160,17 @@ export default function ProfilePage() {
   };
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 0" }}>
+    <div style={{  margin: "0 auto", padding: "0 0" }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div style={{ marginBottom: 48 }}>
-          <Title style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>
+        <div style={{ marginBottom: 40 }}>
+          <Title level={2}>
             个人中心
           </Title>
-          <Text style={{ color: "var(--text-secondary)", fontSize: 16 }}>
+          <Text className="page-title-sub">
             管理您的账号信息、身份认证与偏好设置
           </Text>
         </div>
