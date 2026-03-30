@@ -108,8 +108,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const onStorage = (e: StorageEvent) => {
       if (e.key === "token" || e.key === "userInfo") checkLogin();
     };
+    const onUserInfoUpdated = () => {
+      checkLogin();
+    };
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("userInfoUpdated", onUserInfoUpdated);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("userInfoUpdated", onUserInfoUpdated);
+    };
   }, [checkLogin]);
 
   const logout = useCallback(async () => {
@@ -359,7 +366,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   快速链接
                 </div>
-                <Space direction="vertical" size={12}>
+                <Space orientation="vertical" size={12}>
                   <Link href="/" style={{ color: "var(--text-secondary)" }}>
                     发现宠物
                   </Link>
@@ -389,7 +396,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   关于我们
                 </div>
-                <Space direction="vertical" size={12}>
+                <Space orientation="vertical" size={12}>
                   <div style={{ color: "var(--text-secondary)" }}>
                     联系我们：paws@home.com
                   </div>

@@ -111,7 +111,7 @@ export default function MyAdoptionsPage() {
 
         <Spin spinning={loading} tip="正在同步申请进度...">
           {list.length > 0 ? (
-            <Space direction="vertical" size={32} style={{ width: "100%" }}>
+            <Space orientation="vertical" size={32} style={{ width: "100%" }}>
               {list.map((item, index) => {
                 const status = getStatusConfig(item.status);
                 const imageUrl = getPetCoverImage(

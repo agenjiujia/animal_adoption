@@ -91,6 +91,7 @@ export default function ProfilePage() {
                   "userInfo",
                   JSON.stringify({ ...parsed, avatar: url })
                 );
+                window.dispatchEvent(new Event("userInfoUpdated"));
               }
             } catch {
               // ignore local cache parse failure
@@ -141,6 +142,7 @@ export default function ProfilePage() {
               username: values.username.trim(),
             })
           );
+          window.dispatchEvent(new Event("userInfoUpdated"));
         }
       } catch {
         // ignore local cache parse failure
@@ -249,7 +251,7 @@ export default function ProfilePage() {
 
                   <div style={{ textAlign: "left", padding: "0 8px" }}>
                     <Space
-                      direction="vertical"
+                      orientation="vertical"
                       size={20}
                       style={{ width: "100%" }}
                     >
