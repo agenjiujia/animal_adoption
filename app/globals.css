@@ -2,35 +2,30 @@
 @import "tailwindcss";
 
 :root {
-  /* Neutral Color Palette (Based on User Requirements) */
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #F8FAFC;
-  --bg-tertiary: #F1F5F9;
-  --border-light: #CBD5E1;
-  --text-secondary: #64748B;
-  --text-primary: #334155;
-  --text-heading: #0F172A;
+  /* 4.0 温暖治愈与现代简约色值体系 */
+  --primary: #4F46E5;
+  --primary-hover: #4338CA;
+  --secondary: #F43F5E;
+  
+  --bg-main: #F8FAFC;
+  --bg-card: #FFFFFF;
+  
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  
+  --border-light: #E2E8F0;
+  --border-base: #CBD5E1;
 
-  /* Functional Colors */
-  --color-primary: #2A9D8F;
-  --color-secondary: #F4A261;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-  --color-info: #3B82F6;
-
-  /* Typography Sizes */
-  --font-size-base: 14px;
-  --font-size-lg: 16px;
-  --font-size-xl: 18px;
-  --font-size-2xl: 24px;
-  --font-size-sm: 12px;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Lexend", "Inter", sans-serif; /* 更加圆润现代的标题字体 */
 }
 
 @theme inline {
-  --color-background: var(--bg-primary);
+  --color-background: var(--bg-main);
   --color-foreground: var(--text-primary);
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
 }
 
 * {
@@ -40,36 +35,79 @@
 }
 
 body {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-main);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: var(--font-size-base);
-  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  color: var(--text-heading);
-  font-weight: 600;
-  line-height: 1.4;
+/* 温暖治愈系标题 */
+.brand-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--primary) 0%, #818CF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Custom Utilities for Standard Spacing */
-.page-container {
-  padding: 20px 24px;
+/* 现代简约卡片 */
+.modern-card {
+  background: var(--bg-card);
+  border-radius: 24px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-card:hover {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  transform: translateY(-4px);
+}
+
+/* 柔和毛玻璃 */
+.soft-glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* 主行动按钮 */
+.btn-primary {
+  background: var(--primary) !important;
+  color: white !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover) !important;
+  transform: scale(1.02);
+}
+
+/* 容器规范 */
+.main-container {
   max-width: 1280px;
   margin: 0 auto;
+  padding: 0 24px;
 }
 
+/* 宠物卡片图片比例 */
+.pet-card-img {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+
+/* 极致留白 */
 .section-spacing {
-  margin-top: 32px;
+  margin-bottom: 120px;
 }
 
-.card-shadow {
-  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.2s ease;
-}
-
-.card-shadow:hover {
-  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
+@media (max-width: 768px) {
+  .section-spacing {
+    margin-bottom: 60px;
+  }
 }

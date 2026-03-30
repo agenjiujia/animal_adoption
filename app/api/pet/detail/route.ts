@@ -79,17 +79,31 @@ const getPetDetailHandler = async (
     } as Record<string, unknown>);
 
     if (authUser) {
-      const fav = await prisma.petFavorite.findFirst({
-        where: { user_id: authUser.userId, pet_id: petId },
-        select: { favorite_id: true },
-      });
-      out.is_favorited = fav ? 1 : 0;
-
-      const app = await prisma.adoptionApply.findFirst({
-        where: { apply_user_id: authUser.userId, pet_id: petId },
-        select: { apply_id: true },
-      });
-      out.is_applied = app ? 1 : 0;
+      out.is_favorited = 0;
+      out.is_applied = 0;
+      try {
+        const fav = await prisma.petFavorite.findFirst({
+          where: { user_id: authUser.userId, pet_id: petId },
+          select: { favorite_id: true },
+        });
+        out.is_favorited = fav ? 1 : 0;
+      } catch (e) {
+        console.error("pet/detail: skip favorite status", e);
+      }
+      try {
+        // 仅「待审核」算已申请；已拒绝/已通过仍有一条记录，但不应禁用再次申请或显示为审核中
+        const app = await prisma.adoptionApply.findFirst({
+          where: {
+            apply_user_id: authUser.userId,
+            pet_id: petId,
+            status: 0,
+          },
+          select: { apply_id: true },
+        });
+        out.is_applied = app ? 1 : 0;
+      } catch (e) {
+        console.error("pet/detail: skip apply status", e);
+      }
     }
 
     return {

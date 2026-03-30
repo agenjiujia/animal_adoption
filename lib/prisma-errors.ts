@@ -65,3 +65,43 @@ export function mapRegisterPrismaError(
     message: "注册失败，请稍后重试（详见服务端日志）",
   };
 }
+
+/** 领养申请等写入 adoption_apply 时的 Prisma 错误 */
+export function mapAdoptionApplyPrismaError(
+  e: unknown,
+  logPrefix: string
+): RegisterDbErrorResponse {
+  console.error(logPrefix, e);
+
+  if (e instanceof Prisma.PrismaClientInitializationError) {
+    return {
+      businessCode: BusinessCodeEnum.ServerBusinessError,
+      httpCode: HttpCodeEnum.ServerError,
+      message: "数据库未正确配置或无法连接，请检查 DATABASE_URL / MySQL 是否可用",
+    };
+  }
+
+  if (e instanceof Prisma.PrismaClientKnownRequestError) {
+    if (e.code === "P2022") {
+      return {
+        businessCode: BusinessCodeEnum.ServerBusinessError,
+        httpCode: HttpCodeEnum.ServiceUnavailable,
+        message:
+          "无法提交申请：数据库「领养申请」表与当前程序不一致（缺列或列类型与外键不匹配）。请在本机执行：`npx tsx scripts/run-fix-adoption-apply.ts`（会按 .env 连库并执行 scripts/fix_adoption_apply.sql），或执行 `npx prisma migrate deploy` / 初始化 SQL。",
+      };
+    }
+    if (e.code === "P2002") {
+      return {
+        businessCode: BusinessCodeEnum.DataAlreadyExist,
+        httpCode: HttpCodeEnum.Conflict,
+        message: "您已提交过该宠物的领养申请，请勿重复操作",
+      };
+    }
+  }
+
+  return {
+    businessCode: BusinessCodeEnum.DataInsertFailed,
+    httpCode: HttpCodeEnum.ServerError,
+    message: "提交失败，请稍后重试（详见服务端日志）",
+  };
+}

@@ -112,7 +112,7 @@ export default function MyFavoritesPage() {
           {pets.length > 0 ? (
             <Row gutter={[24, 32]}>
               {pets.map((pet, index) => {
-                const imageUrl = getPetCoverImage(pet.image_urls);
+                const imageUrl = getPetCoverImage(pet.image_urls, pet.species);
                 return (
                   <Col xs={24} sm={12} md={8} lg={6} key={pet.pet_id}>
                     <motion.div

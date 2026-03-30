@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="vÖ i`Mþ">
+  <defs>
+    <linearGradient id="natbg" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e6f5e8"/>
+      <stop offset="50%" style="stop-color:#c8e6c9"/>
+      <stop offset="100%" style="stop-color:#a5d6a7"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#natbg)"/>
+  <!-- sun -->
+  <circle cx="620" cy="120" r="48" fill="#fff9c4" opacity="0.9"/>
+  <!-- hills & group -->
+  <path fill="#81c784" opacity="0.6" d="M0 420 Q200 320 400 400 T800 380 V600 H0Z"/>
+  <path fill="#66bb6a" opacity="0.5" d="M0 460 Q300 380 500 440 T800 420 V600 H0Z"/>
+  <!-- small shapes suggesting multiple animals -->
+  <ellipse cx="220" cy="340" rx="28" ry="22" fill="#5d4037"/>
+  <ellipse cx="400" cy="320" rx="22" ry="18" fill="#6d4c41"/>
+  <ellipse cx="560" cy="350" rx="26" ry="20" fill="#5d4037"/>
+  <circle cx="320" cy="300" r="18" fill="#795548"/>
+  <circle cx="480" cy="295" r="16" fill="#795548"/>
+  <path fill="#8d6e63" d="M360 360 L400 340 L440 360 L420 390 L380 390Z"/>
+  <text x="400" y="520" text-anchor="middle" fill="#33691e" font-family="system-ui,sans-serif" font-size="26" font-weight="600"> jq · …
+ gG</text>
+</svg>

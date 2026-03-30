@@ -18,6 +18,7 @@ import {
   Tag,
   Empty,
   message,
+  Pagination,
 } from "antd";
 import {
   EditOutlined,
@@ -54,7 +55,7 @@ export default function MyPublishPage() {
   const router = useRouter();
   const [form] = Form.useForm();
   const [pageNum, setPageNum] = useState(1);
-  const [pageSize] = useState(12);
+  const [pageSize, setPageSize] = useState(12);
 
   const {
     run: load,
@@ -192,7 +193,7 @@ export default function MyPublishPage() {
         {list.length > 0 ? (
           <Row gutter={[32, 32]}>
             {list.map((pet) => {
-              const imageUrl = getPetCoverImage(pet.image_urls);
+              const imageUrl = getPetCoverImage(pet.image_urls, pet.species);
               return (
                 <Col xs={24} sm={12} md={8} lg={6} key={pet.pet_id}>
                   <motion.div
@@ -297,6 +298,28 @@ export default function MyPublishPage() {
           </Row>
         ) : (
           !loading && <Empty description="还没有发布过领养信息，快去发布吧" />
+        )}
+        {total > 0 && (
+          <div
+            style={{
+              marginTop: 40,
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <Pagination
+              current={pageNum}
+              pageSize={pageSize}
+              total={total}
+              showSizeChanger
+              pageSizeOptions={[12, 24, 48]}
+              showTotal={(t) => `共 ${t} 条发布`}
+              onChange={(p, ps) => {
+                setPageNum(p);
+                setPageSize(ps);
+              }}
+            />
+          </div>
         )}
       </Spin>
     </div>

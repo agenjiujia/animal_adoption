@@ -15,7 +15,11 @@ import {
 import { BellOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { getPetCoverImage } from "@/lib/petImage";
+import {
+  getDefaultPetCoverBySpecies,
+  getLocalDefaultPetCoverBySpecies,
+  getPetCoverImage,
+} from "@/lib/petImage";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -36,6 +40,9 @@ interface Pet {
 
 export default function HomePage() {
   const [pets, setPets] = useState<Pet[]>([]);
+  const [failedImageByPetId, setFailedImageByPetId] = useState<
+    Record<number, string>
+  >({});
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [pageNum, setPageNum] = useState(1);
@@ -43,19 +50,46 @@ export default function HomePage() {
   const [hasMore, setHasMore] = useState(true);
   const router = useRouter();
 
+  const loadingRef = useRef(false);
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  // 预检测卡片图片可用性：避免首屏在 React 绑定 onError 前就已失败，导致默认图不生效
+  useEffect(() => {
+    pets.forEach((pet) => {
+      if (failedImageByPetId[pet.pet_id]) return;
+      const candidate = getPetCoverImage(pet.image_urls, pet.species);
+      const fallback = getDefaultPetCoverBySpecies(pet.species);
+      if (!candidate || candidate === fallback) return;
+
+      const probe = new Image();
+      probe.onerror = () => {
+        setFailedImageByPetId((prev) => {
+          if (prev[pet.pet_id]) return prev;
+          return { ...prev, [pet.pet_id]: fallback };
+        });
+      };
+      probe.src = candidate;
+    });
+  }, [pets, failedImageByPetId]);
+
   const observer = useRef<IntersectionObserver | null>(null);
   const lastPetElementRef = useCallback(
     (node: HTMLDivElement) => {
-      if (loading) return;
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
+        if (
+          entries[0].isIntersecting &&
+          hasMore &&
+          !loadingRef.current
+        ) {
           setPageNum((prev) => prev + 1);
         }
       });
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore]
+    [hasMore]
   );
 
   const fetchPets = async (page: number) => {
@@ -65,19 +99,52 @@ export default function HomePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pageNum: page, pageSize }),
+        credentials: "same-origin",
       });
       const json = await res.json();
       if (json.businessCode === 0) {
         const { list, total: totalCount } = json.data;
-        setPets((prev) => (page === 1 ? list : [...prev, ...list]));
+        // 首屏刷新时清理旧的失败图片缓存，避免上一批数据干扰
+        if (page === 1) {
+          setFailedImageByPetId({});
+        }
+        setPets((prev) => {
+          const next = page === 1 ? list : [...prev, ...list];
+          setHasMore(next.length < totalCount);
+          return next;
+        });
         setTotal(totalCount);
-        setHasMore(pets.length + list.length < totalCount);
 
-        // 处理通知
+        // 处理通知（须标记已读，否则刷新仍从接口带回 is_read/is_admin_read=0）
         if (json.data.notifications?.length > 0) {
           json.data.notifications.forEach(
-            (notif: { type: string; pet_name: string; status: number }) => {
+            (notif: {
+              type: string;
+              apply_id: number;
+              pet_name: string;
+              status: number;
+            }) => {
+              const applyId = Number(notif.apply_id);
+              if (!applyId) return;
+
+              let marked = false;
+              const markNotifRead = () => {
+                if (marked) return;
+                marked = true;
+                const url =
+                  notif.type === "USER"
+                    ? "/api/adoption/mark-read"
+                    : "/api/admin/adoption/mark-read";
+                void fetch(url, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "same-origin",
+                  body: JSON.stringify({ app_ids: [applyId] }),
+                });
+              };
+
               notification.info({
+                key: `notif-${notif.type}-${applyId}-${notif.status}`,
                 message: "系统通知",
                 description:
                   notif.type === "USER"
@@ -91,13 +158,28 @@ export default function HomePage() {
                   boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
                 },
                 onClick: () => {
+                  markNotifRead();
                   router.push(
                     notif.type === "USER" ? "/my/adoptions" : "/admin/adoptions"
                   );
                 },
+                onClose: () => {
+                  markNotifRead();
+                },
               });
             }
           );
+        }
+      } else {
+        message.error(
+          typeof json.message === "string"
+            ? json.message
+            : "获取宠物列表失败"
+        );
+        if (page === 1) {
+          setPets([]);
+          setTotal(0);
+          setHasMore(false);
         }
       }
     } catch (e) {
@@ -233,7 +315,9 @@ export default function HomePage() {
 
         <Row gutter={[24, 32]}>
           {pets.map((pet, index) => {
-            const imageUrl = getPetCoverImage(pet.image_urls);
+            const imageUrl =
+              failedImageByPetId[pet.pet_id] ??
+              getPetCoverImage(pet.image_urls, pet.species);
 
             return (
               <Col xs={24} sm={12} md={8} lg={6} key={pet.pet_id}>
@@ -259,14 +343,31 @@ export default function HomePage() {
                         padding: 12,
                       }}
                     >
-                      <motion.img
-                        alt={pet.name}
-                        src={imageUrl}
-                        className="pet-card-img"
-                        style={{ width: "100%" }}
+                      <motion.div
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.4 }}
-                      />
+                      >
+                        <img
+                          alt={pet.name}
+                          src={imageUrl}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const localFallback =
+                              getLocalDefaultPetCoverBySpecies(pet.species);
+                            // 统一失败兜底到本地静态图，避免远程防盗链导致的反复裂图与闪烁
+                            const nextFallback = localFallback;
+                            setFailedImageByPetId((prev) => {
+                              if (prev[pet.pet_id] === nextFallback) return prev;
+                              return {
+                                ...prev,
+                                [pet.pet_id]: nextFallback,
+                              };
+                            });
+                          }}
+                          className="pet-card-img"
+                          style={{ width: "100%" }}
+                        />
+                      </motion.div>
                       {pet.is_applied === 1 && (
                         <div
                           style={{

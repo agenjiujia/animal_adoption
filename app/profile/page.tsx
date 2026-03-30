@@ -26,12 +26,18 @@ import {
   SafetyCertificateOutlined,
   EditOutlined,
   CameraOutlined,
+  FormOutlined,
+  HeartOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
+import Link from "next/link";
 import { request } from "@/utils/request";
 import { UserRoleMap, UserStatusMap } from "@/constant";
 import { UserRoleEnum, UserStatusEnum } from "@/types";
 import dayjs from "dayjs";
 import type { UploadChangeParam } from "antd/es/upload";
+
+import { motion } from "framer-motion";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -78,222 +84,347 @@ export default function ProfilePage() {
   };
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 0" }}>
-      <div style={{ marginBottom: 32 }}>
-        <Title
-          level={2}
-          style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}
-        >
-          个人中心
-        </Title>
-        <Text style={{ color: "#64748B" }}>管理您的账号信息与偏好设置</Text>
-      </div>
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 0" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div style={{ marginBottom: 48 }}>
+          <Title style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>
+            个人中心
+          </Title>
+          <Text style={{ color: "var(--text-secondary)", fontSize: 16 }}>
+            管理您的账号信息、身份认证与偏好设置
+          </Text>
+        </div>
 
-      <Spin spinning={loading} description="正在获取个人资料...">
-        {u && (
-          <Row gutter={[24, 24]}>
-            {/* 左侧：基本名片 */}
-            <Col xs={24} md={8}>
-              <Card
-                bordered={false}
-                className="card-shadow"
-                style={{ borderRadius: 12, textAlign: "center" }}
-                bodyStyle={{ padding: "40px 24px" }}
-              >
-                <div style={{ position: "relative", display: "inline-block" }}>
-                  <Avatar
-                    size={100}
-                    src={u.avatar}
-                    icon={<UserOutlined />}
+        <Spin spinning={loading}>
+          {u && (
+            <Row gutter={[32, 32]}>
+              {/* 左侧：个人名片 */}
+              <Col xs={24} md={8}>
+                <div
+                  className="modern-card"
+                  style={{ textAlign: "center", padding: "48px 24px" }}
+                >
+                  <div
                     style={{
-                      backgroundColor: "#F1F5F9",
-                      color: "#2A9D8F",
+                      position: "relative",
+                      display: "inline-block",
                       marginBottom: 24,
-                      border: "4px solid #fff",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                    }}
-                  />
-                  <Upload
-                    name="file"
-                    showUploadList={false}
-                    action="/api/upload"
-                    onChange={handleAvatarChange}
-                    style={{
-                      position: "absolute",
-                      bottom: 24,
-                      right: 0,
                     }}
                   >
-                    <Button
-                      shape="circle"
-                      size="small"
-                      icon={<CameraOutlined style={{ fontSize: 12 }} />}
+                    <Avatar
+                      size={120}
+                      src={u.avatar}
+                      icon={<UserOutlined />}
                       style={{
-                        position: "absolute",
-                        bottom: 0,
-                        right: 0,
-                        background: "#fff",
-                        border: "1px solid #E2E8F0",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                        backgroundColor: "var(--bg-main)",
+                        color: "var(--primary)",
+                        border: "4px solid white",
+                        boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
                       }}
                     />
-                  </Upload>
+                    <Upload
+                      name="file"
+                      showUploadList={false}
+                      action="/api/upload"
+                      onChange={handleAvatarChange}
+                    >
+                      <Button
+                        shape="circle"
+                        icon={<CameraOutlined />}
+                        style={{
+                          position: "absolute",
+                          bottom: 4,
+                          right: 4,
+                          background: "var(--primary)",
+                          color: "white",
+                          border: "none",
+                          boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
+                        }}
+                      />
+                    </Upload>
+                  </div>
+                  <Title
+                    level={3}
+                    style={{
+                      margin: "0 0 8px 0",
+                      fontSize: 24,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {u.username}
+                  </Title>
+                  <Tag
+                    bordered={false}
+                    color={u.role === UserRoleEnum.Admin ? "purple" : "blue"}
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: 8,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {u.role === UserRoleEnum.Admin
+                      ? "平台管理员"
+                      : "爱心领养人"}
+                  </Tag>
+
+                  <Divider style={{ margin: "32px 0" }} />
+
+                  <div style={{ textAlign: "left", padding: "0 8px" }}>
+                    <Space
+                      direction="vertical"
+                      size={20}
+                      style={{ width: "100%" }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            background: "rgba(79, 70, 229, 0.05)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--primary)",
+                          }}
+                        >
+                          <PhoneOutlined />
+                        </div>
+                        <Text
+                          style={{
+                            color: "var(--text-primary)",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {u.phone}
+                        </Text>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            background: "rgba(79, 70, 229, 0.05)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--primary)",
+                          }}
+                        >
+                          <MailOutlined />
+                        </div>
+                        <Text
+                          style={{
+                            color: "var(--text-primary)",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {u.email}
+                        </Text>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            background: "rgba(79, 70, 229, 0.05)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--primary)",
+                          }}
+                        >
+                          <EnvironmentOutlined />
+                        </div>
+                        <Text
+                          style={{
+                            color: "var(--text-primary)",
+                            fontWeight: 500,
+                          }}
+                          ellipsis
+                        >
+                          {u.address || "未填写联系地址"}
+                        </Text>
+                      </div>
+                    </Space>
+                  </div>
+
+                  <Button
+                    type="primary"
+                    className="btn-primary"
+                    icon={<EditOutlined />}
+                    block
+                    style={{
+                      marginTop: 40,
+                      height: 48,
+                      fontSize: 16,
+                    }}
+                  >
+                    编辑个人资料
+                  </Button>
                 </div>
-                <Title level={3} style={{ margin: "0 0 8px 0", fontSize: 20 }}>
-                  {u.username}
-                </Title>
-                <Tag
-                  color={u.role === UserRoleEnum.Admin ? "gold" : "blue"}
-                  bordered={false}
-                  style={{
-                    borderRadius: 4,
-                    padding: "2px 12px",
-                    marginBottom: 24,
-                  }}
+              </Col>
+
+              {/* 右侧：详细内容 */}
+              <Col xs={24} md={16}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 32 }}
                 >
-                  {UserRoleMap[u.role as UserRoleEnum]?.label}
-                </Tag>
+                  <div className="modern-card" style={{ padding: 32 }}>
+                    <Title
+                      level={4}
+                      style={{
+                        marginBottom: 20,
+                        fontWeight: 700,
+                      }}
+                    >
+                      我的领养
+                    </Title>
+                    <Paragraph
+                      type="secondary"
+                      style={{ marginBottom: 20, fontSize: 14 }}
+                    >
+                      查看与管理您发布的宠物、收藏的宠物及领养申请进度。
+                    </Paragraph>
+                    <Space wrap size={12}>
+                      <Link href="/pet/my-publish">
+                        <Button icon={<FormOutlined />} type="primary">
+                          我发布的宠物
+                        </Button>
+                      </Link>
+                      <Link href="/my/favorites">
+                        <Button icon={<HeartOutlined />}>我的收藏</Button>
+                      </Link>
+                      <Link href="/my/adoptions">
+                        <Button icon={<AppstoreOutlined />}>我的领养申请</Button>
+                      </Link>
+                    </Space>
+                  </div>
 
-                <Divider style={{ margin: "24px 0" }} />
-
-                <div style={{ textAlign: "left" }}>
-                  <Space
-                    direction="vertical"
-                    size={16}
-                    style={{ width: "100%" }}
-                  >
-                    <div className="flex items-center text-[#64748B]">
-                      <PhoneOutlined style={{ marginRight: 12 }} />
-                      <Text style={{ color: "#334155" }}>{u.phone}</Text>
-                    </div>
-                    <div className="flex items-center text-[#64748B]">
-                      <MailOutlined style={{ marginRight: 12 }} />
-                      <Text style={{ color: "#334155" }}>{u.email}</Text>
-                    </div>
-                    <div className="flex items-center text-[#64748B]">
-                      <EnvironmentOutlined style={{ marginRight: 12 }} />
-                      <Text style={{ color: "#334155" }} ellipsis>
-                        {u.address || "未填写地址"}
-                      </Text>
-                    </div>
-                  </Space>
-                </div>
-
-                <Button
-                  type="primary"
-                  icon={<EditOutlined />}
-                  block
-                  style={{
-                    marginTop: 32,
-                    height: 40,
-                    background: "#2A9D8F",
-                    border: "none",
-                    borderRadius: 6,
-                  }}
-                >
-                  编辑资料
-                </Button>
-              </Card>
-            </Col>
-
-            {/* 右侧：详细信息 */}
-            <Col xs={24} md={16}>
-              <Card
-                bordered={false}
-                className="card-shadow"
-                style={{ borderRadius: 12, marginBottom: 24 }}
-                title={<span style={{ fontWeight: 600 }}>身份认证</span>}
-              >
-                <Descriptions
-                  column={1}
-                  labelStyle={{ color: "#64748B", width: 120 }}
-                >
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <UserOutlined />
-                        真实姓名
-                      </Space>
-                    }
-                  >
-                    <Text strong>{u.real_name || "未认证"}</Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <IdcardOutlined />
-                        身份证号
-                      </Space>
-                    }
-                  >
-                    <Text strong>
-                      {u.id_card
-                        ? `${u.id_card.slice(0, 4)}**********${u.id_card.slice(
+                  <div className="modern-card" style={{ padding: 32 }}>
+                    <Title
+                      level={4}
+                      style={{
+                        marginBottom: 24,
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <SafetyCertificateOutlined
+                        style={{ color: "var(--primary)" }}
+                      />
+                      身份认证
+                    </Title>
+                    <Descriptions
+                      column={1}
+                      labelStyle={{
+                        color: "var(--text-secondary)",
+                        width: 140,
+                        fontSize: 15,
+                      }}
+                      contentStyle={{ fontSize: 15, fontWeight: 600 }}
+                    >
+                      <Descriptions.Item label="真实姓名">
+                        {u.real_name || (
+                          <Text type="secondary" style={{ fontWeight: 400 }}>
+                            未认证
+                          </Text>
+                        )}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="身份证号">
+                        {u.id_card ? (
+                          `${u.id_card.slice(0, 4)}**********${u.id_card.slice(
                             -4
                           )}`
-                        : "未认证"}
-                    </Text>
-                  </Descriptions.Item>
-                </Descriptions>
-              </Card>
+                        ) : (
+                          <Text type="secondary" style={{ fontWeight: 400 }}>
+                            未认证
+                          </Text>
+                        )}
+                      </Descriptions.Item>
+                    </Descriptions>
+                  </div>
 
-              <Card
-                bordered={false}
-                className="card-shadow"
-                style={{ borderRadius: 12 }}
-                title={<span style={{ fontWeight: 600 }}>账号安全</span>}
-              >
-                <Descriptions
-                  column={1}
-                  labelStyle={{ color: "#64748B", width: 120 }}
-                >
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <SafetyCertificateOutlined />
-                        账号状态
-                      </Space>
-                    }
-                  >
-                    <Tag
-                      color={
-                        u.status === UserStatusEnum.Normal ? "success" : "error"
-                      }
-                      bordered={false}
+                  <div className="modern-card" style={{ padding: 32 }}>
+                    <Title
+                      level={4}
+                      style={{
+                        marginBottom: 24,
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
                     >
-                      {UserStatusMap[u.status as UserStatusEnum]?.label}
-                    </Tag>
-                  </Descriptions.Item>
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <CalendarOutlined />
-                        注册时间
-                      </Space>
-                    }
-                  >
-                    <Text>
-                      {dayjs(u.create_time).format("YYYY-MM-DD HH:mm")}
-                    </Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <CalendarOutlined />
-                        最后更新
-                      </Space>
-                    }
-                  >
-                    <Text>
-                      {dayjs(u.update_time).format("YYYY-MM-DD HH:mm")}
-                    </Text>
-                  </Descriptions.Item>
-                </Descriptions>
-              </Card>
-            </Col>
-          </Row>
-        )}
-      </Spin>
+                      <CalendarOutlined style={{ color: "var(--primary)" }} />
+                      账号信息
+                    </Title>
+                    <Descriptions
+                      column={1}
+                      labelStyle={{
+                        color: "var(--text-secondary)",
+                        width: 140,
+                        fontSize: 15,
+                      }}
+                      contentStyle={{ fontSize: 15, fontWeight: 600 }}
+                    >
+                      <Descriptions.Item label="账号状态">
+                        <Tag
+                          color={
+                            u.status === UserStatusEnum.Normal
+                              ? "success"
+                              : "error"
+                          }
+                          bordered={false}
+                          style={{ borderRadius: 6, fontWeight: 600 }}
+                        >
+                          {UserStatusMap[u.status as UserStatusEnum]?.label}
+                        </Tag>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="注册时间">
+                        <Text style={{ fontWeight: 500 }}>
+                          {dayjs(u.create_time).format("YYYY-MM-DD HH:mm")}
+                        </Text>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="资料更新">
+                        <Text style={{ fontWeight: 500 }}>
+                          {dayjs(u.update_time).format("YYYY-MM-DD HH:mm")}
+                        </Text>
+                      </Descriptions.Item>
+                    </Descriptions>
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          )}
+        </Spin>
+      </motion.div>
     </div>
   );
 }

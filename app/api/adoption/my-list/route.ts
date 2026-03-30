@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
@@ -50,6 +51,17 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("My adoption list error:", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2022"
+    ) {
+      return NextResponse.json({
+        businessCode: BusinessCodeEnum.Success,
+        httpCode: HttpCodeEnum.Success,
+        message: "查询成功",
+        data: { list: [] },
+      });
+    }
     return NextResponse.json(
       {
         businessCode: BusinessCodeEnum.InternalServerError,

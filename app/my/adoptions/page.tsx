@@ -111,7 +111,10 @@ export default function MyAdoptionsPage() {
             <Space direction="vertical" size={32} style={{ width: "100%" }}>
               {list.map((item, index) => {
                 const status = getStatusConfig(item.status);
-                const imageUrl = getPetCoverImage(item.image_urls);
+                const imageUrl = getPetCoverImage(
+                  item.image_urls,
+                  item.species
+                );
 
                 return (
                   <motion.div

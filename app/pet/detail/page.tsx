@@ -30,7 +30,11 @@ import {
 import { request } from "@/utils/request";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
-import { getPetImageList } from "@/lib/petImage";
+import {
+  getDefaultPetCoverBySpecies,
+  getLocalDefaultPetCoverBySpecies,
+  getPetImageList,
+} from "@/lib/petImage";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -58,6 +62,7 @@ export default function PetDetailPage() {
   const qs = useSearchParams();
   const petId = qs.get("pet_id");
   const [uid, setUid] = useState<number | null>(null);
+  const [petDetail, setPetDetail] = useState<PetDetail | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem("userInfo");
@@ -75,12 +80,17 @@ export default function PetDetailPage() {
     () => request.get(`/api/pet/detail?pet_id=${petId}`),
     { ready: !!petId, refreshDeps: [petId] }
   );
-
-  const petDetail = data?.data as PetDetail | undefined;
+  useEffect(() => {
+    const next = data?.data as PetDetail | undefined;
+    if (next) setPetDetail(next);
+  }, [data]);
 
   const images = useMemo(() => {
-    if (!petDetail?.image_urls) return [];
-    return getPetImageList(petDetail.image_urls);
+    if (!petDetail) return [];
+    const list = getPetImageList(petDetail.image_urls);
+    if (list.length > 0) return list;
+    // 无图时直接给一个默认封面，避免轮播区空白
+    return [getDefaultPetCoverBySpecies(petDetail.species)];
   }, [petDetail]);
 
   const handleAdopt = () => {
@@ -124,7 +134,9 @@ export default function PetDetailPage() {
       });
       const json = await res.json();
       if (json.businessCode === 0) {
-        refresh();
+        setPetDetail((prev) =>
+          prev ? { ...prev, is_favorited: prev.is_favorited ? 0 : 1 } : prev
+        );
       } else if (json.httpCode === 401) {
         router.push("/login");
       }
@@ -180,6 +192,15 @@ export default function PetDetailPage() {
                   <img
                     src={url}
                     alt={petDetail.name}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      const localFallback = getLocalDefaultPetCoverBySpecies(
+                        petDetail.species
+                      );
+                      if (img.src.includes(localFallback)) return;
+                      img.src = localFallback;
+                    }}
                     style={{ width: "100%", height: 640, objectFit: "cover" }}
                   />
                 </div>

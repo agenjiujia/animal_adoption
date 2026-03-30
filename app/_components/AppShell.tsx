@@ -1,30 +1,39 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layout, Menu, Avatar, Space, Dropdown } from "antd";
+import {
+  Layout,
+  Menu,
+  Avatar,
+  Space,
+  Dropdown,
+  Button,
+  type MenuProps,
+} from "antd";
 import {
   UserOutlined,
-  HomeOutlined,
-  FormOutlined,
   LogoutOutlined,
-  IdcardOutlined,
-  SettingOutlined,
-  UpSquareOutlined,
   HeartOutlined,
+  DashboardOutlined,
+  AppstoreOutlined,
+  MenuOutlined,
+  FormOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { UserRoleEnum } from "@/types";
 import { request } from "@/utils/request";
+import { motion, AnimatePresence } from "framer-motion";
 import "@/app/globals.css";
 
-const { Header, Content } = Layout;
+const { Header, Content, Footer } = Layout;
 
 type StoredUser = {
   user_id: number;
   username: string;
   phone: string;
   role?: number;
+  avatar?: string;
 };
 
 const AUTH_FREE = ["/login", "/register"];
@@ -92,168 +101,285 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const items = [
       {
         key: "/",
-        icon: <HomeOutlined />,
-        label: <Link href="/">领养中心</Link>,
+        label: <Link href="/">发现宠物</Link>,
       },
       {
         key: "/pet/new",
-        icon: <FormOutlined />,
-        label: <Link href="/pet/new">发布宠物</Link>,
+        label: <Link href="/pet/new">发布领养</Link>,
       },
     ];
-    return items;
-  }, []);
-
-  const selectedKey = useMemo(() => {
-    if (pathname.startsWith("/admin")) return "/admin/pets";
-    if (pathname.startsWith("/profile")) return "/profile";
-    if (pathname.startsWith("/pet/new") || pathname.startsWith("/pet/edit"))
-      return "/pet/new";
-    if (pathname.startsWith("/pet/my-publish")) return "/pet/my-publish";
-    return "/";
-  }, [pathname]);
-
-  const userMenu = useMemo(
-    () => [
-      ...(isAdmin
-        ? [
-            {
-              key: "/admin/pets",
-              icon: <SettingOutlined />,
-              label: <Link href="/admin/pets">管理后台</Link>,
-            },
-          ]
-        : []),
-      {
-        key: "/profile",
-        icon: <IdcardOutlined />,
-        label: <Link href="/profile">个人中心</Link>,
-      },
-      {
-        key: "/my/favorites",
-        icon: <HeartOutlined />,
-        label: <Link href="/my/favorites">我的收藏</Link>,
-      },
-      {
-        key: "/my/adoptions",
-        icon: <IdcardOutlined />,
-        label: <Link href="/my/adoptions">我的领养</Link>,
-      },
-      {
+    if (isLogin) {
+      items.push({
         key: "/pet/my-publish",
-        icon: <UpSquareOutlined />,
-        label: <Link href="/pet/my-publish">我发布的</Link>,
-      },
-      {
-        key: "logout",
-        icon: <LogoutOutlined />,
-        label: <span onClick={logout}>退出登录</span>,
-      },
-    ],
-    [isAdmin, logout]
-  );
+        label: <Link href="/pet/my-publish">我的发布</Link>,
+      });
+    }
+    if (isAdmin) {
+      items.push({
+        key: "/admin/pets",
+        label: <Link href="/admin/pets">管理后台</Link>,
+      });
+    }
+    return items;
+  }, [isAdmin, isLogin]);
 
-  if (!ready) {
-    return <div className="min-h-full" />;
-  }
+  const userMenuItems: MenuProps["items"] = [
+    {
+      key: "profile",
+      icon: <UserOutlined style={{ fontSize: 14 }} />,
+      label: <Link href="/profile">个人中心</Link>,
+    },
+    {
+      key: "favorites",
+      icon: <HeartOutlined style={{ fontSize: 14 }} />,
+      label: <Link href="/my/favorites">我的收藏</Link>,
+    },
+    {
+      key: "my-publish",
+      icon: <FormOutlined style={{ fontSize: 14 }} />,
+      label: <Link href="/pet/my-publish">我发布的宠物</Link>,
+    },
+    {
+      key: "adoptions",
+      icon: <AppstoreOutlined style={{ fontSize: 14 }} />,
+      label: <Link href="/my/adoptions">我的领养申请</Link>,
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined style={{ fontSize: 14 }} />,
+      label: "退出登录",
+      onClick: logout,
+      danger: true,
+    },
+  ];
 
-  const authPage = AUTH_FREE.includes(pathname);
+  if (!ready) return null;
 
-  // 未登录访问受保护路由：不渲染子页面，避免子组件抢先请求 API 触发 401 与多余跳转
-  if (!isLogin && !authPage) {
-    return (
-      <div className="min-h-full flex items-center justify-center text-gray-500">
-        正在跳转登录…
-      </div>
-    );
-  }
+  const isAuthPage = AUTH_FREE.includes(pathname);
 
   return (
-    <div className="min-h-full">
-      {isLogin ? (
-        <Layout style={{ minHeight: "100vh", background: "#F8FAFC" }}>
-          <Header
-            style={{
-              height: 64,
-              padding: "0 24px",
-              background: "#fff",
-              borderBottom: "1px solid #E2E8F0",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              position: "sticky",
-              top: 0,
-              zIndex: 100,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
-              <div style={{ marginRight: 40 }}>
-                <Link
-                  href="/"
+    <Layout style={{ minHeight: "100vh", background: "var(--bg-main)" }}>
+      {!isAuthPage && (
+        <Header
+          className="soft-glass"
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 1000,
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 40px",
+            height: 72,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 64 }}>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="brand-title"
+              style={{
+                fontSize: 24,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+              onClick={() => router.push("/")}
+            >
+              <HeartOutlined
+                style={{ fontSize: 24, color: "var(--secondary)" }}
+              />
+              萌宠之家
+            </motion.div>
+
+            <Menu
+              mode="horizontal"
+              selectedKeys={[pathname]}
+              items={menuItems}
+              style={{
+                border: "none",
+                background: "transparent",
+                minWidth: 320,
+                fontSize: 15,
+                fontWeight: 500,
+              }}
+            />
+          </div>
+
+          <Space size={24}>
+            {isLogin ? (
+              <Dropdown
+                menu={{ items: userMenuItems }}
+                placement="bottomRight"
+                arrow={{ pointAtCenter: true }}
+              >
+                <motion.div
+                  whileHover={{ opacity: 0.8 }}
                   style={{
-                    fontSize: 20,
-                    fontWeight: 600,
-                    color: "#2A9D8F",
-                    letterSpacing: "-0.5px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
                   }}
                 >
-                  🐾 萌宠之家
-                </Link>
-              </div>
-              <Menu
-                mode="horizontal"
-                selectedKeys={[selectedKey]}
-                items={menuItems}
-                style={{
-                  borderBottom: 0,
-                  background: "transparent",
-                  flex: 1,
-                  lineHeight: "64px",
-                }}
-              />
-            </div>
-            <Dropdown menu={{ items: userMenu }} placement="bottomRight" arrow>
-              <Space
-                style={{
-                  cursor: "pointer",
-                  padding: "4px 8px",
-                  borderRadius: 8,
-                  transition: "background 0.2s",
-                }}
-                className="hover:bg-slate-50"
-              >
-                <Avatar
-                  icon={<UserOutlined />}
-                  style={{ backgroundColor: "#2A9D8F" }}
-                  size="small"
-                />
-                <span
-                  style={{ fontSize: 14, fontWeight: 500, color: "#334155" }}
+                  <div style={{ textAlign: "right", lineHeight: 1 }}>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      {userInfo.username}
+                    </div>
+                  </div>
+                  <Avatar
+                    src={userInfo.avatar}
+                    icon={<UserOutlined />}
+                    size={40}
+                    style={{
+                      border: "2px solid var(--primary)",
+                      background: "white",
+                    }}
+                  />
+                </motion.div>
+              </Dropdown>
+            ) : (
+              <Space size={16}>
+                <Button
+                  type="text"
+                  style={{ fontSize: 14, fontWeight: 500 }}
+                  onClick={() => router.push("/login")}
                 >
-                  {userInfo.username}
-                </span>
+                  登录
+                </Button>
+                <Button
+                  className="btn-primary"
+                  type="primary"
+                  onClick={() => router.push("/register")}
+                >
+                  加入我们
+                </Button>
               </Space>
-            </Dropdown>
-          </Header>
-          <Content
-            style={{
-              padding: "20px 24px",
-              background: "transparent",
-              minHeight: "calc(100vh - 64px)",
-              maxWidth: 1280,
-              margin: "0 auto",
-              width: "100%",
-            }}
+            )}
+          </Space>
+        </Header>
+      )}
+
+      <Content style={{ position: "relative" }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+            className={!isAuthPage ? "main-container" : ""}
+            style={{ padding: !isAuthPage ? "40px 0" : 0 }}
           >
             {children}
-          </Content>
-        </Layout>
-      ) : (
-        <Content style={{ background: "#F8FAFC", minHeight: "100vh" }}>
-          {children}
-        </Content>
+          </motion.div>
+        </AnimatePresence>
+      </Content>
+
+      {!isAuthPage && (
+        <Footer
+          style={{
+            padding: "80px 40px",
+            background: "white",
+            borderTop: "1px solid var(--border-light)",
+          }}
+        >
+          <div className="main-container">
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 40,
+              }}
+            >
+              <div style={{ gridColumn: "span 2" }}>
+                <div
+                  className="brand-title"
+                  style={{ fontSize: 24, marginBottom: 16 }}
+                >
+                  萌宠之家
+                </div>
+                <div
+                  style={{
+                    color: "var(--text-secondary)",
+                    maxWidth: 360,
+                    lineHeight: 1.8,
+                  }}
+                >
+                  我们致力于为每一只流浪的小动物寻找一个温暖的家。在这里，每一个生命都值得被尊重和珍爱。
+                </div>
+              </div>
+              <div>
+                <div
+                  style={{ fontWeight: 600, marginBottom: 20, fontSize: 16 }}
+                >
+                  快速链接
+                </div>
+                <Space direction="vertical" size={12}>
+                  <Link href="/" style={{ color: "var(--text-secondary)" }}>
+                    发现宠物
+                  </Link>
+                  <Link
+                    href="/pet/new"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    发布领养
+                  </Link>
+                  <Link
+                    href="/pet/my-publish"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    我的发布
+                  </Link>
+                  <Link
+                    href="/profile"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    个人中心
+                  </Link>
+                </Space>
+              </div>
+              <div>
+                <div
+                  style={{ fontWeight: 600, marginBottom: 20, fontSize: 16 }}
+                >
+                  关于我们
+                </div>
+                <Space direction="vertical" size={12}>
+                  <div style={{ color: "var(--text-secondary)" }}>
+                    联系我们：paws@home.com
+                  </div>
+                  <div style={{ color: "var(--text-secondary)" }}>
+                    加入志愿者
+                  </div>
+                </Space>
+              </div>
+            </div>
+            <div
+              style={{
+                marginTop: 80,
+                paddingTop: 32,
+                borderTop: "1px solid var(--border-light)",
+                textAlign: "center",
+                color: "var(--text-muted)",
+                fontSize: 14,
+              }}
+            >
+              © 2026 PawHouse 萌宠之家. All rights reserved.
+            </div>
+          </div>
+        </Footer>
       )}
-    </div>
+    </Layout>
   );
 }

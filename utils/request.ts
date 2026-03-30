@@ -65,8 +65,9 @@ const responseInterceptor = async <T = unknown>(
   const formattedResponse: ApiResponse<T> = {
     ...defaultResponse,
     ...responseData,
-    httpCode: (responseData.httpCode || response.status) as HttpCodeEnum,
-    businessCode: (responseData.businessCode ||
+    // 成功时 businessCode 为 0，不能用 ||，否则会把 0 当成假值替换成错误码
+    httpCode: (responseData.httpCode ?? response.status) as HttpCodeEnum,
+    businessCode: (responseData.businessCode ??
       BusinessCodeEnum.ServerBusinessError) as BusinessCodeEnum,
   };
 

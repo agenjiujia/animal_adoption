@@ -17,7 +17,7 @@ import {
 } from "@/constant";
 import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
-import { normalizeImageUrlsInput } from "@/lib/imageUrls";
+import { imageUrlsToApiField, normalizeImageUrlsInput } from "@/lib/imageUrls";
 
 /** 登录用户发布宠物，默认 status=待领养 */
 const createPetHandler = async (req: NextRequest) => {
@@ -40,14 +40,28 @@ const createPetHandler = async (req: NextRequest) => {
 
   if (
     !name ||
+    !String(name).trim() ||
     species === undefined ||
     species === null ||
-    gender === undefined
+    !String(breed ?? "").trim() ||
+    age === undefined ||
+    age === null ||
+    gender === undefined ||
+    weight === undefined ||
+    weight === null ||
+    !String(health_status ?? "").trim() ||
+    vaccine_status === undefined ||
+    vaccine_status === null ||
+    neutered === undefined ||
+    neutered === null ||
+    !String(description ?? "").trim() ||
+    image_urls === undefined ||
+    image_urls === null
   ) {
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
-      message: "宠物名称、种类、性别为必填项",
+      message: "请完整填写发布单所有内容（含图片）",
     };
   }
 
@@ -72,27 +86,65 @@ const createPetHandler = async (req: NextRequest) => {
     };
   }
 
+  const ageNum = Number(age);
+  if (isNaN(ageNum) || ageNum < 0 || !Number.isInteger(ageNum)) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "年龄须为非负整数",
+    };
+  }
+
+  const weightNum = Number(weight);
+  if (isNaN(weightNum) || weightNum < 0 || weightNum > 999.99) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "体重取值非法",
+    };
+  }
+
+  const vaccineNum = Number(vaccine_status);
+  if (PetVaccineStatusMap[vaccineNum as PetVaccineStatusEnum] === undefined) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "疫苗情况取值非法",
+    };
+  }
+
+  const neuteredNum = Number(neutered);
+  if (PetNeuteredMap[neuteredNum as PetNeuteredEnum] === undefined) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "绝育情况取值非法",
+    };
+  }
+
+  const parsedImageUrls = imageUrlsToApiField(image_urls);
+  if (parsedImageUrls.length < 1 || parsedImageUrls.length > 5) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "图片数量需为 1-5 张",
+    };
+  }
+
   try {
     await prisma.pet.create({
       data: {
         user_id: auth.user.userId,
         name,
         species: speciesLabel,
-        breed: breed ? String(breed).trim() : null,
-        age:
-          age !== undefined && age !== null && age !== ""
-            ? Number(age)
-            : null,
+        breed: String(breed).trim(),
+        age: ageNum,
         gender: genderNum,
-        weight:
-          weight !== undefined && weight !== null && weight !== ""
-            ? Number(weight)
-            : null,
-        health_status: health_status || null,
-        vaccine_status:
-          Number(vaccine_status) || PetVaccineStatusEnum.Unknown,
-        neutered: Number(neutered) || PetNeuteredEnum.Unknown,
-        description: description || null,
+        weight: weightNum,
+        health_status: String(health_status).trim(),
+        vaccine_status: vaccineNum,
+        neutered: neuteredNum,
+        description: String(description).trim(),
         image_urls: normalizeImageUrlsInput(image_urls),
         status: PetStatusEnum.ForAdoption,
       },

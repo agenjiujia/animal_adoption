@@ -39,15 +39,14 @@ const { Title, Text } = Typography;
 type CreatePetFormValues = {
   name: string;
   species: string;
-  breed?: string;
-  age?: number;
+  breed: string;
+  age: number;
   gender: number;
-  weight?: number;
-  health_status?: string;
+  weight: number;
+  health_status: string;
   vaccine_status: number;
   neutered: number;
-  description?: string;
-  image_urls?: string;
+  description: string;
 };
 
 export default function CreatePet() {
@@ -76,8 +75,18 @@ export default function CreatePet() {
     );
   };
 
-  const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) =>
-    setFileList(newFileList);
+  const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
+    if (newFileList.length > 5) {
+      message.warning("最多上传 5 张图片");
+    }
+    setFileList(newFileList.slice(0, 5));
+  };
+
+  const getUploadedImageUrls = () =>
+    fileList
+      .filter((f) => f.status === "done")
+      .map((f) => f.response?.data?.url || f.url)
+      .filter(Boolean) as string[];
 
   const uploadButton = (
     <div>
@@ -88,15 +97,21 @@ export default function CreatePet() {
 
   // 发布接口调用
   const { run: submitPet, loading } = useRequest(
-    (values: CreatePetFormValues) =>
-      request.post("/api/pet/create", {
+    async (values: CreatePetFormValues) => {
+      const imageUrls = getUploadedImageUrls();
+      if (imageUrls.length === 0) {
+        message.error("请至少上传 1 张宠物图片");
+        throw new Error("missing image");
+      }
+      if (imageUrls.length > 5) {
+        message.error("最多上传 5 张宠物图片");
+        throw new Error("too many images");
+      }
+      return request.post("/api/pet/create", {
         ...values,
-        // 处理图片URL（从 fileList 中提取已上传成功的 URL）
-        image_urls: fileList
-          .filter((f) => f.status === "done")
-          .map((f) => f.response?.data?.url || f.url)
-          .join(","),
-      }),
+        image_urls: imageUrls.join(","),
+      });
+    },
     {
       manual: true,
       onSuccess: () => {
@@ -143,15 +158,22 @@ export default function CreatePet() {
   );
 
   const { loading: editLoading, run: editPet } = useRequest(
-    (values: CreatePetFormValues) =>
-      request.put("/api/pet/edit", {
+    async (values: CreatePetFormValues) => {
+      const imageUrls = getUploadedImageUrls();
+      if (imageUrls.length === 0) {
+        message.error("请至少上传 1 张宠物图片");
+        throw new Error("missing image");
+      }
+      if (imageUrls.length > 5) {
+        message.error("最多上传 5 张宠物图片");
+        throw new Error("too many images");
+      }
+      return request.put("/api/pet/edit", {
         ...values,
-        image_urls: fileList
-          .filter((f) => f.status === "done")
-          .map((f) => f.response?.data?.url || f.url)
-          .join(","),
+        image_urls: imageUrls.join(","),
         pet_id: petIdForEdit,
-      }),
+      });
+    },
     {
       manual: true,
       onSuccess: () => {
@@ -247,6 +269,7 @@ export default function CreatePet() {
                 <Form.Item
                   label={<span style={{ fontWeight: 600 }}>宠物品种</span>}
                   name="breed"
+                  rules={[{ required: true, message: "请输入宠物品种" }]}
                 >
                   <Input placeholder="如：布偶猫、金毛等" />
                 </Form.Item>
@@ -255,6 +278,7 @@ export default function CreatePet() {
                 <Form.Item
                   label={<span style={{ fontWeight: 600 }}>宠物年龄 (月)</span>}
                   name="age"
+                  rules={[{ required: true, message: "请输入宠物年龄" }]}
                 >
                   <InputNumber
                     style={{ width: "100%" }}
@@ -268,6 +292,7 @@ export default function CreatePet() {
             <Form.Item
               label={<span style={{ fontWeight: 600 }}>宠物性别</span>}
               name="gender"
+              rules={[{ required: true, message: "请选择宠物性别" }]}
             >
               <Radio.Group
                 options={PetGenderOptions}
@@ -303,6 +328,7 @@ export default function CreatePet() {
                 <Form.Item
                   label={<span style={{ fontWeight: 600 }}>疫苗情况</span>}
                   name="vaccine_status"
+                  rules={[{ required: true, message: "请选择疫苗情况" }]}
                 >
                   <Select options={PetVaccineStatusOptions} />
                 </Form.Item>
@@ -311,6 +337,7 @@ export default function CreatePet() {
                 <Form.Item
                   label={<span style={{ fontWeight: 600 }}>绝育情况</span>}
                   name="neutered"
+                  rules={[{ required: true, message: "请选择绝育情况" }]}
                 >
                   <Select options={PetNeuteredOptions} />
                 </Form.Item>
@@ -320,10 +347,25 @@ export default function CreatePet() {
             <Form.Item
               label={<span style={{ fontWeight: 600 }}>健康描述</span>}
               name="health_status"
+              rules={[{ required: true, message: "请填写健康描述" }]}
             >
               <Input.TextArea
                 placeholder="简单描述一下宠物的健康状况、过敏史等"
                 rows={3}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={<span style={{ fontWeight: 600 }}>体重 (kg)</span>}
+              name="weight"
+              rules={[{ required: true, message: "请输入体重" }]}
+            >
+              <InputNumber
+                style={{ width: "100%" }}
+                min={0}
+                max={999.99}
+                precision={2}
+                placeholder="如：3.50"
               />
             </Form.Item>
 
@@ -352,7 +394,7 @@ export default function CreatePet() {
             <Form.Item
               label={
                 <span style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
-                  第一张图将作为封面展示
+                  第一张图将作为封面展示（至少 1 张，最多 5 张）
                 </span>
               }
             >
@@ -362,14 +404,16 @@ export default function CreatePet() {
                 fileList={fileList}
                 onPreview={handlePreview}
                 onChange={handleChange}
+                maxCount={5}
               >
-                {fileList.length >= 8 ? null : uploadButton}
+                {fileList.length >= 5 ? null : uploadButton}
               </Upload>
             </Form.Item>
 
             <Form.Item
               label={<span style={{ fontWeight: 600 }}>详细故事</span>}
               name="description"
+              rules={[{ required: true, message: "请填写详细故事" }]}
             >
               <Input.TextArea
                 placeholder="分享一下 TA 的性格、爱好或有趣的小故事，这能大大增加领养成功率哦"
@@ -394,7 +438,7 @@ export default function CreatePet() {
                   type="primary"
                   htmlType="submit"
                   size="large"
-                  loading={loading}
+                  loading={isCreate ? loading : editLoading}
                   style={{ width: 200, fontWeight: 700 }}
                 >
                   {isCreate ? "确认发布" : "保存修改"}

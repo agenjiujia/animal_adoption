@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getPetCoverImage, getPetImageList } from "@/lib/petImage";
+import {
+  getPetCoverImage,
+  getPetImageList,
+  getDefaultPetCoverBySpecies,
+  PET_DEFAULT_COVER,
+} from "@/lib/petImage";
 
 describe("getPetImageList", () => {
   it("handles string comma list", () => {
@@ -13,5 +18,11 @@ describe("getPetImageList", () => {
   });
   it("cover picks first", () => {
     expect(getPetCoverImage(["/a", "/b"])).toBe("/a");
+  });
+  it("cover falls back by species", () => {
+    expect(getPetCoverImage([], "猫")).toBe(PET_DEFAULT_COVER.cat);
+    expect(getPetCoverImage([], "狗")).toBe(PET_DEFAULT_COVER.dog);
+    expect(getPetCoverImage([], "兔子")).toBe(PET_DEFAULT_COVER.other);
+    expect(getDefaultPetCoverBySpecies(null)).toBe(PET_DEFAULT_COVER.other);
   });
 });

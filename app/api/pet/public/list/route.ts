@@ -40,66 +40,75 @@ export async function POST(req: NextRequest) {
       serializePetForApi(p as unknown as Record<string, unknown>)
     );
 
+    /** 登录态：已申请/收藏标记 + 首屏通知（表未 migrate 时仍会返回列表） */
     if (currentUserId) {
-      const petIds = baseList.map((p) => p.pet_id);
-      if (petIds.length > 0) {
-        const [applied, favs] = await Promise.all([
-          prisma.adoptionApply.findMany({
-            where: {
-              apply_user_id: currentUserId,
-              pet_id: { in: petIds },
-              status: 0,
-            },
-            select: { pet_id: true },
-          }),
-          prisma.petFavorite.findMany({
-            where: { user_id: currentUserId, pet_id: { in: petIds } },
-            select: { pet_id: true },
-          }),
-        ]);
-        const appliedSet = new Set(applied.map((a) => a.pet_id));
-        const favSet = new Set(favs.map((f) => f.pet_id));
-        listResult = listResult.map((row, i) => ({
-          ...row,
-          is_applied: appliedSet.has(baseList[i].pet_id) ? 1 : 0,
-          is_favorited: favSet.has(baseList[i].pet_id) ? 1 : 0,
-        }));
+      try {
+        const petIds = baseList.map((p) => p.pet_id);
+        if (petIds.length > 0) {
+          const [applied, favs] = await Promise.all([
+            prisma.adoptionApply.findMany({
+              where: {
+                apply_user_id: currentUserId,
+                pet_id: { in: petIds },
+                status: 0,
+              },
+              select: { pet_id: true },
+            }),
+            prisma.petFavorite.findMany({
+              where: { user_id: currentUserId, pet_id: { in: petIds } },
+              select: { pet_id: true },
+            }),
+          ]);
+          const appliedSet = new Set(applied.map((a) => a.pet_id));
+          const favSet = new Set(favs.map((f) => f.pet_id));
+          listResult = listResult.map((row, i) => ({
+            ...row,
+            is_applied: appliedSet.has(baseList[i].pet_id) ? 1 : 0,
+            is_favorited: favSet.has(baseList[i].pet_id) ? 1 : 0,
+          }));
+        }
+      } catch (e) {
+        console.error("Public pet list: skip apply/favorite markers:", e);
       }
     }
 
     let notifications: Record<string, unknown>[] = [];
     if (currentUserId && pageNum === 1) {
-      const userNotif = await prisma.adoptionApply.findMany({
-        where: {
-          apply_user_id: currentUserId,
-          is_read: 0,
-          status: { in: [1, 2] },
-        },
-        include: { pet: { select: { name: true } } },
-      });
-      notifications = userNotif.map((a) => ({
-        ...a,
-        pet_name: a.pet?.name,
-        type: "USER",
-      })) as Record<string, unknown>[];
-
-      if (isAdmin) {
-        const adminNotif = await prisma.adoptionApply.findMany({
-          where: { is_admin_read: 0, status: 0 },
-          include: {
-            pet: { select: { name: true } },
-            applicant: { select: { username: true } },
+      try {
+        const userNotif = await prisma.adoptionApply.findMany({
+          where: {
+            apply_user_id: currentUserId,
+            is_read: 0,
+            status: { in: [1, 2] },
           },
+          include: { pet: { select: { name: true } } },
         });
-        notifications = [
-          ...notifications,
-          ...adminNotif.map((a) => ({
-            ...a,
-            pet_name: a.pet?.name,
-            applicant_name: a.applicant?.username,
-            type: "ADMIN",
-          })),
-        ];
+        notifications = userNotif.map((a) => ({
+          ...a,
+          pet_name: a.pet?.name,
+          type: "USER",
+        })) as Record<string, unknown>[];
+
+        if (isAdmin) {
+          const adminNotif = await prisma.adoptionApply.findMany({
+            where: { is_admin_read: 0, status: 0 },
+            include: {
+              pet: { select: { name: true } },
+              applicant: { select: { username: true } },
+            },
+          });
+          notifications = [
+            ...notifications,
+            ...adminNotif.map((a) => ({
+              ...a,
+              pet_name: a.pet?.name,
+              applicant_name: a.applicant?.username,
+              type: "ADMIN",
+            })),
+          ];
+        }
+      } catch (e) {
+        console.error("Public pet list: skip notifications:", e);
       }
     }
 

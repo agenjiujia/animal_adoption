@@ -9,6 +9,9 @@ const openApiPaths = [
   "/api/auth/register",
   "/api/auth/logout",
   "/api/upload", // 允许上传接口，内部自行校验 Referer 或 Token
+  // 游客可浏览：待领养列表与详情（路由内再做业务校验）
+  "/api/pet/public/list",
+  "/api/pet/detail",
 ];
 
 function isOpenApi(path: string) {

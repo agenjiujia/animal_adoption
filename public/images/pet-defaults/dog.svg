@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="×`Mþ">
+  <defs>
+    <linearGradient id="dgbg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f4fc"/>
+      <stop offset="100%" style="stop-color:#b8d4e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#dgbg)"/>
+  <ellipse cx="400" cy="380" rx="220" ry="120" fill="#7eb3d4" opacity="0.4"/>
+  <!-- dog silhouette -->
+  <ellipse cx="400" cy="320" rx="95" ry="85" fill="#a67c52"/>
+  <ellipse cx="400" cy="380" rx="110" ry="70" fill="#8b6914"/>
+  <ellipse cx="330" cy="300" rx="35" ry="50" fill="#a67c52" transform="rotate(-25 330 300)"/>
+  <ellipse cx="470" cy="300" rx="35" ry="50" fill="#a67c52" transform="rotate(25 470 300)"/>
+  <ellipse cx="380" cy="315" rx="10" ry="12" fill="#3d2914"/>
+  <ellipse cx="420" cy="315" rx="10" ry="12" fill="#3d2914"/>
+  <ellipse cx="400" cy="345" rx="14" ry="10" fill="#3d2914"/>
+  <text x="400" y="520" text-anchor="middle" fill="#4a6480" font-family="system-ui,sans-serif" font-size="28" font-weight="600">× · …
+ gG</text>
+</svg>

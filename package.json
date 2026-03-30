@@ -14,7 +14,8 @@
     "db:push": "prisma db push",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db": "tsx scripts/db-smoke.ts"
+    "test:db": "tsx scripts/db-smoke.ts",
+    "db:fix-adoption-apply": "tsx scripts/run-fix-adoption-apply.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
