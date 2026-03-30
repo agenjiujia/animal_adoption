@@ -227,36 +227,36 @@ export default function AdminAdoptionsPage() {
         }
       },
     },
-    {
-      title: "操作",
-      key: "action",
-      render: (_, record) =>
-        record.status === 0 ? (
-          <Space>
-            <Button
-              type="primary"
-              size="small"
-              icon={<CheckCircleOutlined />}
-              onClick={() => openAuditModal(record.apply_id, 1)}
-              className="btn-primary"
-            >
-              通过
-            </Button>
-            <Button
-              danger
-              size="small"
-              icon={<CloseCircleOutlined />}
-              onClick={() => openAuditModal(record.apply_id, 2)}
-            >
-              拒绝
-            </Button>
-          </Space>
-        ) : (
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            {record.review_message || "-"}
-          </Text>
-        ),
-    },
+    // {
+    //   title: "操作",
+    //   key: "action",
+    //   render: (_, record) =>
+    //     record.status === 0 ? (
+    //       <Space>
+    //         <Button
+    //           type="primary"
+    //           size="small"
+    //           icon={<CheckCircleOutlined />}
+    //           onClick={() => openAuditModal(record.apply_id, 1)}
+    //           className="btn-primary"
+    //         >
+    //           通过
+    //         </Button>
+    //         <Button
+    //           danger
+    //           size="small"
+    //           icon={<CloseCircleOutlined />}
+    //           onClick={() => openAuditModal(record.apply_id, 2)}
+    //         >
+    //           拒绝
+    //         </Button>
+    //       </Space>
+    //     ) : (
+    //       <Text type="secondary" style={{ fontSize: 13 }}>
+    //         {record.review_message || "-"}
+    //       </Text>
+    //     ),
+    // },
   ];
 
   return (
