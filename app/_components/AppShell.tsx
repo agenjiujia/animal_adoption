@@ -320,7 +320,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
             className={!isAuthPage ? "main-container" : ""}
-            style={{ padding: !isAuthPage ? "40px 0" : 0 }}
+            style={{ padding: !isAuthPage ? "28px 0" : 0 }}
           >
             {children}
           </motion.div>

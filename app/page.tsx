@@ -10,9 +10,8 @@ import {
   message,
   Spin,
   notification,
-  Space,
 } from "antd";
-import { BellOutlined, ArrowRightOutlined } from "@ant-design/icons";
+import { BellOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -219,153 +218,80 @@ export default function HomePage() {
 
   return (
     <div style={{ position: "relative", overflow: "hidden" }}>
-      {/* 背景层：提升质感，避免页面显得过素 */}
-      <div
-        style={{
-          position: "absolute",
-          top: -140,
-          left: -120,
-          width: 320,
-          height: 320,
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(79,70,229,0.22), transparent 65%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: 120,
-          right: -110,
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(244,63,94,0.16), transparent 65%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
-      {/* Hero Section - 温暖治愈的开场 */}
+      {/* 首屏横向通栏卡片：压缩留白，顶部直接看宠物 */}
       <section
-        style={{ marginBottom: 18, paddingTop: 0, textAlign: "center", position: "relative", zIndex: 1 }}
+        style={{
+          marginBottom: 24,
+          paddingTop: 0,
+          position: "relative",
+          zIndex: 1,
+        }}
       >
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+          // initial={{ opacity: 0, y: 10 }}
+          // animate={{ opacity: 1, y: 0 }}
+          // transition={{ duration: 0.45 }}
+          className="modern-card"
+          style={{
+            minHeight: 64,
+            maxHeight: 80,
+            padding: "10px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
         >
-          <div
+          {/* 左：文案（点击保留“浏览宠物”功能） */}
+          <Text
+            onClick={() =>
+              document
+                .getElementById("collection")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
             style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--primary)",
-              marginBottom: 8,
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
+              fontSize: 16,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
-            今日可领养
-          </div>
-          <Title
-            className="brand-title"
-            style={{
-              fontSize: "clamp(28px, 4.5vw, 42px)",
-              marginBottom: 10,
-              lineHeight: 1.2,
-            }}
+            每一个生命都值得被温柔对待
+          </Text>
+
+          {/* 右：发布领养 */}
+          <Button
+            className="btn-primary"
+            type="primary"
+            style={{ height: 40, padding: "0 18px", fontWeight: 700 }}
+            onClick={() => router.push("/pet/new")}
           >
-            先看小可爱
-            <br />再决定是否领养
-          </Title>
-          <Paragraph
-            style={{
-              fontSize: 14,
-              color: "var(--text-secondary)",
-              marginBottom: 12,
-              maxWidth: 520,
-              marginInline: "auto",
-              lineHeight: 1.6,
-            }}
-          >
-            首屏优先展示在领养宠物卡片，快速浏览年龄、疫苗、绝育与健康信息。
-          </Paragraph>
-          <Space size={8} style={{ marginBottom: 14 }} wrap>
-            <span className="pet-list-card__species-tag">真实待领养信息</span>
-            <span className="pet-list-card__species-tag">发布者直接审批</span>
-            <span className="pet-list-card__species-tag">今日在寻家：{total}</span>
-          </Space>
-          <Space size={16}>
-            <Button
-              className="btn-primary"
-              type="primary"
-              size="large"
-              style={{
-                height: 44,
-                padding: "0 24px",
-                fontSize: 15,
-              }}
-              onClick={() =>
-                document
-                  .getElementById("collection")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
-            >
-              浏览宠物
-            </Button>
-            <Button
-              type="default"
-              size="large"
-              style={{
-                height: 44,
-                padding: "0 24px",
-                fontSize: 15,
-                borderRadius: 12,
-                fontWeight: 600,
-              }}
-              onClick={() => router.push("/pet/new")}
-            >
-              发布领养 <ArrowRightOutlined style={{ marginLeft: 8 }} />
-            </Button>
-          </Space>
+            发布领养
+          </Button>
         </motion.div>
       </section>
 
       {/* Collection Grid - 现代卡片展示 */}
       <section id="collection" style={{ paddingBottom: 72, position: "relative", zIndex: 1 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            marginBottom: 24,
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--text-muted)",
-                marginBottom: 8,
-                textTransform: "uppercase",
-              }}
-            >
-              正在寻找新家
-            </div>
-            <Title style={{ margin: 0, fontSize: 28, fontWeight: 750 }}>
-              待领养的小家伙们
-            </Title>
-          </div>
-          <Text
+          <div
             style={{
-              color: "var(--text-muted)",
-              fontSize: 15,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+              paddingTop: 2,
             }}
           >
-            共有 {total} 位新朋友
-          </Text>
-        </div>
+            <Title style={{ margin: 0, fontSize: 26, fontWeight: 750 }}>
+              待领养的小家伙们
+            </Title>
+            <Text style={{ color: "var(--text-muted)", fontSize: 13 }}>
+              共有 {total} 位新朋友
+            </Text>
+          </div>
 
         <Row gutter={[20, 20]}>
           {pets.map((pet, index) => {
