@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   Form,
   Input,
-  InputNumber,
   Select,
   Button,
   Space,
@@ -23,20 +22,17 @@ import {
 import {
   EditOutlined,
   DeleteOutlined,
-  InfoCircleOutlined,
   PlusOutlined,
   SearchOutlined,
   ReloadOutlined,
+  EnvironmentOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
 import { request } from "@/utils/request";
-import {
-  PetGenderOptions,
-  PetVaccineStatusOptions,
-  PetNeuteredOptions,
-  PetSpeciesOptions,
-} from "@/constant";
+import { PetSpeciesOptions } from "@/constant";
 import { PetStatusEnum } from "@/types";
-import dayjs from "dayjs";
+import { motion } from "framer-motion";
+import { getPetCoverImage } from "@/lib/petImage";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -48,77 +44,36 @@ interface PetItem {
   breed?: string;
   age?: number;
   gender: number;
-  weight?: number;
-  image_urls?: string;
+  image_urls?: string | string[];
   description?: string;
-  vaccine_status: number;
-  neutered: number;
   status: number;
   create_time: string;
-  update_time: string;
-}
-
-interface QueryParams {
-  pet_id?: number;
-  name?: string;
-  species?: string;
-  gender?: number;
-  status?: number;
-  vaccine_status?: number;
-  neutered?: number;
-  pageNum: number;
-  pageSize: number;
 }
 
 export default function MyPublishPage() {
   const router = useRouter();
   const [form] = Form.useForm();
   const [pageNum, setPageNum] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
-  const [total, setTotal] = useState(0);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("userInfo");
-      if (raw) {
-        const u = JSON.parse(raw) as { user_id?: number };
-        setTimeout(() => setCurrentUserId(u.user_id ?? null), 0);
-      }
-    } catch {
-      setTimeout(() => setCurrentUserId(null), 0);
-    }
-  }, []);
+  const [pageSize] = useState(12);
 
   const {
     run: load,
     loading,
     data,
-  } = useRequest((p: QueryParams) => request.post("/api/pet/list", p), {
+  } = useRequest((params: any) => request.post("/api/pet/list", params), {
     manual: true,
   });
 
-  useEffect(() => {
-    const d = data?.data as
-      | { list: PetItem[]; total: number; pageNum: number; pageSize: number }
-      | undefined;
-    if (d && "total" in d) {
-      setTimeout(() => {
-        setTotal(d.total);
-        setPageNum(d.pageNum);
-        setPageSize(d.pageSize);
-      }, 0);
-    }
-  }, [data]);
+  const list = (data?.data as { list?: PetItem[] })?.list ?? [];
+  const total = (data?.data as { total?: number })?.total ?? 0;
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) return;
-    load({ pageNum: 1, pageSize: 12 });
-  }, [load]);
+    load({ pageNum, pageSize, ...form.getFieldsValue() });
+  }, [pageNum, pageSize, load]);
 
-  const onSearch = (values: QueryParams) => {
-    load({ ...values, pageNum: 1, pageSize });
+  const onSearch = () => {
     setPageNum(1);
+    load({ pageNum: 1, pageSize, ...form.getFieldsValue() });
   };
 
   const onReset = () => {
@@ -127,436 +82,223 @@ export default function MyPublishPage() {
     load({ pageNum: 1, pageSize });
   };
 
-  const remove = (pet: PetItem) => {
+  const handleDelete = (petId: number) => {
     Modal.confirm({
       title: "确认删除",
-      content: `您确定要删除宠物 "${pet.name}" 的发布信息吗？此操作不可撤销。`,
+      content: "删除后不可恢复，确定要删除这个发布单吗？",
       okText: "确认删除",
-      okType: "danger",
       cancelText: "取消",
+      okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await request.delete(`/api/pet/${pet.pet_id}`);
-          message.success("删除成功");
-          load({ ...form.getFieldsValue(), pageNum, pageSize });
-        } catch (error) {
-          message.error("删除失败");
+          const res = await request.delete(`/api/pet/${petId}`);
+          if (res.businessCode === 0) {
+            message.success("已删除");
+            load({ pageNum, pageSize, ...form.getFieldsValue() });
+          } else {
+            message.error(res.message);
+          }
+        } catch {
+          message.error("操作失败");
         }
       },
     });
   };
 
   const getStatusTag = (status: number) => {
-    const m: Record<number, { color: string; text: string }> = {
-      [PetStatusEnum.ForAdoption]: { color: "blue", text: "待领养" },
-      [PetStatusEnum.Adopted]: { color: "green", text: "已领养" },
-      [PetStatusEnum.Offline]: { color: "orange", text: "已下架" },
-    };
-    const s = m[status] || { color: "default", text: "未知" };
-    return (
-      <Tag color={s.color} bordered={false}>
-        {s.text}
-      </Tag>
-    );
-  };
-
-  const getGenderTag = (gender: number) => {
-    if (gender === 1)
-      return (
-        <Tag color="blue" bordered={false}>
-          公
-        </Tag>
-      );
-    if (gender === 0)
-      return (
-        <Tag color="magenta" bordered={false}>
-          母
-        </Tag>
-      );
-    return <Tag bordered={false}>未知</Tag>;
-  };
-
-  const getDefaultImage = (species: string | number) => {
-    const s = String(species);
-    if (species === "猫" || s === "1") {
-      return "https://5b0988e595225.cdn.sohucs.com/images/20190808/082b82088b154024a5d8dba5da1b1c57.jpeg";
+    switch (status) {
+      case 0:
+        return <Tag color="blue">待领养</Tag>;
+      case 1:
+        return <Tag color="green">已领养</Tag>;
+      case 2:
+        return <Tag color="default">已下架</Tag>;
+      default:
+        return <Tag>未知</Tag>;
     }
-    if (species === "狗" || s === "2") {
-      return "https://img2.baidu.com/it/u=4071791880,181388239&fm=253&app=138&f=JPEG?w=500&h=625";
-    }
-    return "https://img.js.design/assets/smartFill/img457164da74a008.jpg";
   };
-
-  const list = (data?.data as { list?: PetItem[] })?.list ?? [];
 
   return (
-    <div
-      style={{
-        padding: "24px",
-        background: "#F8FAFC",
-        minHeight: "100vh",
-      }}
-    >
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 32,
-          }}
-        >
-          <div>
-            <Title
-              level={2}
-              style={{ marginBottom: 8, fontSize: 24, fontWeight: 600 }}
-            >
-              我发布的宠物
-            </Title>
-            <Text style={{ color: "#64748B" }}>
-              管理您发布的每一份领养爱心，共计 {total} 个发布单
-            </Text>
-          </div>
-          <Button
-            type="primary"
-            size="large"
-            icon={<PlusOutlined />}
-            onClick={() => router.push("/pet/new")}
-            style={{
-              height: 44,
-              padding: "0 24px",
-              borderRadius: 6,
-              background: "#2A9D8F",
-              border: "none",
-              boxShadow: "0 4px 12px rgba(42, 157, 143, 0.2)",
-            }}
-          >
-            发布新宠物
-          </Button>
+    <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 40,
+        }}
+      >
+        <div>
+          <Title level={2}>我的发布</Title>
+          <Text style={{ color: "#8A8AA8" }}>管理您发布的宠物领养信息</Text>
         </div>
-
-        {/* 筛选区域 */}
-        <Card
-          bordered={false}
-          className="card-shadow"
-          style={{
-            marginBottom: 32,
-            borderRadius: 8,
-          }}
-          bodyStyle={{ padding: "20px 24px" }}
+        <Button
+          className="btn-gradient"
+          type="primary"
+          size="large"
+          icon={<PlusOutlined />}
+          onClick={() => router.push("/pet/new")}
         >
-          <Form
-            form={form}
-            layout="inline"
-            onFinish={onSearch}
-            style={{ display: "flex", flexWrap: "wrap", gap: 16 }}
-          >
-            <Form.Item name="name" style={{ marginBottom: 0 }}>
-              <Input
-                placeholder="搜索宠物名称"
-                allowClear
-                prefix={<SearchOutlined style={{ color: "#CBD5E1" }} />}
-                style={{ borderRadius: 6, width: 200 }}
-              />
-            </Form.Item>
-            <Form.Item
-              name="species"
-              style={{ marginBottom: 0, minWidth: 140 }}
-            >
-              <Select
-                placeholder="宠物种类"
-                allowClear
-                options={PetSpeciesOptions}
-                style={{ borderRadius: 6 }}
-              />
-            </Form.Item>
-            <Form.Item name="status" style={{ marginBottom: 0, minWidth: 140 }}>
-              <Select
-                placeholder="发布状态"
-                allowClear
-                options={[
-                  { label: "待领养", value: PetStatusEnum.ForAdoption },
-                  { label: "已领养", value: PetStatusEnum.Adopted },
-                  { label: "已下架", value: PetStatusEnum.Offline },
-                ]}
-                style={{ borderRadius: 6 }}
-              />
-            </Form.Item>
-            <Form.Item style={{ marginBottom: 0 }}>
-              <Space size={12}>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  icon={<SearchOutlined />}
-                  style={{
-                    borderRadius: 6,
-                    background: "#2A9D8F",
-                    border: "none",
-                  }}
-                >
-                  查询
-                </Button>
-                <Button
-                  onClick={onReset}
-                  icon={<ReloadOutlined />}
-                  style={{ borderRadius: 6 }}
-                >
-                  重置
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Card>
+          发布新宠
+        </Button>
+      </div>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "100px 0" }}>
-            <Spin size="large" description="正在获取发布列表..." />
-          </div>
-        ) : list.length > 0 ? (
-          <>
-            <Row gutter={[24, 24]}>
-              {list.map((pet) => (
-                <Col key={pet.pet_id} xs={24} sm={12} md={8} lg={6}>
-                  <Card
-                    className="card-shadow"
-                    bordered={false}
-                    style={{
-                      borderRadius: 8,
-                      overflow: "hidden",
-                    }}
-                    bodyStyle={{ padding: 20 }}
-                    cover={
-                      <div
-                        style={{
-                          height: 200,
-                          overflow: "hidden",
-                          position: "relative",
-                          background: "#F1F5F9",
-                        }}
-                      >
-                        <img
-                          alt={pet.name}
-                          src={
-                            pet.image_urls
-                              ? pet.image_urls.split(",")[0]
-                              : getDefaultImage(pet.species)
-                          }
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                        <div
-                          style={{ position: "absolute", top: 12, left: 12 }}
-                        >
-                          <Tag
-                            bordered={false}
-                            style={{
-                              background:
-                                pet.status === PetStatusEnum.ForAdoption
-                                  ? "#E6F4F1"
-                                  : pet.status === PetStatusEnum.Adopted
-                                  ? "#E6F7F0"
-                                  : "#F1F5F9",
-                              color:
-                                pet.status === PetStatusEnum.ForAdoption
-                                  ? "#2A9D8F"
-                                  : pet.status === PetStatusEnum.Adopted
-                                  ? "#10B981"
-                                  : "#64748B",
-                              borderRadius: 4,
-                              fontWeight: 500,
-                            }}
-                          >
-                            {getStatusTag(pet.status).props.children}
-                          </Tag>
-                        </div>
-                      </div>
-                    }
-                    actions={[
-                      <Button
-                        key="detail"
-                        type="text"
-                        size="small"
-                        onClick={() =>
-                          router.push(`/pet/detail/?pet_id=${pet.pet_id}`)
-                        }
-                        style={{ color: "#64748B" }}
-                      >
-                        详情
-                      </Button>,
-                      <Button
-                        key="edit"
-                        type="text"
-                        size="small"
-                        onClick={() =>
-                          router.push(`/pet/edit/?pet_id=${pet.pet_id}`)
-                        }
-                        style={{ color: "#3B82F6" }}
-                      >
-                        编辑
-                      </Button>,
-                      <Button
-                        key="delete"
-                        type="text"
-                        danger
-                        size="small"
-                        onClick={() => remove(pet)}
-                      >
-                        删除
-                      </Button>,
-                    ]}
+      <Card
+        className="glass-morphism"
+        style={{ marginBottom: 32, borderRadius: 16 }}
+      >
+        <Form
+          form={form}
+          layout="inline"
+          onFinish={onSearch}
+          style={{ gap: 16 }}
+        >
+          <Form.Item name="name">
+            <Input
+              placeholder="宠物昵称"
+              prefix={<SearchOutlined style={{ color: "#8A8AA8" }} />}
+              style={{ width: 200 }}
+            />
+          </Form.Item>
+          <Form.Item name="species">
+            <Select
+              placeholder="选择物种"
+              options={PetSpeciesOptions}
+              style={{ width: 150 }}
+              allowClear
+            />
+          </Form.Item>
+          <Form.Item name="status">
+            <Select placeholder="状态" style={{ width: 120 }} allowClear>
+              <Select.Option value={0}>待领养</Select.Option>
+              <Select.Option value={1}>已领养</Select.Option>
+              <Select.Option value={2}>已下架</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                查询
+              </Button>
+              <Button icon={<ReloadOutlined />} onClick={onReset}>
+                重置
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Card>
+
+      <Spin spinning={loading} description="正在同步发布状态...">
+        {list.length > 0 ? (
+          <Row gutter={[32, 32]}>
+            {list.map((pet) => {
+              const imageUrl = getPetCoverImage(pet.image_urls);
+              return (
+                <Col xs={24} sm={12} md={8} lg={6} key={pet.pet_id}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ y: -8 }}
                   >
-                    <Card.Meta
-                      title={
+                    <Card
+                      hoverable
+                      className="fancy-card"
+                      cover={
                         <div
                           style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginBottom: 12,
+                            position: "relative",
+                            overflow: "hidden",
+                            borderTopLeftRadius: 16,
+                            borderTopRightRadius: 16,
                           }}
                         >
-                          <span
+                          <img
+                            alt={pet.name}
+                            src={imageUrl}
                             style={{
-                              fontSize: 17,
-                              fontWeight: 600,
-                              color: "#0F172A",
+                              width: "100%",
+                              height: 200,
+                              objectFit: "cover",
                             }}
-                          >
-                            {pet.name}
-                          </span>
-                          {getGenderTag(pet.gender)}
-                        </div>
-                      }
-                      description={
-                        <div>
-                          <Space size={8} wrap style={{ marginBottom: 12 }}>
-                            {pet.breed && (
-                              <Tag
-                                bordered={false}
-                                style={{
-                                  borderRadius: 4,
-                                  background: "#F1F5F9",
-                                  color: "#475569",
-                                  fontSize: 11,
-                                }}
-                              >
-                                {pet.breed}
-                              </Tag>
-                            )}
-                            <Tag
-                              bordered={false}
-                              style={{
-                                borderRadius: 4,
-                                background: "#F1F5F9",
-                                color: "#475569",
-                                fontSize: 11,
-                              }}
-                            >
-                              {pet.age ? `${pet.age}个月` : "年龄未知"}
-                            </Tag>
-                          </Space>
-                          <Paragraph
-                            style={{
-                              color: "#64748B",
-                              fontSize: 13,
-                              marginBottom: 16,
-                              height: 40,
-                              lineHeight: 1.5,
-                            }}
-                            ellipsis={{ rows: 2 }}
-                          >
-                            {pet.description || "暂无描述信息"}
-                          </Paragraph>
+                          />
                           <div
-                            style={{
-                              borderTop: "1px solid #F1F5F9",
-                              paddingTop: 12,
-                              marginTop: 4,
-                            }}
+                            style={{ position: "absolute", top: 12, right: 12 }}
                           >
-                            <Text style={{ fontSize: 12, color: "#94A3B8" }}>
-                              更新于{" "}
-                              {dayjs(pet.update_time).format("YYYY-MM-DD")}
-                            </Text>
+                            {getStatusTag(pet.status)}
                           </div>
                         </div>
                       }
-                    />
-                  </Card>
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 12,
+                        }}
+                      >
+                        <Title level={4} style={{ margin: 0 }}>
+                          {pet.name}
+                        </Title>
+                        <Tag
+                          color={pet.gender === 1 ? "blue" : "volcano"}
+                          bordered={false}
+                        >
+                          {pet.gender === 1 ? "公" : "母"}
+                        </Tag>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 16,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                            color: "#8A8AA8",
+                            fontSize: 12,
+                          }}
+                        >
+                          <EnvironmentOutlined />
+                          <span>
+                            {pet.species} · {pet.breed || "普通"}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <Button
+                          icon={<EditOutlined />}
+                          block
+                          onClick={() =>
+                            router.push(`/pet/edit?pet_id=${pet.pet_id}`)
+                          }
+                        >
+                          编辑
+                        </Button>
+                        <Button
+                          danger
+                          icon={<DeleteOutlined />}
+                          block
+                          onClick={() => handleDelete(pet.pet_id)}
+                        >
+                          删除
+                        </Button>
+                      </div>
+                    </Card>
+                  </motion.div>
                 </Col>
-              ))}
-            </Row>
-
-            {/* 分页 */}
-            <div
-              style={{ marginTop: 48, textAlign: "center", paddingBottom: 40 }}
-            >
-              <Space size={16}>
-                <Button
-                  disabled={pageNum <= 1}
-                  onClick={() => {
-                    const next = pageNum - 1;
-                    setPageNum(next);
-                    load({ ...form.getFieldsValue(), pageNum: next, pageSize });
-                  }}
-                  style={{ borderRadius: 6 }}
-                >
-                  上一页
-                </Button>
-                <Text style={{ color: "#64748B" }}>
-                  第 {pageNum} 页 / 共 {Math.ceil(total / pageSize)} 页
-                </Text>
-                <Button
-                  disabled={pageNum >= Math.ceil(total / pageSize)}
-                  onClick={() => {
-                    const next = pageNum + 1;
-                    setPageNum(next);
-                    load({ ...form.getFieldsValue(), pageNum: next, pageSize });
-                  }}
-                  style={{ borderRadius: 6 }}
-                >
-                  下一页
-                </Button>
-              </Space>
-            </div>
-          </>
+              );
+            })}
+          </Row>
         ) : (
-          <Card
-            bordered={false}
-            style={{
-              padding: "80px 0",
-              textAlign: "center",
-              borderRadius: 8,
-            }}
-            className="card-shadow"
-          >
-            <Empty
-              description={
-                <Text style={{ color: "#94A3B8" }}>
-                  您还没有发布过任何宠物信息
-                </Text>
-              }
-            >
-              <Button
-                type="primary"
-                onClick={() => router.push("/pet/new")}
-                style={{
-                  height: 40,
-                  borderRadius: 6,
-                  background: "#2A9D8F",
-                  border: "none",
-                }}
-              >
-                立即发布第一个宠物
-              </Button>
-            </Empty>
-          </Card>
+          !loading && <Empty description="还没有发布过领养信息，快去发布吧" />
         )}
-      </div>
+      </Spin>
     </div>
   );
 }

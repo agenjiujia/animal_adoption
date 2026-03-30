@@ -16,6 +16,8 @@ import {
   Upload,
   Modal,
   Divider,
+  Row,
+  Col,
 } from "antd";
 import type { FormProps, UploadFile, UploadProps } from "antd"; // TS类型
 import { PlusOutlined } from "@ant-design/icons";
@@ -25,8 +27,11 @@ import {
   PetNeuteredOptions,
   PetGenderOptions,
   PetSpeciesOptions,
+  PetSpeciesMap,
 } from "@/constant";
 import { request } from "@/utils/request";
+import { motion } from "framer-motion";
+import { getPetImageList } from "@/lib/petImage";
 
 const { Title, Text } = Typography;
 
@@ -109,14 +114,21 @@ export default function CreatePet() {
       onSuccess: (res) => {
         const d = res.data as Record<string, unknown> | undefined;
         if (!d) return;
+
+        // 反向映射物种：从字符串 "猫" 映射回枚举值 1
+        const speciesEntry = Object.entries(PetSpeciesMap).find(
+          ([, v]) => v.label === d.species
+        );
+        const speciesValue = speciesEntry ? Number(speciesEntry[0]) : undefined;
+
         form.setFieldsValue({
           ...d,
           weight: d.weight != null ? Number(d.weight) : undefined,
-          species: d.species !== null ? Number(d.species) : undefined,
+          species: speciesValue,
         });
         // 回显图片
         if (d.image_urls) {
-          const urls = String(d.image_urls).split(",").filter(Boolean);
+          const urls = getPetImageList(d.image_urls);
           setFileList(
             urls.map((url, index) => ({
               uid: `-${index}`,
@@ -154,31 +166,28 @@ export default function CreatePet() {
     isCreate ? submitPet(values) : editPet(values);
 
   return (
-    <div
-      style={{
-        background: "#F8FAFC",
-        minHeight: "100vh",
-        padding: "20px 24px",
-      }}
-    >
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ marginBottom: 32 }}>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 0" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div style={{ marginBottom: 40, textAlign: "center" }}>
           <Title
-            level={2}
-            style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}
+            level={1}
+            style={{ fontSize: 36, fontWeight: 850, marginBottom: 12 }}
           >
-            {isCreate ? "发布送养信息" : "编辑宠物信息"}
+            {isCreate ? "发布" : "编辑"}
+            <span className="text-gradient">领养信息</span>
           </Title>
-          <Text style={{ color: "#64748B" }}>
-            请真实、详细地填写宠物信息，帮助它更快找到温暖的家
+          <Text style={{ color: "var(--text-tertiary)", fontSize: 16 }}>
+            您的每一份详细描述，都能帮助小生命更快找到家
           </Text>
         </div>
 
         <Card
           bordered={false}
-          className="card-shadow"
-          style={{ borderRadius: 12 }}
-          bodyStyle={{ padding: "40px" }}
+          className="standard-card"
+          bodyStyle={{ padding: 40 }}
           loading={detailLoading}
         >
           <Form
@@ -186,220 +195,165 @@ export default function CreatePet() {
             layout="vertical"
             onFinish={onFinish}
             initialValues={{
-              vaccine_status: PetVaccineStatusEnum.Unknown,
-              neutered: PetNeuteredEnum.Unknown,
+              gender: 1,
+              vaccine_status: 0,
+              neutered: 0,
             }}
-            requiredMark="optional"
+            requiredMark={false}
           >
-            <div
+            <Title
+              level={5}
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "0 24px",
+                marginBottom: 24,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
               }}
             >
-              {/* 宠物名称 */}
-              <Form.Item
-                name="name"
-                label={
-                  <Text strong style={{ fontSize: 14 }}>
-                    宠物名称
-                  </Text>
-                }
-                rules={[
-                  { required: true, message: "请输入宠物名称" },
-                  { max: 50, message: "名称长度不能超过50字" },
-                ]}
-              >
-                <Input
-                  placeholder="例如：小金毛、小布偶"
-                  maxLength={50}
-                  style={{ borderRadius: 6 }}
-                />
-              </Form.Item>
+              <div
+                style={{
+                  width: 4,
+                  height: 18,
+                  background: "var(--primary)",
+                  borderRadius: 2,
+                }}
+              />
+              基本信息
+            </Title>
 
-              {/* 宠物种类 */}
-              <Form.Item
-                name="species"
-                label={
-                  <Text strong style={{ fontSize: 14 }}>
-                    宠物种类
-                  </Text>
-                }
-                rules={[{ required: true, message: "请选择种类" }]}
-              >
-                <Select
-                  options={PetSpeciesOptions}
-                  placeholder="请选择宠物种类"
-                  style={{ borderRadius: 6 }}
-                />
-              </Form.Item>
+            <Row gutter={24}>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 600 }}>宠物昵称</span>}
+                  name="name"
+                  rules={[{ required: true, message: "请输入宠物昵称" }]}
+                >
+                  <Input placeholder="给 TA 起个好听的名字" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 600 }}>物种类型</span>}
+                  name="species"
+                  rules={[{ required: true, message: "请选择物种" }]}
+                >
+                  <Select placeholder="选择物种" options={PetSpeciesOptions} />
+                </Form.Item>
+              </Col>
+            </Row>
 
-              <Form.Item
-                name="gender"
-                label={
-                  <Text strong style={{ fontSize: 14 }}>
-                    性别
-                  </Text>
-                }
-                rules={[{ required: true, message: "请选择性别" }]}
-              >
-                <Radio.Group>
-                  <Space size={24}>
-                    {PetGenderOptions.map((option) => (
-                      <Radio key={option.value} value={option.value}>
-                        {option.label}
-                      </Radio>
-                    ))}
-                  </Space>
-                </Radio.Group>
-              </Form.Item>
+            <Row gutter={24}>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 600 }}>宠物品种</span>}
+                  name="breed"
+                >
+                  <Input placeholder="如：布偶猫、金毛等" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 600 }}>宠物年龄 (月)</span>}
+                  name="age"
+                >
+                  <InputNumber
+                    style={{ width: "100%" }}
+                    placeholder="大概月数"
+                    min={0}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
 
-              {/* 宠物品种 */}
-              <Form.Item
-                name="breed"
-                label={
-                  <Text strong style={{ fontSize: 14 }}>
-                    宠物品种
-                  </Text>
-                }
-              >
-                <Input
-                  placeholder="例如：金毛、布偶猫（可选）"
-                  style={{ borderRadius: 6 }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="age"
-                label={
-                  <Text strong style={{ fontSize: 14 }}>
-                    年龄（月）
-                  </Text>
-                }
-                rules={[
-                  { type: "number", min: 0, message: "年龄必须为非负整数" },
-                ]}
-              >
-                <InputNumber
-                  placeholder="例如：3"
-                  min={0}
-                  precision={0}
-                  style={{ width: "100%", borderRadius: 6 }}
-                />
-              </Form.Item>
-
-              {/* 体重 */}
-              <Form.Item
-                name="weight"
-                label={
-                  <Text strong style={{ fontSize: 14 }}>
-                    体重（kg）
-                  </Text>
-                }
-                rules={[
-                  {
-                    type: "number",
-                    min: 0,
-                    max: 999.99,
-                    message: "体重需为0-999.99之间的数字",
-                  },
-                ]}
-              >
-                <InputNumber
-                  placeholder="例如：5.5"
-                  min={0}
-                  max={999.99}
-                  precision={2}
-                  style={{ width: "100%", borderRadius: 6 }}
-                />
-              </Form.Item>
-            </div>
-
-            <Divider style={{ margin: "16px 0 32px" }} />
-
-            {/* 健康状况 */}
             <Form.Item
+              label={<span style={{ fontWeight: 600 }}>宠物性别</span>}
+              name="gender"
+            >
+              <Radio.Group
+                options={PetGenderOptions}
+                optionType="button"
+                buttonStyle="solid"
+              />
+            </Form.Item>
+
+            <Divider style={{ margin: "40px 0" }} />
+
+            <Title
+              level={5}
+              style={{
+                marginBottom: 24,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: 4,
+                  height: 18,
+                  background: "var(--primary)",
+                  borderRadius: 2,
+                }}
+              />
+              健康状况
+            </Title>
+
+            <Row gutter={24}>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 600 }}>疫苗情况</span>}
+                  name="vaccine_status"
+                >
+                  <Select options={PetVaccineStatusOptions} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 600 }}>绝育情况</span>}
+                  name="neutered"
+                >
+                  <Select options={PetNeuteredOptions} />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item
+              label={<span style={{ fontWeight: 600 }}>健康描述</span>}
               name="health_status"
-              label={
-                <Text strong style={{ fontSize: 14 }}>
-                  健康状况描述
-                </Text>
-              }
             >
               <Input.TextArea
-                placeholder="描述宠物健康状况、是否有疾病等（可选）"
+                placeholder="简单描述一下宠物的健康状况、过敏史等"
                 rows={3}
-                style={{ borderRadius: 6 }}
               />
             </Form.Item>
 
-            {/* 疫苗状态 + 绝育状态 一行布局 */}
-            <div
+            <Divider style={{ margin: "40px 0" }} />
+
+            <Title
+              level={5}
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "0 24px",
+                marginBottom: 24,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
               }}
             >
-              <Form.Item
-                name="vaccine_status"
-                label={
-                  <Text strong style={{ fontSize: 14 }}>
-                    疫苗状态
-                  </Text>
-                }
-              >
-                <Select
-                  options={PetVaccineStatusOptions}
-                  placeholder="请选择疫苗状态"
-                  style={{ width: "100%", borderRadius: 6 }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="neutered"
-                label={
-                  <Text strong style={{ fontSize: 14 }}>
-                    绝育状态
-                  </Text>
-                }
-              >
-                <Select
-                  options={PetNeuteredOptions}
-                  placeholder="请选择绝育状态"
-                  style={{ width: "100%", borderRadius: 6 }}
-                />
-              </Form.Item>
-            </div>
-
-            {/* 详细描述 */}
-            <Form.Item
-              name="description"
-              label={
-                <Text strong style={{ fontSize: 14 }}>
-                  详细故事与领养要求
-                </Text>
-              }
-            >
-              <Input.TextArea
-                placeholder="描述宠物的性格、习性、生活习惯以及对领养家庭的期待等..."
-                rows={5}
-                style={{ borderRadius: 6 }}
+              <div
+                style={{
+                  width: 4,
+                  height: 18,
+                  background: "var(--primary)",
+                  borderRadius: 2,
+                }}
               />
-            </Form.Item>
+              生活照展示
+            </Title>
 
-            {/* 图片上传 */}
             <Form.Item
               label={
-                <Text strong style={{ fontSize: 14 }}>
-                  宠物图片
-                </Text>
-              }
-              extra={
-                <Text style={{ fontSize: 12, color: "#94A3B8" }}>
-                  支持多图上传（最多8张），首张图片将作为封面展示
-                </Text>
+                <span style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
+                  第一张图将作为封面展示
+                </span>
               }
             >
               <Upload
@@ -408,56 +362,63 @@ export default function CreatePet() {
                 fileList={fileList}
                 onPreview={handlePreview}
                 onChange={handleChange}
-                maxCount={8}
-                accept="image/*"
               >
                 {fileList.length >= 8 ? null : uploadButton}
               </Upload>
-              <Modal
-                open={previewOpen}
-                title={previewTitle}
-                footer={null}
-                onCancel={handleCancel}
-              >
-                <img
-                  alt="preview"
-                  style={{ width: "100%", borderRadius: 8 }}
-                  src={previewImage}
-                />
-              </Modal>
             </Form.Item>
 
-            <Divider style={{ margin: "40px 0" }} />
+            <Form.Item
+              label={<span style={{ fontWeight: 600 }}>详细故事</span>}
+              name="description"
+            >
+              <Input.TextArea
+                placeholder="分享一下 TA 的性格、爱好或有趣的小故事，这能大大增加领养成功率哦"
+                rows={5}
+              />
+            </Form.Item>
 
-            {/* 提交按钮 */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
-              <Button
-                onClick={() => router.push("/")}
-                size="large"
-                style={{ width: 160, height: 48, borderRadius: 6 }}
+            <Form.Item style={{ marginTop: 48, marginBottom: 0 }}>
+              <Space
+                size={16}
+                style={{ width: "100%", justifyContent: "center" }}
               >
-                返回首页
-              </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={loading || editLoading}
-                size="large"
-                style={{
-                  width: 240,
-                  height: 48,
-                  borderRadius: 6,
-                  background: "#2A9D8F",
-                  border: "none",
-                  boxShadow: "0 4px 12px rgba(42, 157, 143, 0.2)",
-                }}
-              >
-                确认{isCreate ? "发布" : "保存修改"}
-              </Button>
-            </div>
+                <Button
+                  size="large"
+                  onClick={() => router.back()}
+                  style={{ width: 120 }}
+                >
+                  取消
+                </Button>
+                <Button
+                  className="btn-primary"
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  loading={loading}
+                  style={{ width: 200, fontWeight: 700 }}
+                >
+                  {isCreate ? "确认发布" : "保存修改"}
+                </Button>
+              </Space>
+            </Form.Item>
           </Form>
         </Card>
-      </div>
+      </motion.div>
+
+      <Modal
+        open={previewOpen}
+        title={previewTitle}
+        footer={null}
+        onCancel={handleCancel}
+        centered
+        className="standard-modal"
+      >
+        <img
+          alt="preview"
+          style={{ width: "100%", borderRadius: 12 }}
+          src={previewImage}
+        />
+      </Modal>
     </div>
   );
 }

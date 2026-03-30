@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRequest } from "ahooks";
 import { useRouter } from "next/navigation";
 import {
@@ -15,286 +14,341 @@ import {
   Spin,
   Space,
   Steps,
-  Divider,
+  Avatar,
 } from "antd";
 import {
-  InfoCircleOutlined,
   HistoryOutlined,
+  ArrowRightOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
   UserOutlined,
-  CalendarOutlined,
 } from "@ant-design/icons";
 import { request } from "@/utils/request";
 import dayjs from "dayjs";
+import { motion } from "framer-motion";
+import { getPetCoverImage } from "@/lib/petImage";
 
 const { Title, Text, Paragraph } = Typography;
 
 interface AdoptionRecord {
-  app_id: number;
+  apply_id: number;
   pet_id: number;
-  user_id: number;
   pet_name: string;
   species: string;
   breed?: string;
-  image_urls?: string;
-  pet_description?: string;
+  image_urls?: string | string[];
   owner_name: string;
+  owner_avatar?: string;
   status: number;
-  apply_time: string;
-  audit_time?: string;
-  audit_remark?: string;
+  create_time: string;
+  review_time?: string;
+  review_message?: string;
 }
 
 export default function MyAdoptionsPage() {
   const router = useRouter();
 
-  const { data, loading, error } = useRequest(
+  const { data, loading } = useRequest(
     () => request.get("/api/adoption/my-list"),
     {
       onSuccess: (res) => {
         if (res.businessCode !== 0) {
-          message.error(res.message || "获取领养记录失败");
+          message.error(res.message);
         }
-      },
-      onError: () => {
-        message.error("网络请求失败");
       },
     }
   );
 
   const list = (data?.data as { list?: AdoptionRecord[] })?.list ?? [];
 
-  const getStatusInfo = (status: number) => {
-    const m: Record<
-      number,
-      {
-        color: string;
-        text: string;
-        step: number;
-        status: "process" | "wait" | "finish" | "error";
-      }
-    > = {
-      0: { color: "blue", text: "审核中", step: 1, status: "process" },
-      1: { color: "orange", text: "已取消", step: 1, status: "wait" }, // 业务暂未实现取消，预留
-      2: { color: "red", text: "被拒绝", step: 2, status: "error" },
-      3: { color: "green", text: "已通过", step: 2, status: "finish" },
-    };
-    return (
-      m[status] || { color: "default", text: "未知", step: 0, status: "wait" }
-    );
-  };
-
-  const getDefaultImage = (species: string | number) => {
-    const s = String(species);
-    if (species === "猫" || s === "1") {
-      return "https://5b0988e595225.cdn.sohucs.com/images/20190808/082b82088b154024a5d8dba5da1b1c57.jpeg";
+  const getStatusConfig = (status: number) => {
+    switch (status) {
+      case 0:
+        return {
+          color: "blue",
+          text: "待审核",
+          icon: <ClockCircleOutlined />,
+          step: 1,
+        };
+      case 1:
+        return {
+          color: "green",
+          text: "审核通过",
+          icon: <CheckCircleOutlined />,
+          step: 2,
+        };
+      case 2:
+        return {
+          color: "red",
+          text: "已拒绝",
+          icon: <CloseCircleOutlined />,
+          step: 2,
+        };
+      default:
+        return { color: "default", text: "未知", icon: null, step: 0 };
     }
-    if (species === "狗" || s === "2") {
-      return "https://img2.baidu.com/it/u=4071791880,181388239&fm=253&app=138&f=JPEG?w=500&h=625";
-    }
-    return "https://img.js.design/assets/smartFill/img457164da74a008.jpg";
   };
 
   return (
-    <div style={{ padding: "24px", background: "#F8FAFC", minHeight: "100vh" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <div style={{ marginBottom: 32 }}>
-          <Title
-            level={2}
-            style={{ marginBottom: 8, fontSize: 24, fontWeight: 600 }}
-          >
-            我的领养记录
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 0" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div style={{ marginBottom: 48 }}>
+          <Title style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>
+            我的领养申请
           </Title>
-          <Text style={{ color: "#64748B" }}>
-            记录您与每一位小伙伴的缘分起点
+          <Text style={{ color: "var(--text-secondary)", fontSize: 16 }}>
+            追踪您的每一份爱心传递进度
           </Text>
         </div>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "100px 0" }}>
-            <Spin size="large" description="正在获取领养历史..." />
-          </div>
-        ) : list.length > 0 ? (
-          <Space direction="vertical" size={20} style={{ width: "100%" }}>
-            {list.map((record) => {
-              const statusInfo = getStatusInfo(record.status);
-              return (
-                <Card
-                  key={record.app_id}
-                  className="card-shadow"
-                  bordered={false}
-                  style={{
-                    borderRadius: 8,
-                  }}
-                  bodyStyle={{ padding: 24 }}
-                >
-                  <Row gutter={32} align="middle">
-                    <Col xs={24} md={6}>
-                      <div
-                        style={{
-                          height: 140,
-                          borderRadius: 6,
-                          overflow: "hidden",
-                          background: "#F1F5F9",
-                        }}
-                      >
-                        <img
-                          src={
-                            record.image_urls
-                              ? record.image_urls.split(",")[0]
-                              : getDefaultImage(record.species)
+        <Spin spinning={loading} tip="正在同步申请进度...">
+          {list.length > 0 ? (
+            <Space direction="vertical" size={32} style={{ width: "100%" }}>
+              {list.map((item, index) => {
+                const status = getStatusConfig(item.status);
+                const imageUrl = getPetCoverImage(item.image_urls);
+
+                return (
+                  <motion.div
+                    key={item.apply_id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="modern-card"
+                    style={{ padding: 32 }}
+                  >
+                    <Row gutter={48} align="middle">
+                      <Col xs={24} md={6}>
+                        <div
+                          style={{ position: "relative", cursor: "pointer" }}
+                          onClick={() =>
+                            router.push(`/pet/detail?pet_id=${item.pet_id}`)
                           }
-                          alt={record.pet_name}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      </div>
-                    </Col>
-                    <Col xs={24} md={18}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          marginBottom: 20,
-                        }}
-                      >
-                        <div>
-                          <Title
-                            level={4}
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={item.pet_name}
                             style={{
-                              marginBottom: 8,
-                              fontSize: 18,
-                              color: "#0F172A",
+                              width: "100%",
+                              height: 180,
+                              borderRadius: 20,
+                              objectFit: "cover",
+                              boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
                             }}
+                          />
+                          <div
+                            style={{ position: "absolute", top: 12, left: 12 }}
                           >
-                            {record.pet_name}
-                          </Title>
-                          <Space size={12}>
                             <Tag
-                              bordered={false}
+                              color={status.color}
                               style={{
-                                background: "#F1F5F9",
-                                color: "#475569",
-                                borderRadius: 4,
+                                borderRadius: 8,
+                                padding: "4px 12px",
+                                fontWeight: 600,
+                                border: "none",
+                                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
                               }}
                             >
-                              {record.breed || record.species}
+                              {status.text}
                             </Tag>
-                            <Text style={{ fontSize: 13, color: "#64748B" }}>
-                              <UserOutlined style={{ marginRight: 4 }} />
-                              发布者: {record.owner_name}
-                            </Text>
-                          </Space>
+                          </div>
                         </div>
-                        <Tag
-                          color={
-                            statusInfo.color === "blue"
-                              ? "processing"
-                              : statusInfo.color === "green"
-                              ? "success"
-                              : "error"
-                          }
-                          bordered={false}
+                      </Col>
+                      <Col xs={24} md={18}>
+                        <div
                           style={{
-                            padding: "2px 12px",
-                            borderRadius: 4,
-                            fontSize: 12,
-                            fontWeight: 500,
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            marginBottom: 24,
                           }}
                         >
-                          {statusInfo.text}
-                        </Tag>
-                      </div>
+                          <div>
+                            <Title
+                              style={{
+                                margin: "0 0 8px 0",
+                                fontSize: 24,
+                                fontWeight: 800,
+                              }}
+                            >
+                              {item.pet_name}
+                            </Title>
+                            <Text
+                              style={{
+                                color: "var(--text-secondary)",
+                                fontSize: 14,
+                                fontWeight: 500,
+                              }}
+                            >
+                              {item.species} · {item.breed || "普通品种"}
+                            </Text>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                color: "var(--text-muted)",
+                                display: "block",
+                                marginBottom: 4,
+                              }}
+                            >
+                              申请时间
+                            </Text>
+                            <Text style={{ fontSize: 14, fontWeight: 600 }}>
+                              {dayjs(item.create_time).format("YYYY-MM-DD")}
+                            </Text>
+                          </div>
+                        </div>
 
-                      <div
-                        style={{
-                          background: "#F8FAFC",
-                          padding: "20px 24px",
-                          borderRadius: 8,
-                          marginBottom: 20,
-                          border: "1px solid #F1F5F9",
-                        }}
-                      >
                         <Steps
                           size="small"
-                          current={statusInfo.step}
-                          status={statusInfo.status}
+                          current={status.step}
                           items={[
                             {
                               title: "提交申请",
-                              description: dayjs(record.apply_time).format(
-                                "MM-DD HH:mm"
-                              ),
                             },
                             {
-                              title: "后台审核",
-                              description: record.audit_time
-                                ? dayjs(record.audit_time).format("MM-DD HH:mm")
-                                : "等待中",
+                              title: "原主人审核",
+                              description:
+                                item.status === 0 ? "审核中" : "已处理",
                             },
                             {
                               title:
-                                record.status === 2 ? "申请拒绝" : "领养成功",
-                              description:
-                                record.audit_remark ||
-                                (record.status === 3 ? "恭喜您！" : ""),
+                                item.status === 2 ? "审核未通过" : "成功领养",
+                              status:
+                                item.status === 2
+                                  ? "error"
+                                  : item.status === 1
+                                  ? "finish"
+                                  : "wait",
                             },
                           ]}
+                          style={{ marginBottom: 32, padding: "0 8px" }}
                         />
-                      </div>
 
-                      <div
-                        style={{ display: "flex", justifyContent: "flex-end" }}
-                      >
-                        <Button
-                          icon={<InfoCircleOutlined />}
-                          onClick={() =>
-                            router.push(`/pet/detail?pet_id=${record.pet_id}`)
-                          }
-                          style={{ borderRadius: 6, color: "#64748B" }}
+                        <div
+                          style={{
+                            padding: "16px 20px",
+                            background: "var(--bg-main)",
+                            borderRadius: 16,
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
                         >
-                          详情
-                        </Button>
-                      </div>
-                    </Col>
-                  </Row>
-                </Card>
-              );
-            })}
-          </Space>
-        ) : (
-          <Card
-            bordered={false}
-            style={{
-              padding: "80px 0",
-              textAlign: "center",
-              borderRadius: 12,
-            }}
-          >
-            <Empty
-              description={
-                <Text style={{ color: "#94A3B8" }}>暂无领养申请记录</Text>
-              }
-            >
-              <Button
-                type="primary"
-                onClick={() => router.push("/")}
+                          <Space size={12}>
+                            <Avatar
+                              size={32}
+                              src={item.owner_avatar}
+                              icon={<UserOutlined />}
+                            />
+                            <div>
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  color: "var(--text-muted)",
+                                  display: "block",
+                                  lineHeight: 1,
+                                }}
+                              >
+                                原主人
+                              </Text>
+                              <Text style={{ fontSize: 14, fontWeight: 600 }}>
+                                {item.owner_name}
+                              </Text>
+                            </div>
+                          </Space>
+
+                          {item.review_message && (
+                            <div
+                              style={{
+                                flex: 1,
+                                margin: "0 32px",
+                                padding: "8px 16px",
+                                background: "white",
+                                borderRadius: 8,
+                                borderLeft: `4px solid ${
+                                  item.status === 2
+                                    ? "var(--color-error)"
+                                    : "var(--color-success)"
+                                }`,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 13,
+                                  color: "var(--text-secondary)",
+                                }}
+                              >
+                                <Text strong>审核意见：</Text>
+                                {item.review_message}
+                              </Text>
+                            </div>
+                          )}
+
+                          <Button
+                            type="link"
+                            className="btn-link"
+                            style={{ fontWeight: 600 }}
+                            onClick={() =>
+                              router.push(`/pet/detail?pet_id=${item.pet_id}`)
+                            }
+                          >
+                            查看宠物详情 <ArrowRightOutlined />
+                          </Button>
+                        </div>
+                      </Col>
+                    </Row>
+                  </motion.div>
+                );
+              })}
+            </Space>
+          ) : (
+            !loading && (
+              <div
                 style={{
-                  height: 40,
-                  borderRadius: 6,
-                  background: "#2A9D8F",
-                  border: "none",
+                  padding: "100px 0",
+                  textAlign: "center",
+                  background: "white",
+                  borderRadius: 32,
                 }}
               >
-                探索更多伙伴
-              </Button>
-            </Empty>
-          </Card>
-        )}
-      </div>
+                <Empty
+                  image={
+                    <HistoryOutlined
+                      style={{
+                        fontSize: 64,
+                        color: "var(--border-light)",
+                        marginBottom: 24,
+                      }}
+                    />
+                  }
+                  description={
+                    <Text type="secondary" style={{ fontSize: 16 }}>
+                      您还没有提交过领养申请哦
+                    </Text>
+                  }
+                >
+                  <Button
+                    className="btn-primary"
+                    type="primary"
+                    size="large"
+                    onClick={() => router.push("/")}
+                    style={{ marginTop: 24 }}
+                  >
+                    开启领养之旅
+                  </Button>
+                </Empty>
+              </div>
+            )
+          )}
+        </Spin>
+      </motion.div>
     </div>
   );
 }

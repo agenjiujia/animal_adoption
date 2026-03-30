@@ -2,14 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRequest } from "ahooks";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Card,
   Typography,
-  Descriptions,
   Button,
-  Divider,
   Image,
   Tag,
   Carousel,
@@ -19,83 +15,42 @@ import {
   Spin,
   Modal,
   message,
-  Breadcrumb,
+  Avatar,
+  Divider,
 } from "antd";
 import {
   LeftOutlined,
   RightOutlined,
-  HomeOutlined,
   HeartOutlined,
   HeartFilled,
-  CalendarOutlined,
-  InfoCircleOutlined,
-  MedicineBoxOutlined,
   UserOutlined,
   ArrowLeftOutlined,
+  ShareAltOutlined,
 } from "@ant-design/icons";
 import { request } from "@/utils/request";
-import {
-  PetGenderOptions,
-  PetVaccineStatusOptions,
-  PetNeuteredOptions,
-  PetSpeciesMap,
-} from "@/constant";
-import { PetSpeciesEnum, PetStatusEnum } from "@/types";
 import dayjs from "dayjs";
+import { motion } from "framer-motion";
+import { getPetImageList } from "@/lib/petImage";
 
 const { Title, Text, Paragraph } = Typography;
-
-interface ArrowProps {
-  className?: string;
-  style?: React.CSSProperties;
-  onClick?: React.MouseEventHandler;
-}
-
-const CustomPrevArrow = (props: ArrowProps) => {
-  const { className, style, onClick } = props;
-  return (
-    <div
-      className={`${className} custom-arrow prev`}
-      style={{ ...style }}
-      onClick={onClick}
-    >
-      <LeftOutlined />
-    </div>
-  );
-};
-
-const CustomNextArrow = (props: ArrowProps) => {
-  const { className, style, onClick } = props;
-  return (
-    <div
-      className={`${className} custom-arrow next`}
-      style={{ ...style }}
-      onClick={onClick}
-    >
-      <RightOutlined />
-    </div>
-  );
-};
 
 interface PetDetail {
   pet_id: number;
   user_id: number;
   name: string;
   species: string;
-  breed?: string;
-  age?: number;
+  breed: string;
+  age: number;
   gender: number;
-  weight?: number;
-  health_status?: string;
+  image_urls?: string | string[];
+  description: string;
+  status: number;
   vaccine_status: number;
   neutered: number;
-  description?: string;
-  image_urls?: string;
-  status: number;
-  create_time: string;
-  update_time: string;
-  is_applied?: number;
-  is_favorited?: number;
+  is_applied: number;
+  is_favorited: number;
+  owner_name: string;
+  owner_avatar: string;
 }
 
 export default function PetDetailPage() {
@@ -103,23 +58,16 @@ export default function PetDetailPage() {
   const qs = useSearchParams();
   const petId = qs.get("pet_id");
   const [uid, setUid] = useState<number | null>(null);
-  const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("userInfo");
-      if (raw) {
-        setTimeout(() => {
-          try {
-            const parsed = JSON.parse(raw);
-            setUid(parsed.user_id ?? null);
-          } catch (e) {
-            console.error("Parse userInfo error:", e);
-          }
-        }, 0);
+    const raw = localStorage.getItem("userInfo");
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        setUid(parsed.user_id ?? null);
+      } catch {
+        setUid(null);
       }
-    } catch {
-      setTimeout(() => setUid(null), 0);
     }
   }, []);
 
@@ -130,56 +78,39 @@ export default function PetDetailPage() {
 
   const petDetail = data?.data as PetDetail | undefined;
 
-  const canEdit = useMemo(() => {
-    if (!petDetail || uid === null) return false;
-    return petDetail.user_id === uid;
-  }, [petDetail, uid]);
-
-  const label = (opts: { value: number; label: string }[], v: number) =>
-    opts.find((o) => o.value === v)?.label ?? "未知";
-
-  const getStatusInfo = (s: number) => {
-    const m: Record<number, { color: string; text: string }> = {
-      [PetStatusEnum.ForAdoption]: { color: "blue", text: "待领养" },
-      [PetStatusEnum.Adopted]: { color: "green", text: "已领养" },
-      [PetStatusEnum.Offline]: { color: "orange", text: "已下架" },
-    };
-    return m[s] ?? { color: "default", text: "未知" };
-  };
-
   const images = useMemo(() => {
     if (!petDetail?.image_urls) return [];
-    return petDetail.image_urls.split(",").filter(Boolean);
+    return getPetImageList(petDetail.image_urls);
   }, [petDetail]);
 
   const handleAdopt = () => {
     if (!petDetail) return;
     Modal.confirm({
-      title: "确认领养申请",
-      content: `您确定要申请领养 ${petDetail.name} 吗？`,
+      title: "确认申请领养",
+      content: `您确定要申请领养 "${petDetail.name}" 吗？我们将立即通知原主人。`,
       okText: "确认申请",
       cancelText: "再想想",
-      okButtonProps: { shape: "round" },
-      cancelButtonProps: { shape: "round" },
+      centered: true,
       onOk: async () => {
         try {
-          const res = await fetch("/api/adoption/create", {
+          const res = await fetch(`/api/pet/${petDetail.pet_id}/apply`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pet_id: petDetail.pet_id }),
+            body: JSON.stringify({
+              message: "我想给这个小家伙一个温暖的家。",
+            }),
           });
           const json = await res.json();
           if (json.businessCode === 0) {
-            message.success("申请成功，请等待管理员审核");
+            message.success("申请已提交，请耐心等待主人联系");
             refresh();
           } else if (json.httpCode === 401) {
-            message.warning("请先登录后再申请领养");
             router.push("/login");
           } else {
-            message.error(json.message || "申请失败");
+            message.error(json.message);
           }
-        } catch (error) {
-          message.error("网络请求失败");
+        } catch {
+          message.error("网络异常，请稍后重试");
         }
       },
     });
@@ -188,602 +119,377 @@ export default function PetDetailPage() {
   const handleFavorite = async () => {
     if (!petDetail) return;
     try {
-      const res = await fetch("/api/favorite/toggle", {
+      const res = await fetch(`/api/pet/${petDetail.pet_id}/favorite`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pet_id: petDetail.pet_id }),
       });
       const json = await res.json();
       if (json.businessCode === 0) {
-        message.success(json.message);
         refresh();
       } else if (json.httpCode === 401) {
-        message.warning("请先登录后再收藏");
         router.push("/login");
-      } else {
-        message.error(json.message || "操作失败");
       }
-    } catch (error) {
-      message.error("网络请求失败");
+    } catch {
+      message.error("网络异常");
     }
   };
 
   if (loading) {
     return (
-      <div style={{ padding: "100px 0", textAlign: "center" }}>
-        <Spin size="large" description="正在加载宠物详情..." />
+      <div style={{ padding: "200px 0", textAlign: "center" }}>
+        <Spin size="large" />
       </div>
     );
   }
 
   if (error || !petDetail) {
     return (
-      <div style={{ padding: "100px 24px", maxWidth: 1200, margin: "0 auto" }}>
-        <Card
-          style={{ borderRadius: 20, textAlign: "center", padding: "40px 0" }}
-        >
-          <Text
-            type="danger"
-            style={{ fontSize: 18, display: "block", marginBottom: 24 }}
-          >
-            {error?.message || "未找到宠物详情"}
-          </Text>
-          <Button
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={() => router.push("/")}
-          >
-            返回首页
-          </Button>
-        </Card>
+      <div style={{ padding: "120px 0", textAlign: "center" }}>
+        <Title style={{ fontWeight: 700 }}>抱歉，未找到该宠物信息</Title>
+        <Button type="primary" onClick={() => router.push("/")}>
+          返回首页
+        </Button>
       </div>
     );
   }
 
-  const statusInfo = getStatusInfo(petDetail.status);
+  const isOwner = petDetail.user_id === uid;
 
   return (
-    <div
-      style={{
-        background: "#F8FAFC",
-        minHeight: "100vh",
-        padding: "20px 24px",
-      }}
-    >
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        {/* Navigation */}
-        <div
-          style={{
-            marginBottom: 32,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Breadcrumb
-            items={[
-              {
-                title: (
-                  <Link href="/" style={{ color: "#64748B" }}>
-                    <HomeOutlined /> 首页
-                  </Link>
-                ),
-              },
-              { title: <span style={{ color: "#64748B" }}>宠物详情</span> },
-              {
-                title: (
-                  <span style={{ color: "#0F172A", fontWeight: 500 }}>
-                    {petDetail.name}
-                  </span>
-                ),
-              },
-            ]}
-          />
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => router.push("/")}
-            style={{ borderRadius: 6, color: "#64748B" }}
+    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 100 }}>
+      <Row gutter={[64, 64]}>
+        {/* 左侧：宠物美照 */}
+        <Col xs={24} lg={12}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
           >
-            返回首页
-          </Button>
-        </div>
+            <Carousel
+              infinite={false}
+              prevArrow={<CustomPrevArrow />}
+              nextArrow={<CustomNextArrow />}
+              arrows
+              style={{
+                borderRadius: 32,
+                overflow: "hidden",
+                boxShadow: "0 20px 40px -20px rgba(0,0,0,0.1)",
+              }}
+            >
+              {images.map((url: string, index: number) => (
+                <div key={index}>
+                  <img
+                    src={url}
+                    alt={petDetail.name}
+                    style={{ width: "100%", height: 640, objectFit: "cover" }}
+                  />
+                </div>
+              ))}
+            </Carousel>
+          </motion.div>
+        </Col>
 
-        <Row gutter={[40, 40]}>
-          {/* Left Column: Images */}
-          <Col xs={24} lg={12}>
-            <div style={{ position: "sticky", top: 100 }}>
+        {/* 右侧：详细信息 */}
+        <Col xs={24} lg={12}>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <div style={{ marginBottom: 48 }}>
               <div
-                className="custom-carousel-container"
                 style={{
-                  background: "#fff",
-                  borderRadius: 12,
-                  padding: "40px",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-                  position: "relative",
-                  overflow: "hidden",
-                  border: "1px solid #F1F5F9",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--primary)",
+                  marginBottom: 12,
                 }}
               >
-                {images.length > 0 ? (
-                  <>
-                    <Carousel
-                      arrows
-                      adaptiveHeight
-                      afterChange={(index) => setCurrentImgIndex(index)}
-                      prevArrow={<CustomPrevArrow />}
-                      nextArrow={<CustomNextArrow />}
-                    >
-                      {images.map((url, i) => (
-                        <div key={i}>
-                          <div
-                            style={{
-                              height: 480,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              background: "#F8FAFC",
-                              borderRadius: 8,
-                              overflow: "hidden",
-                            }}
-                          >
-                            <Image
-                              src={url}
-                              alt={`pet-${i}`}
-                              style={{
-                                maxWidth: "100%",
-                                maxHeight: "100%",
-                                objectFit: "contain",
-                              }}
-                              preview={{
-                                mask: (
-                                  <div style={{ fontSize: 14 }}>
-                                    <InfoCircleOutlined /> 查看原图
-                                  </div>
-                                ),
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </Carousel>
-                    {/* Counter */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: 60,
-                        right: 60,
-                        background: "rgba(15, 23, 42, 0.6)",
-                        color: "#fff",
-                        padding: "4px 12px",
-                        borderRadius: 20,
-                        fontSize: 11,
-                        zIndex: 10,
-                        backdropFilter: "blur(4px)",
-                      }}
-                    >
-                      {currentImgIndex + 1} / {images.length}
-                    </div>
-                  </>
-                ) : (
-                  <div
-                    style={{
-                      height: 480,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: "#F8FAFC",
-                      borderRadius: 8,
-                    }}
-                  >
-                    <Text style={{ color: "#94A3B8" }}>暂无宠物图片</Text>
-                  </div>
-                )}
+                档案编号：#{petDetail.pet_id.toString().padStart(4, "0")}
               </div>
-            </div>
-          </Col>
-
-          {/* Right Column: Info */}
-          <Col xs={24} lg={12}>
-            <Card
-              bordered={false}
-              style={{
-                borderRadius: 12,
-                boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-                height: "100%",
-              }}
-              bodyStyle={{ padding: "40px" }}
-            >
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  marginBottom: 24,
-                }}
-              >
-                <div>
-                  <Tag
-                    color={
-                      statusInfo.color === "blue"
-                        ? "#E6F4F1"
-                        : statusInfo.color === "green"
-                        ? "#E6F7F0"
-                        : "#FFF7ED"
-                    }
-                    style={{
-                      borderRadius: 4,
-                      padding: "2px 10px",
-                      marginBottom: 16,
-                      color:
-                        statusInfo.color === "blue"
-                          ? "#2A9D8F"
-                          : statusInfo.color === "green"
-                          ? "#10B981"
-                          : "#F4A261",
-                      border: "none",
-                      fontSize: 12,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {statusInfo.text}
-                  </Tag>
-                  <Title
-                    level={1}
-                    style={{
-                      margin: 0,
-                      fontSize: 32,
-                      fontWeight: 700,
-                      color: "#0F172A",
-                    }}
-                  >
-                    {petDetail.name}
-                  </Title>
-                </div>
-                <Button
-                  type="text"
-                  shape="circle"
-                  icon={
-                    petDetail.is_favorited ? (
-                      <HeartFilled style={{ color: "#EF4444", fontSize: 24 }} />
-                    ) : (
-                      <HeartOutlined
-                        style={{ fontSize: 24, color: "#CBD5E1" }}
-                      />
-                    )
-                  }
-                  onClick={handleFavorite}
-                />
-              </div>
-
-              <Space size={[8, 12]} wrap style={{ marginBottom: 32 }}>
-                <Tag
-                  bordered={false}
-                  style={{
-                    fontSize: 13,
-                    padding: "4px 12px",
-                    borderRadius: 6,
-                    background: "#F1F5F9",
-                    color: "#475569",
-                  }}
-                >
-                  {
-                    PetSpeciesMap[
-                      petDetail.species as unknown as PetSpeciesEnum
-                    ]?.label
-                  }
-                </Tag>
-                {petDetail.breed && (
-                  <Tag
-                    bordered={false}
-                    style={{
-                      fontSize: 13,
-                      padding: "4px 12px",
-                      borderRadius: 6,
-                      background: "#F1F5F9",
-                      color: "#475569",
-                    }}
-                  >
-                    {petDetail.breed}
-                  </Tag>
-                )}
-                <Tag
-                  bordered={false}
-                  style={{
-                    fontSize: 13,
-                    padding: "4px 12px",
-                    borderRadius: 6,
-                    background: "#F1F5F9",
-                    color: "#475569",
-                  }}
-                >
-                  {label(PetGenderOptions, petDetail.gender)}
-                </Tag>
-                <Tag
-                  bordered={false}
-                  style={{
-                    fontSize: 13,
-                    padding: "4px 12px",
-                    borderRadius: 6,
-                    background: "#F1F5F9",
-                    color: "#475569",
-                  }}
-                >
-                  {petDetail.age ? `${petDetail.age}个月` : "年龄不详"}
-                </Tag>
-              </Space>
-
-              <Divider
-                style={{ margin: "0 0 32px 0", borderColor: "#F1F5F9" }}
-              />
-
-              <Title
-                level={4}
-                style={{ marginBottom: 16, fontSize: 18, color: "#0F172A" }}
-              >
-                <InfoCircleOutlined
-                  style={{ marginRight: 8, color: "#2A9D8F" }}
-                />{" "}
-                宠物故事
-              </Title>
-              <Paragraph
-                style={{
-                  fontSize: 15,
-                  lineHeight: 1.8,
-                  color: "#334155",
+                  alignItems: "center",
                   marginBottom: 32,
                 }}
               >
-                {petDetail.description ||
-                  "这只可爱的小伙伴暂时还没有详细的故事，但它正期待着与你开启新的篇章。"}
+                <Title style={{ margin: 0, fontSize: 48, fontWeight: 800 }}>
+                  {petDetail.name}
+                </Title>
+                <motion.div whileTap={{ scale: 0.9 }}>
+                  <Button
+                    type="text"
+                    shape="circle"
+                    size="large"
+                    icon={
+                      petDetail.is_favorited ? (
+                        <HeartFilled
+                          style={{ color: "var(--secondary)", fontSize: 24 }}
+                        />
+                      ) : (
+                        <HeartOutlined style={{ fontSize: 24 }} />
+                      )
+                    }
+                    onClick={handleFavorite}
+                    style={{
+                      background: "rgba(244, 63, 94, 0.05)",
+                      width: 56,
+                      height: 56,
+                    }}
+                  />
+                </motion.div>
+              </div>
+
+              <Space size={24} style={{ marginBottom: 40 }}>
+                <div
+                  className="modern-card"
+                  style={{
+                    padding: "16px 24px",
+                    borderRadius: 16,
+                    boxShadow: "none",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-muted)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    品种
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>
+                    {petDetail.breed || petDetail.species}
+                  </div>
+                </div>
+                <div
+                  className="modern-card"
+                  style={{
+                    padding: "16px 24px",
+                    borderRadius: 16,
+                    boxShadow: "none",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-muted)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    年龄
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>
+                    {petDetail.age} 个月
+                  </div>
+                </div>
+                <div
+                  className="modern-card"
+                  style={{
+                    padding: "16px 24px",
+                    borderRadius: 16,
+                    boxShadow: "none",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-muted)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    性别
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>
+                    {petDetail.gender === 1 ? "公" : "母"}
+                  </div>
+                </div>
+              </Space>
+
+              <Title level={4} style={{ marginBottom: 16, fontWeight: 700 }}>
+                关于它
+              </Title>
+              <Paragraph
+                style={{
+                  fontSize: 16,
+                  color: "var(--text-secondary)",
+                  lineHeight: 1.8,
+                  marginBottom: 40,
+                }}
+              >
+                {petDetail.description || "主人很懒，还没有给它写介绍哦~"}
               </Paragraph>
 
-              <Title
-                level={4}
-                style={{ marginBottom: 20, fontSize: 18, color: "#0F172A" }}
-              >
-                <MedicineBoxOutlined
-                  style={{ marginRight: 8, color: "#2A9D8F" }}
-                />{" "}
-                健康状况
-              </Title>
-              <Row gutter={[16, 16]} style={{ marginBottom: 32 }}>
+              <Row gutter={[16, 16]} style={{ marginBottom: 48 }}>
                 <Col span={12}>
                   <div
+                    className="modern-card"
                     style={{
-                      background: "#F8FAFC",
-                      padding: "16px",
-                      borderRadius: 8,
-                      border: "1px solid #F1F5F9",
+                      padding: 20,
+                      borderRadius: 16,
+                      background: "var(--bg-main)",
+                      border: "none",
                     }}
                   >
-                    <Text
+                    <div
                       style={{
-                        display: "block",
-                        marginBottom: 4,
-                        color: "#64748B",
                         fontSize: 12,
+                        color: "var(--text-muted)",
+                        marginBottom: 8,
                       }}
                     >
-                      疫苗状态
-                    </Text>
-                    <Text style={{ color: "#334155", fontWeight: 500 }}>
-                      {label(PetVaccineStatusOptions, petDetail.vaccine_status)}
-                    </Text>
+                      疫苗情况
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 600 }}>
+                      {petDetail.vaccine_status === 1
+                        ? "✅ 已接种"
+                        : "⏳ 待接种"}
+                    </div>
                   </div>
                 </Col>
                 <Col span={12}>
                   <div
+                    className="modern-card"
                     style={{
-                      background: "#F8FAFC",
-                      padding: "16px",
-                      borderRadius: 8,
-                      border: "1px solid #F1F5F9",
+                      padding: 20,
+                      borderRadius: 16,
+                      background: "var(--bg-main)",
+                      border: "none",
                     }}
                   >
-                    <Text
+                    <div
                       style={{
-                        display: "block",
-                        marginBottom: 4,
-                        color: "#64748B",
                         fontSize: 12,
+                        color: "var(--text-muted)",
+                        marginBottom: 8,
                       }}
                     >
-                      绝育状态
-                    </Text>
-                    <Text style={{ color: "#334155", fontWeight: 500 }}>
-                      {label(PetNeuteredOptions, petDetail.neutered)}
-                    </Text>
-                  </div>
-                </Col>
-                <Col span={24}>
-                  <div
-                    style={{
-                      background: "#F8FAFC",
-                      padding: "16px",
-                      borderRadius: 8,
-                      border: "1px solid #F1F5F9",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        display: "block",
-                        marginBottom: 4,
-                        color: "#64748B",
-                        fontSize: 12,
-                      }}
-                    >
-                      健康描述
-                    </Text>
-                    <Text style={{ color: "#334155", fontWeight: 500 }}>
-                      {petDetail.health_status || "健康状况良好"}
-                    </Text>
+                      绝育情况
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 600 }}>
+                      {petDetail.neutered === 1 ? "✅ 已绝育" : "⏳ 未绝育"}
+                    </div>
                   </div>
                 </Col>
               </Row>
 
               <div
                 style={{
-                  background: "#FDFCFB",
-                  padding: 20,
-                  borderRadius: 12,
-                  marginBottom: 40,
-                  border: "1px solid #F4EBE4",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                  marginBottom: 48,
+                  padding: 24,
+                  background: "var(--bg-main)",
+                  borderRadius: 24,
                 }}
               >
-                <Space align="start">
-                  <UserOutlined style={{ color: "#F4A261", marginTop: 4 }} />
-                  <div>
-                    <Text
-                      style={{
-                        color: "#9A3412",
-                        fontWeight: 600,
-                        fontSize: 14,
-                      }}
-                    >
-                      发布者寄语
-                    </Text>
-                    <Paragraph
-                      style={{
-                        margin: "4px 0 0 0",
-                        color: "#7C2D12",
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      希望领养人能够给它一个稳定、温暖的家，不离不弃。
-                    </Paragraph>
+                <Avatar
+                  size={56}
+                  src={petDetail.owner_avatar}
+                  icon={<UserOutlined />}
+                  style={{ border: "2px solid white" }}
+                />
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>
+                    {petDetail.owner_name}
                   </div>
-                </Space>
+                  <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                    原主人/发布者
+                  </div>
+                </div>
               </div>
 
               <div style={{ display: "flex", gap: 16 }}>
-                {petDetail.status === PetStatusEnum.ForAdoption ? (
-                  petDetail.user_id === uid ? (
-                    <Button
-                      size="large"
-                      block
-                      disabled
-                      style={{ height: 52, borderRadius: 8, fontSize: 15 }}
-                    >
-                      这是您发布的宠物
-                    </Button>
-                  ) : petDetail.is_applied ? (
-                    <Button
-                      type="primary"
-                      size="large"
-                      block
-                      disabled
-                      style={{
-                        height: 52,
-                        borderRadius: 8,
-                        background: "#10B981",
-                        borderColor: "#10B981",
-                        color: "#fff",
-                        fontSize: 15,
-                      }}
-                    >
-                      已提交申请
-                    </Button>
-                  ) : (
-                    <Button
-                      type="primary"
-                      size="large"
-                      block
-                      onClick={handleAdopt}
-                      style={{
-                        height: 52,
-                        borderRadius: 8,
-                        background: "#2A9D8F",
-                        fontSize: 16,
-                        fontWeight: 500,
-                      }}
-                    >
-                      立即申请领养
-                    </Button>
-                  )
-                ) : (
-                  <Button
-                    size="large"
-                    block
-                    disabled
-                    style={{ height: 52, borderRadius: 8, fontSize: 15 }}
-                  >
-                    该宠物目前不在待领养状态
-                  </Button>
-                )}
-
-                {canEdit && (
-                  <Button
-                    size="large"
-                    onClick={() => router.push(`/pet/edit/?pet_id=${petId}`)}
-                    style={{ height: 52, padding: "0 32px", borderRadius: 8 }}
-                  >
-                    编辑
-                  </Button>
-                )}
+                <Button
+                  className="btn-primary"
+                  type="primary"
+                  size="large"
+                  block
+                  style={{
+                    height: 64,
+                    fontSize: 18,
+                  }}
+                  onClick={handleAdopt}
+                  disabled={
+                    petDetail.is_applied === 1 ||
+                    petDetail.status !== 0 ||
+                    isOwner
+                  }
+                >
+                  {isOwner
+                    ? "这是您发布的宠物"
+                    : petDetail.is_applied === 1
+                    ? "领养申请审核中"
+                    : petDetail.status === 1
+                    ? "已被领养"
+                    : "申请领养"}
+                </Button>
+                <Button
+                  size="large"
+                  icon={<ShareAltOutlined />}
+                  style={{
+                    height: 64,
+                    width: 64,
+                    borderRadius: 16,
+                  }}
+                />
               </div>
-
-              <div style={{ marginTop: 24, textAlign: "center" }}>
-                <Space style={{ fontSize: 12, color: "#94A3B8" }}>
-                  <CalendarOutlined /> 发布于{" "}
-                  {dayjs(petDetail.create_time).format("YYYY-MM-DD")}
-                </Space>
-              </div>
-            </Card>
-          </Col>
-        </Row>
-      </div>
-
-      <style jsx global>{`
-        .custom-carousel-container .slick-dots {
-          bottom: 20px !important;
-        }
-        .custom-carousel-container .slick-dots li button {
-          background: #cbd5e1 !important;
-          height: 4px !important;
-          border-radius: 2px !important;
-          transition: all 0.3s !important;
-        }
-        .custom-carousel-container .slick-dots li.slick-active button {
-          background: #2a9d8f !important;
-          width: 20px !important;
-        }
-        .custom-arrow {
-          width: 40px;
-          height: 40px;
-          background: #fff;
-          border-radius: 50%;
-          display: flex !important;
-          align-items: center;
-          justify-content: center;
-          z-index: 2;
-          color: #334155;
-          font-size: 16px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-          transition: all 0.2s;
-          cursor: pointer;
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-        }
-        .custom-arrow:hover {
-          background: #2a9d8f;
-          color: #fff;
-          transform: translateY(-50%) scale(1.05);
-          box-shadow: 0 6px 16px rgba(42, 157, 143, 0.2);
-        }
-        .custom-arrow.prev {
-          left: -20px;
-        }
-        .custom-arrow.next {
-          right: -20px;
-        }
-        .slick-prev:before,
-        .slick-next:before {
-          display: none !important;
-        }
-      `}</style>
+            </div>
+          </motion.div>
+        </Col>
+      </Row>
     </div>
   );
 }
+
+const CustomPrevArrow = ({ onClick }: { onClick?: () => void }) => (
+  <div
+    onClick={onClick}
+    style={{
+      position: "absolute",
+      left: 24,
+      top: "50%",
+      zIndex: 10,
+      cursor: "pointer",
+      width: 48,
+      height: 48,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "rgba(255,255,255,0.2)",
+      backdropFilter: "blur(12px)",
+      color: "#fff",
+      borderRadius: "50%",
+      transform: "translateY(-50%)",
+    }}
+  >
+    <LeftOutlined style={{ fontSize: 20 }} />
+  </div>
+);
+
+const CustomNextArrow = ({ onClick }: { onClick?: () => void }) => (
+  <div
+    onClick={onClick}
+    style={{
+      position: "absolute",
+      right: 24,
+      top: "50%",
+      zIndex: 10,
+      cursor: "pointer",
+      width: 48,
+      height: 48,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "rgba(255,255,255,0.2)",
+      backdropFilter: "blur(12px)",
+      color: "#fff",
+      borderRadius: "50%",
+      transform: "translateY(-50%)",
+    }}
+  >
+    <RightOutlined style={{ fontSize: 20 }} />
+  </div>
+);
