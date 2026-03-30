@@ -33,12 +33,16 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+/**
+ * Prisma 查询引擎会校验 schema 中的 env("DATABASE_URL")，仅传 datasources 仍会报
+ * "Environment variable not found: DATABASE_URL"。必须在实例化前写入 process.env。
+ */
+const resolvedDatabaseUrl = resolveDatabaseUrl();
+process.env.DATABASE_URL = resolvedDatabaseUrl;
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    datasources: {
-      db: { url: resolveDatabaseUrl() },
-    },
     log:
       process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
