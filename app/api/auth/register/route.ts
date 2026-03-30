@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
 import { withApiHandler } from "@/utils/response/hoc";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types/common/enum";
 import { registerSchema } from "@/lib/schemas/auth";
@@ -27,16 +27,22 @@ const registerHandler = async (req: NextRequest) => {
       message: parsed.error.issues[0]?.message ?? "参数错误",
     };
   }
-  const { username, phone, password, identityCard, address, email, avatar } =
-    parsed.data;
+  const {
+    username,
+    real_name,
+    phone,
+    password,
+    identityCard,
+    address,
+    email,
+    avatar,
+  } = parsed.data;
 
-  // 唯一字段重复校验
-  // 7.1 校验用户名是否已存在（对应 uk_username 唯一索引）
-  const [usernameExist] = await pool.query(
-    "SELECT user_id FROM user WHERE username = ?",
-    [username]
-  );
-  if ((usernameExist as unknown[]).length > 0) {
+  const usernameExist = await prisma.user.findFirst({
+    where: { username },
+    select: { user_id: true },
+  });
+  if (usernameExist) {
     return {
       businessCode: BusinessCodeEnum.UserAlreadyExist,
       httpCode: HttpCodeEnum.Conflict,
@@ -44,25 +50,25 @@ const registerHandler = async (req: NextRequest) => {
     };
   }
 
-  // 7.2 校验邮箱是否已存在（对应 uk_email 唯一索引）
-  const [emailExist] = await pool.query(
-    "SELECT user_id FROM user WHERE email = ?",
-    [email]
-  );
-  if ((emailExist as unknown[]).length > 0) {
-    return {
-      businessCode: BusinessCodeEnum.UserAlreadyExist,
-      httpCode: HttpCodeEnum.Conflict,
-      message: "该邮箱已被注册！",
-    };
+  if (email) {
+    const emailExist = await prisma.user.findFirst({
+      where: { email },
+      select: { user_id: true },
+    });
+    if (emailExist) {
+      return {
+        businessCode: BusinessCodeEnum.UserAlreadyExist,
+        httpCode: HttpCodeEnum.Conflict,
+        message: "该邮箱已被注册！",
+      };
+    }
   }
 
-  // 7.3 校验手机号是否已存在（对应 uk_phone 唯一索引）
-  const [phoneExist] = await pool.query(
-    "SELECT user_id FROM user WHERE phone = ?",
-    [phone]
-  );
-  if ((phoneExist as unknown[]).length > 0) {
+  const phoneExist = await prisma.user.findFirst({
+    where: { phone },
+    select: { user_id: true },
+  });
+  if (phoneExist) {
     return {
       businessCode: BusinessCodeEnum.UserAlreadyExist,
       httpCode: HttpCodeEnum.Conflict,
@@ -70,12 +76,11 @@ const registerHandler = async (req: NextRequest) => {
     };
   }
 
-  // 7.4 校验身份证号是否已存在（业务唯一性）
-  const [idCardExist] = await pool.query(
-    "SELECT user_id FROM user WHERE id_card = ?",
-    [identityCard]
-  );
-  if ((idCardExist as unknown[]).length > 0) {
+  const idCardExist = await prisma.user.findFirst({
+    where: { id_card: identityCard },
+    select: { user_id: true },
+  });
+  if (idCardExist) {
     return {
       businessCode: BusinessCodeEnum.UserAlreadyExist,
       httpCode: HttpCodeEnum.Conflict,
@@ -83,19 +88,28 @@ const registerHandler = async (req: NextRequest) => {
     };
   }
 
-  // 8. 密码加密
   const salt = bcrypt.genSaltSync(10);
   const hashedPassword = bcrypt.hashSync(password, salt);
 
-  // 9. 插入用户数据
-  await pool.query(
-    `INSERT INTO user (
-      username, avatar, phone, id_card, address, email, password, role, status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)`,
-    [username, avatar || null, phone, identityCard, address, email, hashedPassword]
-  );
+  const userCount = await prisma.user.count();
+  const isFirstUser = userCount === 0;
+  const role = isFirstUser ? 1 : 0;
 
-  // 10. 返回注册成功响应
+  await prisma.user.create({
+    data: {
+      username,
+      real_name,
+      avatar: avatar || null,
+      phone,
+      id_card: identityCard,
+      address,
+      email: email ?? null,
+      password: hashedPassword,
+      role,
+      status: 1,
+    },
+  });
+
   return {
     businessCode: BusinessCodeEnum.Success,
     httpCode: HttpCodeEnum.Created,
@@ -104,7 +118,4 @@ const registerHandler = async (req: NextRequest) => {
   };
 };
 
-/**
- * 注册接口（用 withApiHandler 包装，自动处理通用响应+全局异常）
- */
 export const POST = withApiHandler(registerHandler);

@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { withApiHandler } from "@/utils/response/hoc";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
 
 /**
@@ -11,13 +12,24 @@ export const GET = withApiHandler(async (req: NextRequest) => {
   const auth = resolveAuth(req);
   if (!auth.ok) return auth.error;
 
-  const [rows] = await pool.query(
-    `SELECT user_id, username, email, phone, avatar, real_name, id_card, address, role, status, create_time, update_time
-     FROM user WHERE user_id = ? LIMIT 1`,
-    [auth.user.userId]
-  );
-  const list = rows as Record<string, unknown>[];
-  if (!list?.length) {
+  const row = await prisma.user.findUnique({
+    where: { user_id: auth.user.userId },
+    select: {
+      user_id: true,
+      username: true,
+      email: true,
+      phone: true,
+      avatar: true,
+      real_name: true,
+      id_card: true,
+      address: true,
+      role: true,
+      status: true,
+      create_time: true,
+      update_time: true,
+    },
+  });
+  if (!row) {
     return {
       businessCode: BusinessCodeEnum.UserNotExist,
       httpCode: HttpCodeEnum.NotFound,
@@ -28,7 +40,7 @@ export const GET = withApiHandler(async (req: NextRequest) => {
     businessCode: BusinessCodeEnum.Success,
     httpCode: HttpCodeEnum.Success,
     message: "查询成功",
-    data: list[0],
+    data: row,
   };
 });
 
@@ -42,31 +54,14 @@ export const PATCH = withApiHandler(async (req: NextRequest) => {
   const body = await req.json();
   const { avatar, username, email, address, real_name } = body;
 
-  const fields: string[] = [];
-  const values: unknown[] = [];
+  const data: Prisma.UserUpdateInput = {};
+  if (avatar !== undefined) data.avatar = avatar;
+  if (username !== undefined) data.username = username;
+  if (email !== undefined) data.email = email === "" ? null : email;
+  if (address !== undefined) data.address = address;
+  if (real_name !== undefined) data.real_name = real_name;
 
-  if (avatar !== undefined) {
-    fields.push("avatar = ?");
-    values.push(avatar);
-  }
-  if (username !== undefined) {
-    fields.push("username = ?");
-    values.push(username);
-  }
-  if (email !== undefined) {
-    fields.push("email = ?");
-    values.push(email);
-  }
-  if (address !== undefined) {
-    fields.push("address = ?");
-    values.push(address);
-  }
-  if (real_name !== undefined) {
-    fields.push("real_name = ?");
-    values.push(real_name);
-  }
-
-  if (fields.length === 0) {
+  if (Object.keys(data).length === 0) {
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
@@ -74,12 +69,18 @@ export const PATCH = withApiHandler(async (req: NextRequest) => {
     };
   }
 
-  values.push(auth.user.userId);
-
-  await pool.query(
-    `UPDATE user SET ${fields.join(", ")}, update_time = CURRENT_TIMESTAMP WHERE user_id = ?`,
-    values
-  );
+  try {
+    await prisma.user.update({
+      where: { user_id: auth.user.userId },
+      data,
+    });
+  } catch {
+    return {
+      businessCode: BusinessCodeEnum.DataUpdateFailed,
+      httpCode: HttpCodeEnum.ServerError,
+      message: "更新失败（可能与其他唯一字段冲突）",
+    };
+  }
 
   return {
     businessCode: BusinessCodeEnum.Success,

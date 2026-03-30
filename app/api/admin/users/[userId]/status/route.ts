@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import { withAdminApiHandler } from "@/utils/response/hoc";
 import { wrapBusinessResponse } from "@/utils/response/core";
 import { BusinessCodeEnum, HttpCodeEnum, UserRoleEnum } from "@/types";
-import pool from "@/lib/db";
-import { resolveAuth } from "@/lib/auth"; // ✅ 新增：引入当前用户解析
+import prisma from "@/lib/db";
+import { resolveAuth } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
@@ -22,7 +22,6 @@ export async function PATCH(
   }
 
   return withAdminApiHandler(async (r) => {
-    // ✅ 核心改动1：解析当前登录的管理员信息
     const auth = resolveAuth(r);
     if (!auth.ok) return auth.error;
 
@@ -45,11 +44,7 @@ export async function PATCH(
       };
     }
 
-    // ✅ 核心改动2：禁止管理员禁用自己的账号
-    if (
-      auth.user?.role === UserRoleEnum.Admin &&
-      userId === auth.user?.userId
-    ) {
+    if (auth.user?.role === UserRoleEnum.Admin && userId === auth.user?.userId) {
       return {
         businessCode: BusinessCodeEnum.PermissionDenied,
         httpCode: HttpCodeEnum.Forbidden,
@@ -57,18 +52,19 @@ export async function PATCH(
       };
     }
 
-    const [result] = await pool.query(
-      "UPDATE user SET status = ? WHERE user_id = ?",
-      [st, userId]
-    );
-    const n = (result as { affectedRows?: number }).affectedRows ?? 0;
-    if (n === 0) {
+    try {
+      await prisma.user.update({
+        where: { user_id: userId },
+        data: { status: st },
+      });
+    } catch {
       return {
         businessCode: BusinessCodeEnum.UserNotExist,
         httpCode: HttpCodeEnum.NotFound,
         message: "用户不存在",
       };
     }
+
     return {
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,

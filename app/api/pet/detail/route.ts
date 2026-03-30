@@ -1,18 +1,23 @@
 import { NextRequest } from "next/server";
 import { withApiHandler } from "@/utils/response/hoc";
-import { BusinessCodeEnum, HttpCodeEnum, PetStatusEnum, UserRoleEnum } from "@/types";
+import {
+  BusinessCodeEnum,
+  HttpCodeEnum,
+  PetStatusEnum,
+  UserRoleEnum,
+} from "@/types";
 import type { BusinessResponse } from "@/types";
-import pool from "@/lib/db";
-import { resolveAuth } from "@/lib/auth";
+import prisma from "@/lib/db";
+import { resolveAuthOptional } from "@/lib/auth";
+import { serializePetForApi } from "@/lib/petSerialize";
 
 /**
- * 宠物详情：主人 / 管理员可看；普通用户可看「待领养」公开宠物
+ * 宠物详情：未登录仅可看待领养；登录用户按角色/归属扩展可见范围
  */
 const getPetDetailHandler = async (
   req: NextRequest
 ): Promise<BusinessResponse<Record<string, unknown> | null>> => {
-  const auth = resolveAuth(req);
-  if (!auth.ok) return { ...auth.error, data: null };
+  const authUser = resolveAuthOptional(req);
 
   const petIdStr = req.nextUrl.searchParams.get("pet_id");
   if (!petIdStr) {
@@ -34,11 +39,15 @@ const getPetDetailHandler = async (
   }
 
   try {
-    const [result] = await pool.query(
-      "SELECT * FROM pet WHERE pet_id = ? LIMIT 1",
-      [petId]
-    );
-    if (!result || !(result as unknown[]).length) {
+    const row = await prisma.pet.findFirst({
+      where: { pet_id: petId },
+      include: {
+        publisher: {
+          select: { username: true, avatar: true, user_id: true },
+        },
+      },
+    });
+    if (!row) {
       return {
         businessCode: BusinessCodeEnum.DataNotExist,
         httpCode: HttpCodeEnum.NotFound,
@@ -46,13 +55,12 @@ const getPetDetailHandler = async (
         data: null,
       };
     }
-    const row = (result as Record<string, unknown>[])[0];
-    const ownerId = Number(row.user_id);
-    const isAdmin = auth.user.role === UserRoleEnum.Admin;
+
+    const ownerId = row.user_id;
+    const isAdmin = authUser?.role === UserRoleEnum.Admin;
     const canView =
-      isAdmin ||
-      ownerId === auth.user.userId ||
-      Number(row.status) === PetStatusEnum.ForAdoption;
+      Number(row.status) === PetStatusEnum.ForAdoption ||
+      (!!authUser && (isAdmin || ownerId === authUser.userId));
 
     if (!canView) {
       return {
@@ -63,11 +71,32 @@ const getPetDetailHandler = async (
       };
     }
 
+    const { publisher, ...petRest } = row;
+    const out = serializePetForApi({
+      ...petRest,
+      owner_name: publisher?.username,
+      owner_avatar: publisher?.avatar,
+    } as Record<string, unknown>);
+
+    if (authUser) {
+      const fav = await prisma.petFavorite.findFirst({
+        where: { user_id: authUser.userId, pet_id: petId },
+        select: { favorite_id: true },
+      });
+      out.is_favorited = fav ? 1 : 0;
+
+      const app = await prisma.adoptionApply.findFirst({
+        where: { apply_user_id: authUser.userId, pet_id: petId },
+        select: { apply_id: true },
+      });
+      out.is_applied = app ? 1 : 0;
+    }
+
     return {
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,
       message: "查询成功",
-      data: row,
+      data: out,
     };
   } catch (e) {
     console.error(e);

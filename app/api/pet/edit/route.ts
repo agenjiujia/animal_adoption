@@ -1,17 +1,23 @@
+import type { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { withApiHandler } from "@/utils/response/hoc";
-import { BusinessCodeEnum, HttpCodeEnum, PetOperateTypeEnum } from "@/types"; // ✅ 已删除 UserRoleEnum 导入
-import pool, { withTransaction } from "@/lib/db";
+import {
+  BusinessCodeEnum,
+  HttpCodeEnum,
+  PetOperateTypeEnum,
+  PetSpeciesEnum,
+} from "@/types";
+import { PetSpeciesMap } from "@/constant";
+import prisma, { withTransaction } from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
+import { normalizeImageUrlsInput } from "@/lib/imageUrls";
 
 /**
- * 发布者修改宠物内容（不含 status）。所有用户（包括管理员）仅能编辑自己发布的记录。
+ * 发布者修改宠物内容（不含 status）
  */
 const editPetHandler = async (req: NextRequest) => {
   const auth = resolveAuth(req);
   if (!auth.ok) return auth.error;
-
-  // ✅ 核心改动：删除「管理员不能使用此接口」的权限拦截
 
   let requestData: Record<string, unknown>;
   try {
@@ -40,7 +46,6 @@ const editPetHandler = async (req: NextRequest) => {
     status,
   } = requestData;
 
-  // ✅ 保留：所有用户都不能通过此接口修改 status
   if (status !== undefined) {
     return {
       businessCode: BusinessCodeEnum.PermissionDenied,
@@ -58,22 +63,16 @@ const editPetHandler = async (req: NextRequest) => {
     };
   }
 
-  const [rows] = await pool.query(
-    "SELECT * FROM pet WHERE pet_id = ? LIMIT 1",
-    [petId]
-  );
-  if (!Array.isArray(rows) || !rows.length) {
+  const petInfo = await prisma.pet.findUnique({ where: { pet_id: petId } });
+  if (!petInfo) {
     return {
       businessCode: BusinessCodeEnum.DataNotExist,
       httpCode: HttpCodeEnum.NotFound,
       message: "宠物不存在",
     };
   }
-  const petInfo = rows[0] as Record<string, unknown>;
-  const oldPetData = { ...petInfo };
 
-  // ✅ 保留：所有用户统一仅能编辑本人发布的宠物
-  if (Number(petInfo.user_id) !== auth.user.userId) {
+  if (petInfo.user_id !== auth.user.userId) {
     return {
       businessCode: BusinessCodeEnum.DataPermissionDenied,
       httpCode: HttpCodeEnum.Forbidden,
@@ -81,7 +80,7 @@ const editPetHandler = async (req: NextRequest) => {
     };
   }
 
-  const updateFields: Record<string, unknown> = {};
+  const updateData: Prisma.PetUpdateInput = {};
 
   if (name !== undefined) {
     if (!String(name).trim() || String(name).length > 50) {
@@ -91,19 +90,20 @@ const editPetHandler = async (req: NextRequest) => {
         message: "名称不能为空且不超过50字",
       };
     }
-    updateFields.name = String(name).trim();
+    updateData.name = String(name).trim();
   }
 
   if (species !== undefined) {
-    const s = String(species).trim();
-    if (!s || s.length > 30) {
+    const sEnum = Number(species);
+    const sLabel = PetSpeciesMap[sEnum as PetSpeciesEnum]?.label;
+    if (!sLabel) {
       return {
         businessCode: BusinessCodeEnum.ParameterValidationFailed,
         httpCode: HttpCodeEnum.BadRequest,
-        message: "种类长度1-30",
+        message: "物种类型非法",
       };
     }
-    updateFields.species = s;
+    updateData.species = sLabel;
   }
 
   if (gender !== undefined) {
@@ -115,7 +115,7 @@ const editPetHandler = async (req: NextRequest) => {
         message: "gender 只能为 0 或 1",
       };
     }
-    updateFields.gender = g;
+    updateData.gender = g;
   }
 
   if (vaccine_status !== undefined) {
@@ -127,7 +127,7 @@ const editPetHandler = async (req: NextRequest) => {
         message: "vaccine_status 非法",
       };
     }
-    updateFields.vaccine_status = v;
+    updateData.vaccine_status = v;
   }
 
   if (neutered !== undefined) {
@@ -139,7 +139,7 @@ const editPetHandler = async (req: NextRequest) => {
         message: "neutered 非法",
       };
     }
-    updateFields.neutered = n;
+    updateData.neutered = n;
   }
 
   if (weight !== undefined) {
@@ -151,7 +151,7 @@ const editPetHandler = async (req: NextRequest) => {
         message: "体重非法",
       };
     }
-    updateFields.weight = w;
+    updateData.weight = w;
   }
 
   if (age !== undefined) {
@@ -163,26 +163,24 @@ const editPetHandler = async (req: NextRequest) => {
         message: "年龄须为非负整数",
       };
     }
-    updateFields.age = a;
+    updateData.age = a;
   }
 
-  if (breed !== undefined)
-    updateFields.breed = breed ? String(breed).trim() : null;
-  if (health_status !== undefined)
-    updateFields.health_status = health_status || null;
-  if (description !== undefined) updateFields.description = description || null;
-
+  if (breed !== undefined) {
+    updateData.breed = breed ? String(breed).trim() : null;
+  }
+  if (health_status !== undefined) {
+    updateData.health_status = health_status ? String(health_status) : null;
+  }
+  if (description !== undefined) {
+    updateData.description = description ? String(description) : null;
+  }
   if (image_urls !== undefined) {
-    let urls = "";
-    if (image_urls && String(image_urls).trim()) {
-      urls = Array.isArray(image_urls)
-        ? image_urls.join(",")
-        : String(image_urls).replace(/，/g, ",");
-    }
-    updateFields.image_urls = urls || null;
+    updateData.image_urls = normalizeImageUrlsInput(image_urls);
   }
 
-  if (Object.keys(updateFields).length === 0) {
+  const keys = Object.keys(updateData);
+  if (keys.length === 0) {
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
@@ -191,25 +189,37 @@ const editPetHandler = async (req: NextRequest) => {
   }
 
   try {
-    await withTransaction(async (conn) => {
-      const keys = Object.keys(updateFields);
-      const sql = `UPDATE pet SET ${keys
-        .map((k) => `${k} = ?`)
-        .join(", ")} WHERE pet_id = ?`;
-      await conn.query(sql, [...Object.values(updateFields), petId]);
-      await conn.query(
-        `INSERT INTO pet_history (pet_id, old_data, new_data, operator_id, operate_type, operate_time)
-         VALUES (?, ?, ?, ?, ?, NOW())`,
-        [
-          petId,
-          JSON.stringify(oldPetData),
-          JSON.stringify(updateFields),
-          auth.user.userId,
-          PetOperateTypeEnum.CONTENT_EDIT,
-        ]
-      );
+    await withTransaction(async (tx) => {
+      const current = await tx.pet.findUnique({ where: { pet_id: petId } });
+      if (!current) throw new Error("NF");
+      await tx.pet.update({
+        where: { pet_id: petId },
+        data: updateData,
+      });
+      const patchJson = Object.fromEntries(
+        keys.map((k) => [
+          k,
+          (updateData as Record<string, unknown>)[k],
+        ])
+      ) as Prisma.InputJsonValue;
+      await tx.petHistory.create({
+        data: {
+          pet_id: petId,
+          old_data: JSON.parse(JSON.stringify(current)) as Prisma.InputJsonValue,
+          new_data: patchJson,
+          operator_id: auth.user.userId,
+          operate_type: PetOperateTypeEnum.CONTENT_EDIT,
+        },
+      });
     });
   } catch (e) {
+    if (e instanceof Error && e.message === "NF") {
+      return {
+        businessCode: BusinessCodeEnum.DataNotExist,
+        httpCode: HttpCodeEnum.NotFound,
+        message: "宠物不存在",
+      };
+    }
     console.error(e);
     return {
       businessCode: BusinessCodeEnum.DataUpdateFailed,

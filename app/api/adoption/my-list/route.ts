@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
-import { RowDataPacket } from "mysql2";
+import { imageUrlsToApiField } from "@/lib/imageUrls";
 
 /**
  * 获取当前用户的领养申请记录
+ * GET /api/adoption/my-list
  */
 export async function GET(req: NextRequest) {
   const auth = resolveAuth(req);
@@ -16,25 +17,36 @@ export async function GET(req: NextRequest) {
   const userId = auth.user.userId;
 
   try {
-    // 联表查询宠物信息及申请单信息
-    const [listResult] = await pool.query<RowDataPacket[]>(
-      `SELECT a.*, p.name as pet_name, p.species, p.breed, p.image_urls, p.description as pet_description,
-              u.username as owner_name
-       FROM adoption_application a
-       JOIN pet p ON a.pet_id = p.pet_id
-       JOIN user u ON p.user_id = u.user_id
-       WHERE a.user_id = ?
-       ORDER BY a.apply_time DESC`,
-      [userId]
-    );
+    const rows = await prisma.adoptionApply.findMany({
+      where: { apply_user_id: userId },
+      orderBy: { create_time: "desc" },
+      include: {
+        pet: {
+          include: {
+            publisher: {
+              select: { username: true, avatar: true },
+            },
+          },
+        },
+      },
+    });
+
+    const list = rows.map((a) => ({
+      ...a,
+      pet_name: a.pet?.name,
+      species: a.pet?.species,
+      breed: a.pet?.breed,
+      image_urls: imageUrlsToApiField(a.pet?.image_urls),
+      pet_description: a.pet?.description,
+      owner_name: a.pet?.publisher?.username,
+      owner_avatar: a.pet?.publisher?.avatar,
+    }));
 
     return NextResponse.json({
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,
       message: "查询成功",
-      data: {
-        list: listResult,
-      },
+      data: { list },
     });
   } catch (error) {
     console.error("My adoption list error:", error);

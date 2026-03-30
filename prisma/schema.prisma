@@ -1,0 +1,127 @@
+// 萌宠之家 — Prisma schema（与 init_pet_adopt_db.sql 对齐）
+// 连接串见 .env.example；本地开发建议使用 Node 20+ 与 MySQL 8+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id     Int       @id @default(autoincrement()) @db.UnsignedInt
+  username    String    @db.VarChar(50)
+  password    String    @db.VarChar(255)
+  email       String?   @db.VarChar(100)
+  phone       String    @unique @db.VarChar(20)
+  avatar      String?   @db.VarChar(512)
+  real_name   String?   @db.VarChar(50)
+  id_card     String?   @db.VarChar(20)
+  address     String?   @db.VarChar(255)
+  role        Int       @default(0) @db.TinyInt
+  status      Int       @default(1) @db.TinyInt
+  create_time DateTime  @default(now())
+  update_time DateTime  @updatedAt
+
+  pets_published  Pet[]             @relation("PetPublisher")
+  pet_histories   PetHistory[]      @relation("HistoryOperator")
+  favorites       PetFavorite[]
+  applies_sent    AdoptionApply[]   @relation("ApplyApplicant")
+  applies_owned   AdoptionApply[]   @relation("ApplyPetOwner")
+  reviews_done    AdoptionApply[]   @relation("ApplyReviewer")
+
+  @@unique([username])
+  @@unique([email])
+  @@index([role, status])
+  @@map("user")
+}
+
+model Pet {
+  pet_id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  user_id       Int       @db.UnsignedInt
+  name          String    @db.VarChar(50)
+  species       String    @db.VarChar(30)
+  breed         String?   @db.VarChar(50)
+  age           Int?
+  gender        Int?      @default(0) @db.TinyInt
+  weight        Decimal?  @db.Decimal(10, 2)
+  health_status String?   @db.Text
+  vaccine_status Int?     @default(0) @db.TinyInt
+  neutered      Int?      @default(0) @db.TinyInt
+  description   String?   @db.Text
+  image_urls    Json?
+  status        Int       @default(0) @db.TinyInt
+  create_time   DateTime  @default(now())
+  update_time   DateTime  @updatedAt
+
+  publisher     User       @relation("PetPublisher", fields: [user_id], references: [user_id], onDelete: Cascade)
+  histories     PetHistory[]
+  favorites     PetFavorite[]
+  applications  AdoptionApply[]
+
+  @@index([user_id])
+  @@index([status, create_time])
+  @@map("pet")
+}
+
+model PetHistory {
+  id           Int      @id @default(autoincrement()) @db.UnsignedInt
+  pet_id       Int      @db.UnsignedInt
+  old_data     Json?
+  new_data     Json?
+  operator_id  Int      @db.UnsignedInt
+  operate_type Int      @db.UnsignedTinyInt
+  operate_time DateTime @default(now())
+
+  pet      Pet  @relation(fields: [pet_id], references: [pet_id], onDelete: Cascade)
+  operator User @relation("HistoryOperator", fields: [operator_id], references: [user_id])
+
+  @@index([pet_id, operate_time])
+  @@index([operator_id])
+  @@map("pet_history")
+}
+
+model AdoptionApply {
+  apply_id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  pet_id          Int       @db.UnsignedInt
+  apply_user_id   Int       @db.UnsignedInt
+  pet_user_id     Int       @db.UnsignedInt
+  apply_message   String?   @db.Text
+  status          Int       @default(0) @db.TinyInt
+  review_admin_id Int?      @db.UnsignedInt
+  review_message  String?   @db.Text
+  review_time     DateTime?
+  is_read         Int       @default(0) @db.TinyInt
+  is_admin_read   Int       @default(0) @db.TinyInt
+  create_time     DateTime  @default(now())
+  update_time     DateTime  @updatedAt
+
+  pet           Pet   @relation(fields: [pet_id], references: [pet_id], onDelete: Cascade)
+  applicant     User  @relation("ApplyApplicant", fields: [apply_user_id], references: [user_id])
+  pet_owner     User  @relation("ApplyPetOwner", fields: [pet_user_id], references: [user_id])
+  review_admin  User? @relation("ApplyReviewer", fields: [review_admin_id], references: [user_id], onDelete: SetNull)
+
+  @@unique([pet_id, apply_user_id])
+  @@index([pet_id])
+  @@index([apply_user_id])
+  @@index([pet_user_id])
+  @@index([status, create_time])
+  @@map("adoption_apply")
+}
+
+model PetFavorite {
+  favorite_id Int      @id @default(autoincrement()) @db.UnsignedInt
+  user_id     Int      @db.UnsignedInt
+  pet_id      Int      @db.UnsignedInt
+  create_time DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  pet  Pet  @relation(fields: [pet_id], references: [pet_id], onDelete: Cascade)
+
+  @@unique([user_id, pet_id])
+  @@index([user_id])
+  @@index([pet_id])
+  @@map("pet_favorite")
+}

@@ -88,3 +88,19 @@ export function resolveAuth(req: NextRequest): AuthResult {
 export function isAdmin(user: AuthUser): boolean {
   return user.role === UserRoleEnum.Admin;
 }
+
+/** 未登录或 Token 无效时返回 null，不写入错误响应 */
+export function resolveAuthOptional(req: NextRequest): AuthUser | null {
+  const token = getBearerToken(req);
+  if (!token) return null;
+  const v = verifyToken(token);
+  if (!v.isValid) return null;
+  const uid = v.payload?.user_id;
+  if (uid === undefined || uid === null) return null;
+  return {
+    userId: Number(uid),
+    role: v.payload!.role as UserRoleEnum,
+    username: v.payload!.username as string | undefined,
+    phone: v.payload!.phone as string | undefined,
+  };
+}

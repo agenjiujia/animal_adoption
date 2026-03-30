@@ -1,10 +1,14 @@
 import type { NextRequest } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { withAdminApiHandler } from "@/utils/response/hoc";
 import { wrapBusinessResponse } from "@/utils/response/core";
-import { BusinessCodeEnum, HttpCodeEnum, PetOperateTypeEnum } from "@/types";
+import {
+  BusinessCodeEnum,
+  HttpCodeEnum,
+  PetOperateTypeEnum,
+} from "@/types";
 import { withTransaction } from "@/lib/db";
-import type { AuthUser } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
@@ -21,7 +25,7 @@ export async function PATCH(
     return NextResponse.json(api, { status: Number(api.httpCode) });
   }
 
-  const logic = async (r: NextRequest, auth: AuthUser) => {
+  const logic = async (r: NextRequest, auth: { userId: number }) => {
     let body: { status?: number };
     try {
       body = await r.json();
@@ -42,30 +46,22 @@ export async function PATCH(
     }
 
     try {
-      await withTransaction(async (conn) => {
-        const [rows] = await conn.query(
-          "SELECT * FROM pet WHERE pet_id = ? LIMIT 1",
-          [petId]
-        );
-        if (!Array.isArray(rows) || !rows.length) {
-          throw new Error("NF");
-        }
-        const oldRow = { ...(rows as Record<string, unknown>[])[0] };
-        await conn.query("UPDATE pet SET status = ? WHERE pet_id = ?", [
-          st,
-          petId,
-        ]);
-        await conn.query(
-          `INSERT INTO pet_history (pet_id, old_data, new_data, operator_id, operate_type, operate_time)
-           VALUES (?, ?, ?, ?, ?, NOW())`,
-          [
-            petId,
-            JSON.stringify(oldRow),
-            JSON.stringify({ status: st }),
-            auth.userId,
-            PetOperateTypeEnum.STATUS_CHANGE,
-          ]
-        );
+      await withTransaction(async (tx) => {
+        const oldRow = await tx.pet.findUnique({ where: { pet_id: petId } });
+        if (!oldRow) throw new Error("NF");
+        await tx.pet.update({
+          where: { pet_id: petId },
+          data: { status: st },
+        });
+        await tx.petHistory.create({
+          data: {
+            pet_id: petId,
+            old_data: JSON.parse(JSON.stringify(oldRow)) as Prisma.InputJsonValue,
+            new_data: { status: st },
+            operator_id: auth.userId,
+            operate_type: PetOperateTypeEnum.STATUS_CHANGE,
+          },
+        });
       });
     } catch (e) {
       if (e instanceof Error && e.message === "NF") {
@@ -91,5 +87,7 @@ export async function PATCH(
     };
   };
 
-  return withAdminApiHandler(logic)(req);
+  return withAdminApiHandler((request, authUser) =>
+    logic(request, { userId: authUser.userId })
+  )(req);
 }

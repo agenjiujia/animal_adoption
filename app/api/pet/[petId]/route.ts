@@ -2,12 +2,12 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { withApiHandler } from "@/utils/response/hoc";
 import { wrapBusinessResponse } from "@/utils/response/core";
-import { BusinessCodeEnum, HttpCodeEnum, UserRoleEnum } from "@/types";
-import pool from "@/lib/db";
+import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
+import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
 
 /**
- * 删除宠物发布单：发布者可删自己的单；管理员可删任意单
+ * 删除宠物发布单：仅发布者；存在未结案申请(status=0)时禁止删除
  */
 export async function DELETE(
   req: NextRequest,
@@ -28,39 +28,47 @@ export async function DELETE(
     const auth = resolveAuth(r);
     if (!auth.ok) return auth.error;
 
-    const [rows] = await pool.query(
-      "SELECT pet_id, user_id FROM pet WHERE pet_id = ? LIMIT 1",
-      [petId]
-    );
-    const list = rows as { pet_id: number; user_id: number }[];
-    if (!list?.length) {
+    const pet = await prisma.pet.findUnique({
+      where: { pet_id: petId },
+      select: { pet_id: true, user_id: true },
+    });
+    if (!pet) {
       return {
         businessCode: BusinessCodeEnum.DataNotExist,
         httpCode: HttpCodeEnum.NotFound,
         message: "宠物不存在",
       };
     }
-    const ownerId = list[0].user_id;
-    const isAdmin = auth.user.role === UserRoleEnum.Admin;
-    if (!isAdmin && ownerId !== auth.user.userId) {
+    if (pet.user_id !== auth.user.userId) {
       return {
         businessCode: BusinessCodeEnum.DataPermissionDenied,
         httpCode: HttpCodeEnum.Forbidden,
-        message: "仅可删除自己发布的宠物",
+        message: "仅可删除本人发布的宠物",
       };
     }
 
-    const [result] = await pool.query("DELETE FROM pet WHERE pet_id = ?", [
-      petId,
-    ]);
-    const affected = (result as { affectedRows?: number }).affectedRows ?? 0;
-    if (affected === 0) {
+    const pending = await prisma.adoptionApply.count({
+      where: { pet_id: petId, status: 0 },
+    });
+    if (pending > 0) {
+      return {
+        businessCode: BusinessCodeEnum.PermissionDenied,
+        httpCode: HttpCodeEnum.Forbidden,
+        message: "该宠物存在待审核的领养申请，暂不可删除",
+      };
+    }
+
+    try {
+      await prisma.pet.delete({ where: { pet_id: petId } });
+    } catch (e) {
+      console.error(e);
       return {
         businessCode: BusinessCodeEnum.DataDeleteFailed,
         httpCode: HttpCodeEnum.ServerError,
         message: "删除失败",
       };
     }
+
     return {
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,

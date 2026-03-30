@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import pool from "@/lib/db";
-import type { UserInfo } from "@/types";
+import prisma from "@/lib/db";
 import { UserStatusEnum } from "@/types";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types/common/enum";
 import { wrapBusinessResponse, generateRequestId } from "@/utils/response/core";
@@ -30,13 +29,11 @@ export async function POST(req: NextRequest) {
 
     const { phone, password } = parsed.data;
 
-    const [users] = await pool.query(
-      "SELECT user_id, username, phone, password, role, status, address, email FROM user WHERE phone = ?",
-      [phone]
-    );
-    const userList = users as UserInfo[];
+    const user = await prisma.user.findUnique({
+      where: { phone },
+    });
 
-    if (userList.length === 0) {
+    if (!user) {
       const apiRes = wrapBusinessResponse({
         businessCode: BusinessCodeEnum.UserNotExist,
         httpCode: HttpCodeEnum.NotFound,
@@ -44,8 +41,6 @@ export async function POST(req: NextRequest) {
       });
       return NextResponse.json(apiRes, { status: Number(apiRes.httpCode) });
     }
-
-    const user = userList[0];
 
     if (user.status === UserStatusEnum.Disabled) {
       const apiRes = wrapBusinessResponse({

@@ -9,10 +9,15 @@ export const loginSchema = z.object({
 /** 注册请求体校验 */
 export const registerSchema = z.object({
   username: z.string().min(2).max(50),
+  real_name: z.string().min(2, "真实姓名至少2个字符").max(50),
   phone: z.string().regex(/^1[3-9]\d{9}$/, "请输入正确的11位手机号"),
   password: z.string().min(6, "密码长度不能少于6位"),
   identityCard: z.string().regex(/^\d{17}[\dXx]$/, "请输入正确的18位身份证号"),
   address: z.string().min(1, "地址为必填项"),
-  email: z.string().email("请输入正确的邮箱"),
+  email: z
+    .preprocess(
+      (v) => (v === "" || v === undefined || v === null ? undefined : v),
+      z.string().email("请输入正确的邮箱").optional()
+    ),
   avatar: z.string().optional(),
 });

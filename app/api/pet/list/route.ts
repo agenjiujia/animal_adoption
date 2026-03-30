@@ -1,9 +1,11 @@
+import type { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { withPaginationApiHandler } from "@/utils/response/hoc";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import type { BusinessPaginationResponse } from "@/types";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
+import { serializePetForApi } from "@/lib/petSerialize";
 
 const empty = (pageNum: number, pageSize: number) => ({
   list: [] as unknown[],
@@ -38,14 +40,9 @@ const getPetListHandler = async (
   const pageNum = Number(requestData.pageNum ?? requestData.page ?? 1);
   const pageSizeNum = Number(requestData.pageSize ?? 10);
 
-  const sqlParams: unknown[] = [];
-  const whereConditions: string[] = [];
-
-  // ✅ 核心改动：所有用户统一只看自己的记录，删除管理员逻辑
-  whereConditions.push("user_id = ?");
-  sqlParams.push(auth.user.userId);
-
-  // ✅ 已删除：管理员专属的 user_id 筛选逻辑
+  const where: Prisma.PetWhereInput = {
+    user_id: auth.user.userId,
+  };
 
   const numericFields = [
     "pet_id",
@@ -89,8 +86,7 @@ const getPetListHandler = async (
           data: empty(pageNum, pageSizeNum),
         };
       }
-      whereConditions.push(`${field} = ?`);
-      sqlParams.push(numValue);
+      (where as Record<string, number>)[field] = numValue;
     }
   }
 
@@ -108,8 +104,7 @@ const getPetListHandler = async (
         data: empty(pageNum, pageSizeNum),
       };
     }
-    whereConditions.push("weight = ?");
-    sqlParams.push(weightNum);
+    where.weight = weightNum;
   }
 
   for (const field of ["name", "species", "breed"] as const) {
@@ -117,8 +112,9 @@ const getPetListHandler = async (
     if (value !== undefined && value !== null) {
       const strValue = String(value).trim();
       if (strValue) {
-        whereConditions.push(`${field} LIKE ?`);
-        sqlParams.push(`%${strValue}%`);
+        (where as Record<string, Prisma.StringFilter>)[field] = {
+          contains: strValue,
+        };
       }
     }
   }
@@ -148,22 +144,14 @@ const getPetListHandler = async (
   const offset = (pageNum - 1) * pageSizeNum;
 
   try {
-    let countSql = "SELECT COUNT(*) as total FROM pet";
-    if (whereConditions.length > 0) {
-      countSql += ` WHERE ${whereConditions.join(" AND ")}`;
-    }
-    const [countResult] = await pool.query(countSql, sqlParams);
-    const total = (countResult as { total: number }[])[0]?.total || 0;
-
-    let listSql = "SELECT * FROM pet";
-    if (whereConditions.length > 0) {
-      listSql += ` WHERE ${whereConditions.join(" AND ")}`;
-    }
-    listSql += " ORDER BY update_time DESC LIMIT ? OFFSET ?";
-    const [listResult] = await pool.query(listSql, [
-      ...sqlParams,
-      pageSizeNum,
-      offset,
+    const [total, listResult] = await Promise.all([
+      prisma.pet.count({ where }),
+      prisma.pet.findMany({
+        where,
+        orderBy: { update_time: "desc" },
+        skip: offset,
+        take: pageSizeNum,
+      }),
     ]);
 
     return {
@@ -171,7 +159,9 @@ const getPetListHandler = async (
       httpCode: HttpCodeEnum.Success,
       message: "查询成功",
       data: {
-        list: listResult as unknown[],
+        list: listResult.map((r) =>
+          serializePetForApi(r as unknown as Record<string, unknown>)
+        ),
         pageNum,
         pageSize: pageSizeNum,
         total,

@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { withAdminPaginationApiHandler } from "@/utils/response/hoc";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import type { BusinessPaginationResponse } from "@/types";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
+import { serializePetForApi } from "@/lib/petSerialize";
 
 const empty = (pageNum: number, pageSize: number) => ({
   list: [] as unknown[],
@@ -50,8 +52,7 @@ async function handler(
     };
   }
 
-  const params: unknown[] = [];
-  const where: string[] = [];
+  const where: Prisma.PetWhereInput = {};
 
   if (body.pet_id !== undefined && body.pet_id !== null && body.pet_id !== "") {
     const id = Number(body.pet_id);
@@ -63,8 +64,7 @@ async function handler(
         data: empty(pageNum, pageSizeNum),
       };
     }
-    where.push("pet_id = ?");
-    params.push(id);
+    where.pet_id = id;
   }
   if (body.user_id !== undefined && body.user_id !== null && body.user_id !== "") {
     const uid = Number(body.user_id);
@@ -76,16 +76,13 @@ async function handler(
         data: empty(pageNum, pageSizeNum),
       };
     }
-    where.push("user_id = ?");
-    params.push(uid);
+    where.user_id = uid;
   }
   if (body.name && String(body.name).trim()) {
-    where.push("name LIKE ?");
-    params.push(`%${String(body.name).trim()}%`);
+    where.name = { contains: String(body.name).trim() };
   }
   if (body.species && String(body.species).trim()) {
-    where.push("species LIKE ?");
-    params.push(`%${String(body.species).trim()}%`);
+    where.species = { contains: String(body.species).trim() };
   }
   if (body.status !== undefined && body.status !== null && body.status !== "") {
     const st = Number(body.status);
@@ -97,29 +94,29 @@ async function handler(
         data: empty(pageNum, pageSizeNum),
       };
     }
-    where.push("status = ?");
-    params.push(st);
+    where.status = st;
   }
 
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
   const offset = (pageNum - 1) * pageSizeNum;
 
   try {
-    const [cnt] = await pool.query(
-      `SELECT COUNT(*) as total FROM pet ${whereSql}`,
-      params
-    );
-    const total = (cnt as { total: number }[])[0]?.total ?? 0;
-    const [list] = await pool.query(
-      `SELECT * FROM pet ${whereSql} ORDER BY update_time DESC LIMIT ? OFFSET ?`,
-      [...params, pageSizeNum, offset]
-    );
+    const [total, list] = await Promise.all([
+      prisma.pet.count({ where }),
+      prisma.pet.findMany({
+        where,
+        orderBy: { update_time: "desc" },
+        skip: offset,
+        take: pageSizeNum,
+      }),
+    ]);
     return {
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,
       message: "ok",
       data: {
-        list: list as unknown[],
+        list: list.map((r) =>
+          serializePetForApi(r as unknown as Record<string, unknown>)
+        ),
         total,
         pageNum,
         pageSize: pageSizeNum,

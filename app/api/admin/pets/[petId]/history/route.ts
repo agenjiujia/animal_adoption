@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { withAdminApiHandler } from "@/utils/response/hoc";
 import { wrapBusinessResponse } from "@/utils/response/core";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
 
 export async function GET(
   req: NextRequest,
@@ -25,21 +25,18 @@ export async function GET(
 
   return withAdminApiHandler(async () => {
     try {
-      const [cnt] = await pool.query(
-        "SELECT COUNT(*) as total FROM pet_history WHERE pet_id = ?",
-        [petId]
-      );
-      const total = (cnt as { total: number }[])[0]?.total ?? 0;
+      const total = await prisma.petHistory.count({ where: { pet_id: petId } });
       const offset = (pageNum - 1) * pageSize;
-      const [list] = await pool.query(
-        `SELECT id, pet_id, old_data, new_data, operator_id, operate_type, operate_time
-         FROM pet_history WHERE pet_id = ? ORDER BY operate_time DESC, id DESC LIMIT ? OFFSET ?`,
-        [petId, pageSize, offset]
-      );
-      const parsed = (list as Record<string, unknown>[]).map((row) => ({
+      const list = await prisma.petHistory.findMany({
+        where: { pet_id: petId },
+        orderBy: [{ operate_time: "desc" }, { id: "desc" }],
+        skip: offset,
+        take: pageSize,
+      });
+      const parsed = list.map((row) => ({
         ...row,
-        old_data: parseJsonField(row.old_data),
-        new_data: parseJsonField(row.new_data),
+        old_data: normalizeJson(row.old_data),
+        new_data: normalizeJson(row.new_data),
       }));
       return {
         businessCode: BusinessCodeEnum.Success,
@@ -64,7 +61,7 @@ export async function GET(
   })(req);
 }
 
-function parseJsonField(v: unknown) {
+function normalizeJson(v: unknown) {
   if (typeof v !== "string") return v;
   try {
     return JSON.parse(v);

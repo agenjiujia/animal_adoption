@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { withAdminApiHandler } from "@/utils/response/hoc";
 import { wrapBusinessResponse } from "@/utils/response/core";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
 
 export async function GET(
   req: NextRequest,
@@ -21,13 +21,24 @@ export async function GET(
   }
 
   return withAdminApiHandler(async () => {
-    const [rows] = await pool.query(
-      `SELECT user_id, username, email, phone, avatar, real_name, id_card, address, role, status, create_time, update_time
-       FROM user WHERE user_id = ? LIMIT 1`,
-      [userId]
-    );
-    const list = rows as Record<string, unknown>[];
-    if (!list?.length) {
+    const row = await prisma.user.findUnique({
+      where: { user_id: userId },
+      select: {
+        user_id: true,
+        username: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        real_name: true,
+        id_card: true,
+        address: true,
+        role: true,
+        status: true,
+        create_time: true,
+        update_time: true,
+      },
+    });
+    if (!row) {
       return {
         businessCode: BusinessCodeEnum.UserNotExist,
         httpCode: HttpCodeEnum.NotFound,
@@ -38,7 +49,7 @@ export async function GET(
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,
       message: "ok",
-      data: list[0],
+      data: row,
     };
   })(req);
 }

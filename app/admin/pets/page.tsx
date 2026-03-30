@@ -12,14 +12,19 @@ import {
   message,
   Typography,
   Tag,
+  Row,
+  Col,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useAntdTable } from "ahooks";
 import { request } from "@/utils/request";
 import { PetStatusEnum, PetOperateTypeEnum } from "@/types";
 import { PetOperateTypeMap } from "@/constant";
+import { motion } from "framer-motion";
+import { ArrowRightOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 type PetRow = {
   pet_id: number;
@@ -171,95 +176,148 @@ export default function AdminPetsPage() {
   ];
 
   return (
-    <div style={{ padding: "16px 24px" }}>
-      <Form
-        form={form}
-        layout="inline"
-        onFinish={submit}
-        style={{
-          marginBottom: 16,
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 16,
-        }}
-        labelCol={{ span: 4 }}
+    <div style={{ padding: "32px" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        <Form.Item name="name" label="名称">
-          <Input allowClear placeholder="模糊" />
-        </Form.Item>
-        <Form.Item name="species" label="种类">
-          <Input allowClear />
-        </Form.Item>
-        <Form.Item name="user_id" label="发布者ID">
-          <Input allowClear />
-        </Form.Item>
-        <Form.Item name="status" label="状态">
-          <Select
-            allowClear
-            placeholder="全部"
-            options={[
-              { label: "待领养", value: PetStatusEnum.ForAdoption },
-              { label: "已领养", value: PetStatusEnum.Adopted },
-              { label: "下架", value: PetStatusEnum.Offline },
-            ]}
-          />
-        </Form.Item>
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit">
-              查询
-            </Button>
-            <Button onClick={reset}>重置</Button>
-          </Space>
-        </Form.Item>
-      </Form>
+        <div style={{ marginBottom: 32 }}>
+          <Title style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>
+            宠物档案管理
+          </Title>
+          <Text type="secondary">
+            管理全站宠物的上下架状态、修改历史与基本信息
+          </Text>
+        </div>
 
-      <Table<PetRow>
-        rowKey="pet_id"
-        columns={columns}
-        {...tableProps}
-        scroll={{ x: 880 }}
-        pagination={{
-          ...tableProps.pagination,
-          showQuickJumper: true,
-          showSizeChanger: true,
-          showTotal: (total) => <Text type="secondary">共 {total} 条</Text>,
-        }}
-      />
+        <div className="modern-card" style={{ padding: 24, marginBottom: 32 }}>
+          <Form form={form} onFinish={submit} layout="vertical">
+            <Row gutter={24}>
+              <Col span={6}>
+                <Form.Item name="name" label="宠物名称">
+                  <Input allowClear placeholder="输入名称搜索" />
+                </Form.Item>
+              </Col>
+              <Col span={6}>
+                <Form.Item name="species" label="宠物种类">
+                  <Input allowClear placeholder="如：猫、狗" />
+                </Form.Item>
+              </Col>
+              <Col span={6}>
+                <Form.Item name="status" label="当前状态">
+                  <Select
+                    allowClear
+                    placeholder="全部状态"
+                    options={[
+                      { label: "待领养", value: PetStatusEnum.ForAdoption },
+                      { label: "已领养", value: PetStatusEnum.Adopted },
+                      { label: "下架", value: PetStatusEnum.Offline },
+                    ]}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={6}>
+                <Form.Item label=" ">
+                  <Space>
+                    <Button
+                      type="primary"
+                      className="btn-primary"
+                      onClick={submit}
+                      icon={<ArrowRightOutlined />}
+                    >
+                      查询
+                    </Button>
+                    <Button onClick={reset}>重置</Button>
+                  </Space>
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        </div>
+
+        <div className="modern-card" style={{ padding: 0, overflow: "hidden" }}>
+          <Table<PetRow>
+            rowKey="pet_id"
+            columns={columns}
+            {...tableProps}
+            scroll={{ x: 880 }}
+            pagination={{
+              ...tableProps.pagination,
+              showQuickJumper: true,
+              showSizeChanger: true,
+              showTotal: (total) => (
+                <Text type="secondary" style={{ marginLeft: 16 }}>
+                  共 {total} 条记录
+                </Text>
+              ),
+            }}
+          />
+        </div>
+      </motion.div>
 
       <Modal
-        title={histPet ? `修改历史 — ${histPet.name}` : ""}
+        title={
+          <Title level={4} style={{ margin: 0 }}>
+            修改历史 — {histPet?.name}
+          </Title>
+        }
         open={!!histPet}
         onCancel={() => setHistPet(null)}
-        width={700}
+        width={800}
         footer={null}
-        destroyOnHidden
+        destroyOnClose
         centered
+        style={{ borderRadius: 24 }}
       >
         <Table<HistoryRow>
           loading={histLoading}
           rowKey="id"
-          size="small"
+          size="middle"
           dataSource={histRows}
           pagination={false}
           columns={[
-            { title: "时间", dataIndex: "operate_time", width: 170 },
             {
-              title: "类型",
+              title: "时间",
+              dataIndex: "operate_time",
+              width: 180,
+              render: (t) => dayjs(t).format("YYYY-MM-DD HH:mm:ss"),
+            },
+            {
+              title: "操作类型",
               dataIndex: "operate_type",
               width: 120,
-              render: (t: string) =>
-                PetOperateTypeMap[t as PetOperateTypeEnum] ?? t,
-            },
-            { title: "操作人", dataIndex: "operator_id", width: 80 },
-            {
-              title: "new_data",
-              render: (_, r) => (
-                <pre
-                  style={{ margin: 0, fontSize: 12, whiteSpace: "pre-wrap" }}
+              render: (t: number) => (
+                <Tag
+                  color="processing"
+                  bordered={false}
+                  style={{ borderRadius: 4 }}
                 >
-                  {JSON.stringify(r.new_data, null, 2)}
-                </pre>
+                  {PetOperateTypeMap[t as PetOperateTypeEnum] ?? t}
+                </Tag>
+              ),
+            },
+            { title: "操作人 ID", dataIndex: "operator_id", width: 100 },
+            {
+              title: "变更数据",
+              render: (_, r) => (
+                <div
+                  style={{
+                    background: "var(--bg-main)",
+                    padding: 12,
+                    borderRadius: 8,
+                  }}
+                >
+                  <pre
+                    style={{
+                      margin: 0,
+                      fontSize: 12,
+                      whiteSpace: "pre-wrap",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    {JSON.stringify(r.new_data, null, 2)}
+                  </pre>
+                </div>
               ),
             },
           ]}

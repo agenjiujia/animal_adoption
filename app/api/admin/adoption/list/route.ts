@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { BusinessCodeEnum, HttpCodeEnum, UserRoleEnum } from "@/types";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
-import { RowDataPacket } from "mysql2";
 
 /**
- * 管理员获取领养申请列表
+ * 管理员获取领养申请列表（分页、按状态筛选）
+ * POST /api/admin/adoption/list
  */
 export async function POST(req: NextRequest) {
   const auth = resolveAuth(req);
@@ -20,50 +21,76 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let body: Record<string, unknown> = {};
+  let body: { pageNum?: number; pageSize?: number; status?: number | string } =
+    {};
   try {
     body = await req.json();
   } catch (e) {
-    // 允许空请求体
+    /* allow empty */
   }
 
   const pageNum = Number(body.pageNum || 1);
   const pageSize = Number(body.pageSize || 10);
   const offset = (pageNum - 1) * pageSize;
 
+  const where: Prisma.AdoptionApplyWhereInput = {};
+  if (
+    body.status !== undefined &&
+    body.status !== null &&
+    body.status !== ""
+  ) {
+    const st = Number(body.status);
+    if (![0, 1, 2].includes(st)) {
+      return NextResponse.json(
+        {
+          businessCode: BusinessCodeEnum.ParameterValidationFailed,
+          httpCode: HttpCodeEnum.BadRequest,
+          message: "status 只能为 0/1/2",
+        },
+        { status: 400 }
+      );
+    }
+    where.status = st;
+  }
+
   try {
-    // 联表查询：领养申请 + 宠物信息 + 申请人信息
-    const querySql = `
-      SELECT 
-        a.*, 
-        p.name as pet_name, 
-        p.species as pet_species, 
-        u.username as applicant_name, 
-        u.real_name as applicant_real_name,
-        u.phone as applicant_phone
-      FROM adoption_application a
-      LEFT JOIN pet p ON a.pet_id = p.pet_id
-      LEFT JOIN user u ON a.user_id = u.user_id
-      ORDER BY a.apply_time DESC
-      LIMIT ? OFFSET ?
-    `;
-
-    const [countResult] = await pool.query<RowDataPacket[]>(
-      "SELECT COUNT(*) as total FROM adoption_application"
-    );
-    const total = countResult[0]?.total || 0;
-
-    const [listResult] = await pool.query<RowDataPacket[]>(querySql, [
-      pageSize,
-      offset,
+    const [total, listResult] = await Promise.all([
+      prisma.adoptionApply.count({ where }),
+      prisma.adoptionApply.findMany({
+        where,
+        include: {
+          pet: { select: { name: true, species: true } },
+          applicant: {
+            select: {
+              username: true,
+              real_name: true,
+              phone: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy: { create_time: "desc" },
+        skip: offset,
+        take: pageSize,
+      }),
     ]);
+
+    const list = listResult.map((a) => ({
+      ...a,
+      pet_name: a.pet?.name,
+      pet_species: a.pet?.species,
+      applicant_name: a.applicant?.username,
+      applicant_real_name: a.applicant?.real_name,
+      applicant_phone: a.applicant?.phone,
+      applicant_avatar: a.applicant?.avatar,
+    }));
 
     return NextResponse.json({
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,
       message: "查询成功",
       data: {
-        list: listResult,
+        list,
         total,
         pageNum,
         pageSize,

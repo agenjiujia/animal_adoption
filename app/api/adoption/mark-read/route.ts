@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
 
 /**
@@ -36,10 +36,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await pool.query(
-      "UPDATE adoption_application SET is_read = 1 WHERE user_id = ? AND app_id IN (?)",
-      [auth.user.userId, app_ids]
-    );
+    await prisma.adoptionApply.updateMany({
+      where: {
+        apply_user_id: auth.user.userId,
+        apply_id: { in: app_ids },
+      },
+      data: { is_read: 1 },
+    });
 
     return NextResponse.json({
       businessCode: BusinessCodeEnum.Success,

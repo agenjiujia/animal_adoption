@@ -79,10 +79,10 @@ export enum PetSpeciesEnum {
  * 宠物操作类型枚举（对应pet_history表的operate_type字段）
  */
 export enum PetOperateTypeEnum {
-  /** 管理员修改状态（STATUS_CHANGE） */
-  STATUS_CHANGE = "STATUS_CHANGE",
-  /** 发布者修改内容（CONTENT_EDIT） */
-  CONTENT_EDIT = "CONTENT_EDIT",
+  /** 管理员修改状态（pet_history.operate_type = 0） */
+  STATUS_CHANGE = 0,
+  /** 发布者修改内容（pet_history.operate_type = 1） */
+  CONTENT_EDIT = 1,
 }
 
 // ===================== 3. 领养申请表（adoption_apply）相关枚举 =====================

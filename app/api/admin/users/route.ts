@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { withAdminPaginationApiHandler } from "@/utils/response/hoc";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import type { BusinessPaginationResponse } from "@/types";
-import pool from "@/lib/db";
+import prisma from "@/lib/db";
 
 const empty = (pageNum: number, pageSize: number) => ({
   list: [] as unknown[],
@@ -50,16 +51,13 @@ async function handler(
     };
   }
 
-  const params: unknown[] = [];
-  const where: string[] = [];
+  const where: Prisma.UserWhereInput = {};
 
   if (body.username && String(body.username).trim()) {
-    where.push("username LIKE ?");
-    params.push(`%${String(body.username).trim()}%`);
+    where.username = { contains: String(body.username).trim() };
   }
   if (body.phone && String(body.phone).trim()) {
-    where.push("phone LIKE ?");
-    params.push(`%${String(body.phone).trim()}%`);
+    where.phone = { contains: String(body.phone).trim() };
   }
   if (body.role !== undefined && body.role !== null && body.role !== "") {
     const r = Number(body.role);
@@ -71,8 +69,7 @@ async function handler(
         data: empty(pageNum, pageSizeNum),
       };
     }
-    where.push("role = ?");
-    params.push(r);
+    where.role = r;
   }
   if (body.status !== undefined && body.status !== null && body.status !== "") {
     const s = Number(body.status);
@@ -84,24 +81,35 @@ async function handler(
         data: empty(pageNum, pageSizeNum),
       };
     }
-    where.push("status = ?");
-    params.push(s);
+    where.status = s;
   }
 
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
   const offset = (pageNum - 1) * pageSizeNum;
 
   try {
-    const [cnt] = await pool.query(
-      `SELECT COUNT(*) as total FROM user ${whereSql}`,
-      params
-    );
-    const total = (cnt as { total: number }[])[0]?.total ?? 0;
-    const [rows] = await pool.query(
-      `SELECT user_id, username, email, phone, avatar, real_name, id_card, address, role, status, create_time, update_time
-       FROM user ${whereSql} ORDER BY create_time DESC LIMIT ? OFFSET ?`,
-      [...params, pageSizeNum, offset]
-    );
+    const [total, rows] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        select: {
+          user_id: true,
+          username: true,
+          email: true,
+          phone: true,
+          avatar: true,
+          real_name: true,
+          id_card: true,
+          address: true,
+          role: true,
+          status: true,
+          create_time: true,
+          update_time: true,
+        },
+        orderBy: { create_time: "desc" },
+        skip: offset,
+        take: pageSizeNum,
+      }),
+    ]);
     return {
       businessCode: BusinessCodeEnum.Success,
       httpCode: HttpCodeEnum.Success,
