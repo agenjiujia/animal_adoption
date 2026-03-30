@@ -6,6 +6,8 @@ import {
   Button,
   Space,
   Form,
+  Row,
+  Col,
   Input,
   Select,
   Modal,
@@ -151,52 +153,60 @@ export default function AdminUsersPage() {
   ];
 
   return (
-    <div style={{ padding: "16px 24px" }}>
-      <Form
-        form={form}
-        layout="inline"
-        onFinish={submit}
-        style={{
-          marginBottom: 16,
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 16,
-        }}
-        labelCol={{ span: 4 }}
-      >
-        <Form.Item name="username" label="用户名">
-          <Input allowClear />
-        </Form.Item>
-        <Form.Item name="phone" label="手机">
-          <Input allowClear />
-        </Form.Item>
-        <Form.Item name="role" label="角色">
-          <Select
-            allowClear
-            options={[
-              { label: "普通用户", value: UserRoleEnum.OrdinaryAdopter },
-              { label: "管理员", value: UserRoleEnum.Admin },
-            ]}
-          />
-        </Form.Item>
-        <Form.Item name="status" label="状态">
-          <Select
-            allowClear
-            options={[
-              { label: "禁用", value: UserStatusEnum.Disabled },
-              { label: "正常", value: UserStatusEnum.Normal },
-            ]}
-          />
-        </Form.Item>
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit">
-              查询
-            </Button>
-            <Button onClick={reset}>重置</Button>
-          </Space>
-        </Form.Item>
-      </Form>
+    <div style={{ padding: "32px" }}>
+      <div className="modern-card" style={{ padding: '20px 20px 0', marginBottom: 32 }}>
+        <Form form={form} onFinish={submit} layout="vertical">
+          <Row gutter={24}>
+            <Col span={4}>
+              <Form.Item name="username" label="用户名">
+                <Input allowClear />
+              </Form.Item>
+            </Col>
+            <Col span={4}>
+              <Form.Item name="phone" label="手机">
+                <Input allowClear />
+              </Form.Item>
+            </Col>
+            <Col span={4}>
+              <Form.Item name="role" label="角色">
+                <Select
+                  allowClear
+                  options={[
+                    { label: "普通用户", value: UserRoleEnum.OrdinaryAdopter },
+                    { label: "管理员", value: UserRoleEnum.Admin },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={4}>
+              <Form.Item name="status" label="状态">
+                <Select
+                  allowClear
+                  options={[
+                    { label: "禁用", value: UserStatusEnum.Disabled },
+                    { label: "正常", value: UserStatusEnum.Normal },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={4}>
+              <Form.Item label=" ">
+                <Space>
+                  <Button
+                    type="primary"
+                    className="btn-primary"
+                    htmlType="submit"
+                  >
+                    查询
+                  </Button>
+                  <Button onClick={reset}>重置</Button>
+                </Space>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </div>
 
       <Table<UserRow>
         rowKey="user_id"

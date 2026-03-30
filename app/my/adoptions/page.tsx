@@ -98,19 +98,15 @@ export default function MyAdoptionsPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 0" }}>
+    <div style={{ margin: "0 auto" }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div style={{ marginBottom: 48 }}>
-          <Title style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>
-            我的领养申请
-          </Title>
-          <Text style={{ color: "var(--text-secondary)", fontSize: 16 }}>
-            追踪您的每一份爱心传递进度
-          </Text>
+        <div className="page-title-wrap">
+          <Title level={2}>我的领养申请</Title>
+          <Text className="page-title-sub">追踪您的每一份爱心传递进度</Text>
         </div>
 
         <Spin spinning={loading} tip="正在同步申请进度...">

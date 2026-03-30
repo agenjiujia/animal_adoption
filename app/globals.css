@@ -177,6 +177,16 @@ body {
   margin-bottom: 120px;
 }
 
+/* 页面标题区域统一样式 */
+.page-title-wrap {
+  margin-bottom: 32px;
+}
+
+.page-title-sub {
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .section-spacing {
     margin-bottom: 60px;

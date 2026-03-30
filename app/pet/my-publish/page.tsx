@@ -141,7 +141,7 @@ export default function MyPublishPage() {
       >
         <div>
           <Title level={2}>我的发布</Title>
-          <Text style={{ color: "#8A8AA8" }}>管理您发布的宠物领养信息</Text>
+          <Text className="page-title-sub">管理您发布的宠物领养信息</Text>
         </div>
         <Button
           className="btn-gradient"

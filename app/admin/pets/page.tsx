@@ -181,29 +181,20 @@ export default function AdminPetsPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div style={{ marginBottom: 32 }}>
-          <Title style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>
-            宠物档案管理
-          </Title>
-          <Text type="secondary">
-            管理全站宠物的上下架状态、修改历史与基本信息
-          </Text>
-        </div>
-
-        <div className="modern-card" style={{ padding: 24, marginBottom: 32 }}>
+        <div className="modern-card" style={{ padding: '20px 20px 0', marginBottom: 32 }}>
           <Form form={form} onFinish={submit} layout="vertical">
             <Row gutter={24}>
-              <Col span={6}>
+              <Col span={4}>
                 <Form.Item name="name" label="宠物名称">
                   <Input allowClear placeholder="输入名称搜索" />
                 </Form.Item>
               </Col>
-              <Col span={6}>
+              <Col span={4}>
                 <Form.Item name="species" label="宠物种类">
                   <Input allowClear placeholder="如：猫、狗" />
                 </Form.Item>
               </Col>
-              <Col span={6}>
+              <Col span={4}>
                 <Form.Item name="status" label="当前状态">
                   <Select
                     allowClear
@@ -216,7 +207,7 @@ export default function AdminPetsPage() {
                   />
                 </Form.Item>
               </Col>
-              <Col span={6}>
+              <Col span={4}>
                 <Form.Item label=" ">
                   <Space>
                     <Button

@@ -9,6 +9,9 @@ import {
   Modal,
   Input,
   Form,
+  Select,
+  Row,
+  Col,
   message,
   Typography,
   Avatar,
@@ -22,7 +25,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
 interface AdoptionApplication {
@@ -47,6 +50,11 @@ export default function AdminAdoptionsPage() {
   const [total, setTotal] = useState(0);
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [filterStatus, setFilterStatus] = useState<number | undefined>(
+    undefined
+  );
+
+  const [searchForm] = Form.useForm<{ status?: number }>();
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [auditSubmitting, setAuditSubmitting] = useState(false);
   const [auditTarget, setAuditTarget] = useState<{
@@ -58,10 +66,20 @@ export default function AdminAdoptionsPage() {
   const fetchData = async (page = pageNum, size = pageSize) => {
     setLoading(true);
     try {
+      const payload: {
+        pageNum: number;
+        pageSize: number;
+        status?: number;
+      } = {
+        pageNum: page,
+        pageSize: size,
+      };
+      if (filterStatus !== undefined) payload.status = filterStatus;
+
       const res = await fetch("/api/admin/adoption/list", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pageNum: page, pageSize: size }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (json.businessCode === 0) {
@@ -79,7 +97,22 @@ export default function AdminAdoptionsPage() {
 
   useEffect(() => {
     fetchData();
-  }, [pageNum, pageSize]);
+  }, [pageNum, pageSize, filterStatus]);
+
+  const handleSearch = async (values: { status?: number }) => {
+    const nextStatus =
+      values.status === undefined || values.status === null
+        ? undefined
+        : Number(values.status);
+    setFilterStatus(nextStatus);
+    setPageNum(1);
+  };
+
+  const handleReset = () => {
+    searchForm.resetFields();
+    setFilterStatus(undefined);
+    setPageNum(1);
+  };
 
   const openAuditModal = (applyId: number, status: number) => {
     setAuditTarget({ applyId, status });
@@ -221,12 +254,43 @@ export default function AdminAdoptionsPage() {
   ];
 
   return (
-    <div>
-      <div style={{ marginBottom: 32 }}>
-        <Title level={2}>领养申请审核</Title>
-        <Text style={{ color: "var(--text-tertiary)" }}>
-          处理用户提交的宠物领养申请
-        </Text>
+    <div style={{ padding: "32px" }}>
+      <div className="modern-card" style={{ padding: '20px 20px 0', marginBottom: 32 }}>
+        <Form
+          form={searchForm}
+          layout="vertical"
+          onFinish={handleSearch}
+        >
+          <Row gutter={24}>
+            <Col span={4}>
+              <Form.Item name="status" label="状态">
+                <Select
+                  allowClear
+                  placeholder="全部状态"
+                  options={[
+                    { label: "待审核", value: 0 },
+                    { label: "已通过", value: 1 },
+                    { label: "已拒绝", value: 2 },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={4}>
+              <Form.Item label=" ">
+                <Space>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    className="btn-primary"
+                  >
+                    查询
+                  </Button>
+                  <Button onClick={handleReset}>重置</Button>
+                </Space>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
       </div>
 
       <Modal

@@ -229,9 +229,9 @@ export default function AdoptionApprovalsPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 32 }}>
+      <div className="page-title-wrap">
         <Title level={2}>领养申请审批队列</Title>
-        <Text style={{ color: "var(--text-tertiary)" }}>
+        <Text className="page-title-sub">
           处理与您发布宠物相关的领养申请
         </Text>
       </div>
