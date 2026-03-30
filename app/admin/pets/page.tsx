@@ -184,17 +184,17 @@ export default function AdminPetsPage() {
         <div className="modern-card" style={{ padding: '20px 20px 0', marginBottom: 32 }}>
           <Form form={form} onFinish={submit} layout="vertical">
             <Row gutter={24}>
-              <Col span={4}>
+              <Col span={6}>
                 <Form.Item name="name" label="宠物名称">
                   <Input allowClear placeholder="输入名称搜索" />
                 </Form.Item>
               </Col>
-              <Col span={4}>
+              <Col span={6}>
                 <Form.Item name="species" label="宠物种类">
                   <Input allowClear placeholder="如：猫、狗" />
                 </Form.Item>
               </Col>
-              <Col span={4}>
+              <Col span={6}>
                 <Form.Item name="status" label="当前状态">
                   <Select
                     allowClear
@@ -207,7 +207,7 @@ export default function AdminPetsPage() {
                   />
                 </Form.Item>
               </Col>
-              <Col span={4}>
+              <Col span={6}>
                 <Form.Item label=" ">
                   <Space>
                     <Button

@@ -159,7 +159,7 @@ export default function MyAdoptionsPage() {
                             }}
                           />
                           <div
-                            style={{ position: "absolute", top: 16, left: 16 }}
+                            style={{ position: "absolute", top: 22, left: 24 }}
                           >
                             <Tag
                               color={status.color}

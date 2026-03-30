@@ -10,7 +10,6 @@ import {
   Button,
   Space,
   Typography,
-  Card,
   Modal,
   Spin,
   Row,
@@ -24,8 +23,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
-  SearchOutlined,
-  ReloadOutlined,
   EnvironmentOutlined,
   ArrowRightOutlined,
 } from "@ant-design/icons";
@@ -154,50 +151,45 @@ export default function MyPublishPage() {
         </Button>
       </div>
 
-      <Card
-        className="glass-morphism"
-        style={{ marginBottom: 32, borderRadius: 16 }}
-      >
-        <Form
-          form={form}
-          layout="inline"
-          onFinish={onSearch}
-          style={{ gap: 16 }}
-        >
-          <Form.Item name="name">
-            <Input
-              placeholder="宠物昵称"
-              prefix={<SearchOutlined style={{ color: "#8A8AA8" }} />}
-              style={{ width: 200 }}
-            />
-          </Form.Item>
-          <Form.Item name="species">
-            <Select
-              placeholder="选择物种"
-              options={PetSpeciesOptions}
-              style={{ width: 150 }}
-              allowClear
-            />
-          </Form.Item>
-          <Form.Item name="status">
-            <Select placeholder="状态" style={{ width: 120 }} allowClear>
-              <Select.Option value={0}>待领养</Select.Option>
-              <Select.Option value={1}>已领养</Select.Option>
-              <Select.Option value={2}>已下架</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                查询
-              </Button>
-              <Button icon={<ReloadOutlined />} onClick={onReset}>
-                重置
-              </Button>
-            </Space>
-          </Form.Item>
+      <div className="modern-card" style={{ padding: 24, marginBottom: 32 }}>
+        <Form form={form} layout="vertical" onFinish={onSearch}>
+          <Row gutter={24}>
+            <Col span={6}>
+              <Form.Item name="name" label="宠物昵称">
+                <Input placeholder="输入昵称搜索" allowClear />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="species" label="宠物种类">
+                <Select
+                  placeholder="全部种类"
+                  options={PetSpeciesOptions}
+                  allowClear
+                />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="status" label="状态">
+                <Select placeholder="全部状态" allowClear>
+                  <Select.Option value={0}>待领养</Select.Option>
+                  <Select.Option value={1}>已领养</Select.Option>
+                  <Select.Option value={2}>已下架</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label=" ">
+                <Space>
+                  <Button type="primary" htmlType="submit" className="btn-primary">
+                    查询
+                  </Button>
+                  <Button onClick={onReset}>重置</Button>
+                </Space>
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
-      </Card>
+      </div>
 
       <Spin spinning={loading} description="正在同步发布状态...">
         {list.length > 0 ? (
@@ -232,7 +224,7 @@ export default function MyPublishPage() {
                             });
                           }}
                         />
-                        <div style={{ position: "absolute", top: 16, right: 16 }}>
+                        <div style={{ position: "absolute", top: 22, right: 24 }}>
                           {getStatusTag(pet.status)}
                         </div>
                       </div>
@@ -269,8 +261,15 @@ export default function MyPublishPage() {
                           <Button
                             icon={<EditOutlined />}
                             block
-                            onClick={() =>
-                              router.push(`/pet/edit?pet_id=${pet.pet_id}`)
+                            disabled={pet.status === PetStatusEnum.Offline}
+                            onClick={() => {
+                              if (pet.status === PetStatusEnum.Offline) return;
+                              router.push(`/pet/edit?pet_id=${pet.pet_id}`);
+                            }}
+                            title={
+                              pet.status === PetStatusEnum.Offline
+                                ? "已下架宠物不可编辑"
+                                : undefined
                             }
                           >
                             编辑

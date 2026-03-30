@@ -1,8 +1,8 @@
 "use client";
 
 import { useRequest } from "ahooks";
+import { useState } from "react";
 import {
-  Card,
   Descriptions,
   Spin,
   Typography,
@@ -15,6 +15,9 @@ import {
   Space,
   Upload,
   message,
+  Modal,
+  Form,
+  Input,
 } from "antd";
 import {
   UserOutlined,
@@ -58,6 +61,15 @@ type Me = {
 
 /** 个人中心：仅展示当前登录用户自身资料 */
 export default function ProfilePage() {
+  const [editOpen, setEditOpen] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editForm] = Form.useForm<{
+    username: string;
+    email?: string;
+    real_name?: string;
+    address?: string;
+  }>();
+
   const { data, loading, refresh } = useRequest(() =>
     request.get<Me>("/api/user/me")
   );
@@ -71,6 +83,18 @@ export default function ProfilePage() {
         request
           .patch("/api/user/me", { avatar: url })
           .then(() => {
+            try {
+              const raw = localStorage.getItem("userInfo");
+              if (raw) {
+                const parsed = JSON.parse(raw) as Record<string, unknown>;
+                localStorage.setItem(
+                  "userInfo",
+                  JSON.stringify({ ...parsed, avatar: url })
+                );
+              }
+            } catch {
+              // ignore local cache parse failure
+            }
             message.success("头像更新成功");
             refresh();
           })
@@ -80,6 +104,56 @@ export default function ProfilePage() {
       }
     } else if (info.file.status === "error") {
       message.error("图片上传失败");
+    }
+  };
+
+  const openEditModal = () => {
+    if (!u) return;
+    editForm.setFieldsValue({
+      username: u.username,
+      email: u.email || "",
+      real_name: u.real_name || "",
+      address: u.address || "",
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      const values = await editForm.validateFields();
+      setEditSubmitting(true);
+
+      await request.patch("/api/user/me", {
+        username: values.username.trim(),
+        email: (values.email || "").trim(),
+        real_name: (values.real_name || "").trim(),
+        address: (values.address || "").trim(),
+      });
+
+      try {
+        const raw = localStorage.getItem("userInfo");
+        if (raw) {
+          const parsed = JSON.parse(raw) as Record<string, unknown>;
+          localStorage.setItem(
+            "userInfo",
+            JSON.stringify({
+              ...parsed,
+              username: values.username.trim(),
+            })
+          );
+        }
+      } catch {
+        // ignore local cache parse failure
+      }
+
+      message.success("资料更新成功");
+      setEditOpen(false);
+      refresh();
+    } catch (e) {
+      if (e && typeof e === "object" && "errorFields" in e) return;
+      message.error("资料更新失败");
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -278,6 +352,7 @@ export default function ProfilePage() {
                     className="btn-primary"
                     icon={<EditOutlined />}
                     block
+                    onClick={openEditModal}
                     style={{
                       marginTop: 40,
                       height: 48,
@@ -424,6 +499,42 @@ export default function ProfilePage() {
             </Row>
           )}
         </Spin>
+
+        <Modal
+          title="编辑个人资料"
+          open={editOpen}
+          onCancel={() => setEditOpen(false)}
+          onOk={handleEditSubmit}
+          okText="保存"
+          cancelText="取消"
+          confirmLoading={editSubmitting}
+          destroyOnHidden
+        >
+          <Form form={editForm} layout="vertical" style={{ marginTop: 12 }}>
+            <Form.Item
+              name="username"
+              label="用户名"
+              rules={[
+                { required: true, whitespace: true, message: "请输入用户名" },
+              ]}
+            >
+              <Input maxLength={50} />
+            </Form.Item>
+            <Form.Item
+              name="email"
+              label="邮箱"
+              rules={[{ type: "email", message: "请输入有效邮箱地址" }]}
+            >
+              <Input maxLength={100} />
+            </Form.Item>
+            <Form.Item name="real_name" label="真实姓名">
+              <Input maxLength={50} />
+            </Form.Item>
+            <Form.Item name="address" label="联系地址">
+              <Input.TextArea rows={3} maxLength={255} showCount />
+            </Form.Item>
+          </Form>
+        </Modal>
       </motion.div>
     </div>
   );

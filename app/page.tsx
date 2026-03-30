@@ -31,9 +31,14 @@ interface Pet {
   breed: string;
   age: number;
   gender: number;
+  weight?: number | string | null;
+  vaccine_status?: number | null;
+  neutered?: number | null;
+  health_status?: string | null;
   image_urls: string | string[];
   description: string;
   status: number;
+  create_time?: string;
   is_applied?: number;
   is_favorited?: number;
 }
@@ -419,6 +424,69 @@ export default function HomePage() {
                           }}
                         >
                           {pet.age} 个月大 · {pet.gender === 1 ? "公" : "母"}
+                        </Text>
+                      </div>
+                      <div className="pet-list-card__meta-row" style={{ marginTop: 8 }}>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          {pet.weight ? `体重 ${pet.weight}kg` : "体重未知"}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          ·
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          疫苗
+                          {pet.vaccine_status === 1
+                            ? "已接种"
+                            : pet.vaccine_status === 0
+                              ? "未接种"
+                              : "未知"}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          ·
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          {pet.neutered === 1
+                            ? "已绝育"
+                            : pet.neutered === 0
+                              ? "未绝育"
+                              : "绝育未知"}
+                        </Text>
+                      </div>
+                      <div style={{ marginTop: 8 }}>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: "var(--text-muted)",
+                          }}
+                        >
+                          {pet.health_status
+                            ? `健康状况：${pet.health_status}`
+                            : "健康状况：待补充"}
                         </Text>
                       </div>
                     </div>

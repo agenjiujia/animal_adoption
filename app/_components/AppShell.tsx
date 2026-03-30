@@ -55,8 +55,37 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem("token");
       const raw = localStorage.getItem("userInfo");
       if (token && raw) {
+        const parsed = JSON.parse(raw) as StoredUser;
         setIsLogin(true);
-        setUserInfo(JSON.parse(raw) as StoredUser);
+        setUserInfo(parsed);
+
+        // 兼容老登录态：本地缓存没有 avatar 时，补拉一次最新资料
+        if (!parsed.avatar) {
+          void request
+            .get<{
+              user_id: number;
+              username: string;
+              phone: string;
+              role?: number;
+              avatar?: string;
+            }>("/api/user/me")
+            .then((res) => {
+              const me = res.data as StoredUser | undefined;
+              if (!me) return;
+              const merged: StoredUser = {
+                ...parsed,
+                username: me.username ?? parsed.username,
+                phone: me.phone ?? parsed.phone,
+                role: me.role ?? parsed.role,
+                avatar: me.avatar,
+              };
+              setUserInfo(merged);
+              localStorage.setItem("userInfo", JSON.stringify(merged));
+            })
+            .catch(() => {
+              // ignore
+            });
+        }
       } else {
         setIsLogin(false);
         setUserInfo({

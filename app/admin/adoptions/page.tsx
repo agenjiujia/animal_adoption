@@ -170,6 +170,12 @@ export default function AdminAdoptionsPage() {
       ),
     },
     {
+      title: "宠物ID",
+      dataIndex: "pet_id",
+      key: "pet_id",
+      width: 88,
+    },
+    {
       title: "申请宠物",
       dataIndex: "pet_name",
       key: "pet_name",
@@ -262,7 +268,7 @@ export default function AdminAdoptionsPage() {
           onFinish={handleSearch}
         >
           <Row gutter={24}>
-            <Col span={4}>
+            <Col span={6}>
               <Form.Item name="status" label="状态">
                 <Select
                   allowClear
@@ -275,7 +281,7 @@ export default function AdminAdoptionsPage() {
                 />
               </Form.Item>
             </Col>
-            <Col span={4}>
+            <Col span={6}>
               <Form.Item label=" ">
                 <Space>
                   <Button

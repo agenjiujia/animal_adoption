@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
           user_id: user.user_id,
           username: user.username,
           phone: user.phone,
+          avatar: user.avatar,
           address: user.address,
           email: user.email,
           role: user.role,
