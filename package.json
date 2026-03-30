@@ -13,7 +13,8 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:db": "tsx scripts/db-smoke.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
@@ -43,6 +44,7 @@
     "eslint-config-next": "16.2.0",
     "prisma": "^5.22.0",
     "tailwindcss": "^4",
+    "tsx": "^4.19.3",
     "typescript": "^5",
     "vitest": "^3.2.4"
   }
