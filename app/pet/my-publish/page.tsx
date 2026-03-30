@@ -33,7 +33,10 @@ import { request } from "@/utils/request";
 import { PetSpeciesOptions } from "@/constant";
 import { PetStatusEnum } from "@/types";
 import { motion } from "framer-motion";
-import { getPetCoverImage } from "@/lib/petImage";
+import {
+  getLocalDefaultPetCoverBySpecies,
+  getPetCoverImage,
+} from "@/lib/petImage";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -56,6 +59,9 @@ export default function MyPublishPage() {
   const [form] = Form.useForm();
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(12);
+  const [failedImageByPetId, setFailedImageByPetId] = useState<
+    Record<number, string>
+  >({});
 
   const {
     run: load,
@@ -71,6 +77,10 @@ export default function MyPublishPage() {
   useEffect(() => {
     load({ pageNum, pageSize, ...form.getFieldsValue() });
   }, [pageNum, pageSize, load]);
+
+  useEffect(() => {
+    setFailedImageByPetId({});
+  }, [pageNum, pageSize]);
 
   const onSearch = () => {
     setPageNum(1);
@@ -193,7 +203,9 @@ export default function MyPublishPage() {
         {list.length > 0 ? (
           <Row gutter={[32, 32]}>
             {list.map((pet) => {
-              const imageUrl = getPetCoverImage(pet.image_urls, pet.species);
+              const imageUrl =
+                failedImageByPetId[pet.pet_id] ??
+                getPetCoverImage(pet.image_urls, pet.species);
               return (
                 <Col xs={24} sm={12} md={8} lg={6} key={pet.pet_id}>
                   <motion.div
@@ -201,68 +213,50 @@ export default function MyPublishPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     whileHover={{ y: -8 }}
                   >
-                    <Card
-                      hoverable
-                      className="fancy-card"
-                      cover={
-                        <div
-                          style={{
-                            position: "relative",
-                            overflow: "hidden",
-                            borderTopLeftRadius: 16,
-                            borderTopRightRadius: 16,
+                    <div className="modern-card" style={{ overflow: "hidden" }}>
+                      <div className="pet-list-card__cover">
+                        <img
+                          alt={pet.name}
+                          src={imageUrl}
+                          className="pet-card-img"
+                          style={{ width: "100%" }}
+                          referrerPolicy="no-referrer"
+                          onError={() => {
+                            setFailedImageByPetId((prev) => {
+                              if (prev[pet.pet_id]) return prev;
+                              return {
+                                ...prev,
+                                [pet.pet_id]:
+                                  getLocalDefaultPetCoverBySpecies(pet.species),
+                              };
+                            });
                           }}
-                        >
-                          <img
-                            alt={pet.name}
-                            src={imageUrl}
-                            style={{
-                              width: "100%",
-                              height: 200,
-                              objectFit: "cover",
-                            }}
-                          />
-                          <div
-                            style={{ position: "absolute", top: 12, right: 12 }}
-                          >
-                            {getStatusTag(pet.status)}
-                          </div>
+                        />
+                        <div style={{ position: "absolute", top: 16, right: 16 }}>
+                          {getStatusTag(pet.status)}
                         </div>
-                      }
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: 12,
-                        }}
-                      >
-                        <Title level={4} style={{ margin: 0 }}>
-                          {pet.name}
-                        </Title>
-                        <Tag
-                          color={pet.gender === 1 ? "blue" : "volcano"}
-                          bordered={false}
-                        >
-                          {pet.gender === 1 ? "公" : "母"}
-                        </Tag>
                       </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: 16,
-                        }}
-                      >
+
+                      <div className="pet-list-card__content">
+                        <div className="pet-list-card__title-row">
+                          <Title level={4} style={{ margin: 0 }}>
+                            {pet.name}
+                          </Title>
+                          <Tag
+                            color={pet.gender === 1 ? "blue" : "volcano"}
+                            bordered={false}
+                          >
+                            {pet.gender === 1 ? "公" : "母"}
+                          </Tag>
+                        </div>
+
                         <div
+                          className="pet-list-card__meta-row"
                           style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
+                            marginBottom: 16,
                             color: "#8A8AA8",
                             fontSize: 12,
+                            fontWeight: 500,
                           }}
                         >
                           <EnvironmentOutlined />
@@ -270,27 +264,28 @@ export default function MyPublishPage() {
                             {pet.species} · {pet.breed || "普通"}
                           </span>
                         </div>
+
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <Button
+                            icon={<EditOutlined />}
+                            block
+                            onClick={() =>
+                              router.push(`/pet/edit?pet_id=${pet.pet_id}`)
+                            }
+                          >
+                            编辑
+                          </Button>
+                          <Button
+                            danger
+                            icon={<DeleteOutlined />}
+                            block
+                            onClick={() => handleDelete(pet.pet_id)}
+                          >
+                            删除
+                          </Button>
+                        </div>
                       </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <Button
-                          icon={<EditOutlined />}
-                          block
-                          onClick={() =>
-                            router.push(`/pet/edit?pet_id=${pet.pet_id}`)
-                          }
-                        >
-                          编辑
-                        </Button>
-                        <Button
-                          danger
-                          icon={<DeleteOutlined />}
-                          block
-                          onClick={() => handleDelete(pet.pet_id)}
-                        >
-                          删除
-                        </Button>
-                      </div>
-                    </Card>
+                    </div>
                   </motion.div>
                 </Col>
               );

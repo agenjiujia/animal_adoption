@@ -47,6 +47,8 @@ type CreatePetFormValues = {
   vaccine_status: number;
   neutered: number;
   description: string;
+  /** 仅用于表单校验：图片列表（不直接入库） */
+  images?: UploadFile[];
 };
 
 export default function CreatePet() {
@@ -79,7 +81,10 @@ export default function CreatePet() {
     if (newFileList.length > 5) {
       message.warning("最多上传 5 张图片");
     }
-    setFileList(newFileList.slice(0, 5));
+    const next = newFileList.slice(0, 5);
+    setFileList(next);
+    form.setFieldValue("images", next);
+    void form.validateFields(["images"]).catch(() => {});
   };
 
   const getUploadedImageUrls = () =>
@@ -235,7 +240,7 @@ export default function CreatePet() {
               <div
                 style={{
                   width: 4,
-                  height: 18,
+                  height: 16,
                   background: "var(--primary)",
                   borderRadius: 2,
                 }}
@@ -315,7 +320,7 @@ export default function CreatePet() {
               <div
                 style={{
                   width: 4,
-                  height: 18,
+                  height: 16,
                   background: "var(--primary)",
                   borderRadius: 2,
                 }}
@@ -383,7 +388,7 @@ export default function CreatePet() {
               <div
                 style={{
                   width: 4,
-                  height: 18,
+                  height: 16,
                   background: "var(--primary)",
                   borderRadius: 2,
                 }}
@@ -392,11 +397,21 @@ export default function CreatePet() {
             </Title>
 
             <Form.Item
+              name="images"
               label={
                 <span style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
                   第一张图将作为封面展示（至少 1 张，最多 5 张）
                 </span>
               }
+              rules={[
+                {
+                  validator: async () => {
+                    const n = getUploadedImageUrls().length;
+                    if (n < 1) throw new Error("请至少上传 1 张宠物图片");
+                    if (n > 5) throw new Error("最多上传 5 张宠物图片");
+                  },
+                },
+              ]}
             >
               <Upload
                 action="/api/upload"

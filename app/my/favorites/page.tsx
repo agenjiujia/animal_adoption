@@ -2,28 +2,26 @@
 
 import { useEffect, useState } from "react";
 import {
-  Card,
   Col,
   Row,
   Button,
-  Tag,
   Typography,
   Empty,
   message,
   Spin,
-  Space,
 } from "antd";
 import {
   HeartFilled,
-  HeartOutlined,
   ArrowRightOutlined,
-  EnvironmentOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { getPetCoverImage } from "@/lib/petImage";
+import {
+  getLocalDefaultPetCoverBySpecies,
+  getPetCoverImage,
+} from "@/lib/petImage";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 interface Pet {
   pet_id: number;
@@ -42,6 +40,9 @@ interface Pet {
 export default function MyFavoritesPage() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failedImageByPetId, setFailedImageByPetId] = useState<
+    Record<number, string>
+  >({});
   const router = useRouter();
 
   const fetchFavorites = async () => {
@@ -54,6 +55,7 @@ export default function MyFavoritesPage() {
       });
       const json = await res.json();
       if (json.businessCode === 0) {
+        setFailedImageByPetId({});
         setPets(json.data.list);
       } else if (json.httpCode === 401) {
         message.warning("请先登录");
@@ -112,7 +114,9 @@ export default function MyFavoritesPage() {
           {pets.length > 0 ? (
             <Row gutter={[24, 32]}>
               {pets.map((pet, index) => {
-                const imageUrl = getPetCoverImage(pet.image_urls, pet.species);
+                const imageUrl =
+                  failedImageByPetId[pet.pet_id] ??
+                  getPetCoverImage(pet.image_urls, pet.species);
                 return (
                   <Col xs={24} sm={12} md={8} lg={6} key={pet.pet_id}>
                     <motion.div
@@ -126,41 +130,39 @@ export default function MyFavoritesPage() {
                         style={{ cursor: "pointer" }}
                         onClick={() => router.push(`/pet/detail?pet_id=${pet.pet_id}`)}
                       >
-                        <div style={{ position: "relative", padding: 12 }}>
+                        <div className="pet-list-card__cover">
                           <img
                             alt={pet.name}
                             src={imageUrl}
                             className="pet-card-img"
-                            style={{ width: "100%", height: 240, objectFit: "cover" }}
+                            style={{ width: "100%" }}
+                            referrerPolicy="no-referrer"
+                            onError={() => {
+                              setFailedImageByPetId((prev) => {
+                                if (prev[pet.pet_id]) return prev;
+                                return {
+                                  ...prev,
+                                  [pet.pet_id]:
+                                    getLocalDefaultPetCoverBySpecies(pet.species),
+                                };
+                              });
+                            }}
                           />
-                          <div style={{ position: "absolute", top: 24, right: 24 }}>
+                          <div className="pet-card__float-action">
                             <Button
                               shape="circle"
                               size="large"
                               icon={<HeartFilled style={{ color: "var(--secondary)", fontSize: 20 }} />}
                               onClick={(e) => toggleFavorite(e, pet.pet_id)}
-                              style={{ 
-                                background: "rgba(255,255,255,0.8)", 
-                                backdropFilter: "blur(8px)",
-                                border: "none",
-                                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)"
-                              }}
                             />
                           </div>
                         </div>
-                        <div style={{ padding: "0 20px 24px" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                            <Title style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>{pet.name}</Title>
-                            <span
-                              style={{
-                                fontSize: 12,
-                                color: "var(--primary)",
-                                background: "rgba(79, 70, 229, 0.1)",
-                                padding: "4px 10px",
-                                borderRadius: 8,
-                                fontWeight: 600,
-                              }}
-                            >
+                        <div className="pet-list-card__content">
+                          <div className="pet-list-card__title-row">
+                            <Title style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>
+                              {pet.name}
+                            </Title>
+                            <span className="pet-list-card__species-tag">
                               {pet.breed || pet.species}
                             </span>
                           </div>

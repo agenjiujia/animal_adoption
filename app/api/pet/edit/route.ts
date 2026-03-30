@@ -6,11 +6,13 @@ import {
   HttpCodeEnum,
   PetOperateTypeEnum,
   PetSpeciesEnum,
+  PetVaccineStatusEnum,
+  PetNeuteredEnum,
 } from "@/types";
-import { PetSpeciesMap } from "@/constant";
+import { PetNeuteredMap, PetSpeciesMap, PetVaccineStatusMap } from "@/constant";
 import prisma, { withTransaction } from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
-import { normalizeImageUrlsInput } from "@/lib/imageUrls";
+import { imageUrlsToApiField, normalizeImageUrlsInput } from "@/lib/imageUrls";
 
 /**
  * 发布者修改宠物内容（不含 status）
@@ -80,104 +82,118 @@ const editPetHandler = async (req: NextRequest) => {
     };
   }
 
+  // 全字段必填（与发布单一致）
+  if (
+    !String(name ?? "").trim() ||
+    species === undefined ||
+    species === null ||
+    !String(breed ?? "").trim() ||
+    age === undefined ||
+    age === null ||
+    gender === undefined ||
+    weight === undefined ||
+    weight === null ||
+    !String(health_status ?? "").trim() ||
+    vaccine_status === undefined ||
+    vaccine_status === null ||
+    neutered === undefined ||
+    neutered === null ||
+    !String(description ?? "").trim() ||
+    image_urls === undefined ||
+    image_urls === null
+  ) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "请完整填写发布单所有内容（含图片）",
+    };
+  }
+
   const updateData: Prisma.PetUpdateInput = {};
 
-  if (name !== undefined) {
-    if (!String(name).trim() || String(name).length > 50) {
-      return {
-        businessCode: BusinessCodeEnum.ParameterValidationFailed,
-        httpCode: HttpCodeEnum.BadRequest,
-        message: "名称不能为空且不超过50字",
-      };
-    }
-    updateData.name = String(name).trim();
+  if (!String(name).trim() || String(name).length > 50) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "名称不能为空且不超过50字",
+    };
   }
+  updateData.name = String(name).trim();
 
-  if (species !== undefined) {
-    const sEnum = Number(species);
-    const sLabel = PetSpeciesMap[sEnum as PetSpeciesEnum]?.label;
-    if (!sLabel) {
-      return {
-        businessCode: BusinessCodeEnum.ParameterValidationFailed,
-        httpCode: HttpCodeEnum.BadRequest,
-        message: "物种类型非法",
-      };
-    }
-    updateData.species = sLabel;
+  const sEnum = Number(species);
+  const sLabel = PetSpeciesMap[sEnum as PetSpeciesEnum]?.label;
+  if (!sLabel) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "物种类型非法",
+    };
   }
+  updateData.species = sLabel;
 
-  if (gender !== undefined) {
-    const g = Number(gender);
-    if (![0, 1].includes(g)) {
-      return {
-        businessCode: BusinessCodeEnum.ParameterValidationFailed,
-        httpCode: HttpCodeEnum.BadRequest,
-        message: "gender 只能为 0 或 1",
-      };
-    }
-    updateData.gender = g;
+  const g = Number(gender);
+  if (![0, 1].includes(g)) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "gender 只能为 0 或 1",
+    };
   }
+  updateData.gender = g;
 
-  if (vaccine_status !== undefined) {
-    const v = Number(vaccine_status);
-    if (![0, 1, 2].includes(v)) {
-      return {
-        businessCode: BusinessCodeEnum.ParameterValidationFailed,
-        httpCode: HttpCodeEnum.BadRequest,
-        message: "vaccine_status 非法",
-      };
-    }
-    updateData.vaccine_status = v;
+  const v = Number(vaccine_status);
+  if (PetVaccineStatusMap[v as PetVaccineStatusEnum] === undefined) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "vaccine_status 非法",
+    };
   }
+  updateData.vaccine_status = v;
 
-  if (neutered !== undefined) {
-    const n = Number(neutered);
-    if (![0, 1, 2].includes(n)) {
-      return {
-        businessCode: BusinessCodeEnum.ParameterValidationFailed,
-        httpCode: HttpCodeEnum.BadRequest,
-        message: "neutered 非法",
-      };
-    }
-    updateData.neutered = n;
+  const n = Number(neutered);
+  if (PetNeuteredMap[n as PetNeuteredEnum] === undefined) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "neutered 非法",
+    };
   }
+  updateData.neutered = n;
 
-  if (weight !== undefined) {
-    const w = Number(weight);
-    if (isNaN(w) || w < 0 || w > 999.99) {
-      return {
-        businessCode: BusinessCodeEnum.ParameterValidationFailed,
-        httpCode: HttpCodeEnum.BadRequest,
-        message: "体重非法",
-      };
-    }
-    updateData.weight = w;
+  const w = Number(weight);
+  if (isNaN(w) || w < 0 || w > 999.99) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "体重非法",
+    };
   }
+  updateData.weight = w;
 
-  if (age !== undefined) {
-    const a = Number(age);
-    if (isNaN(a) || a < 0 || !Number.isInteger(a)) {
-      return {
-        businessCode: BusinessCodeEnum.ParameterValidationFailed,
-        httpCode: HttpCodeEnum.BadRequest,
-        message: "年龄须为非负整数",
-      };
-    }
-    updateData.age = a;
+  const a = Number(age);
+  if (isNaN(a) || a < 0 || !Number.isInteger(a)) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "年龄须为非负整数",
+    };
   }
+  updateData.age = a;
 
-  if (breed !== undefined) {
-    updateData.breed = breed ? String(breed).trim() : null;
+  updateData.breed = String(breed).trim();
+  updateData.health_status = String(health_status).trim();
+  updateData.description = String(description).trim();
+
+  const parsedImageUrls = imageUrlsToApiField(image_urls);
+  if (parsedImageUrls.length < 1 || parsedImageUrls.length > 5) {
+    return {
+      businessCode: BusinessCodeEnum.ParameterValidationFailed,
+      httpCode: HttpCodeEnum.BadRequest,
+      message: "图片数量需为 1-5 张",
+    };
   }
-  if (health_status !== undefined) {
-    updateData.health_status = health_status ? String(health_status) : null;
-  }
-  if (description !== undefined) {
-    updateData.description = description ? String(description) : null;
-  }
-  if (image_urls !== undefined) {
-    updateData.image_urls = normalizeImageUrlsInput(image_urls);
-  }
+  updateData.image_urls = normalizeImageUrlsInput(image_urls);
 
   const keys = Object.keys(updateData);
   if (keys.length === 0) {

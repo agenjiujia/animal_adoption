@@ -1,9 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useRequest } from "ahooks";
 import { useRouter } from "next/navigation";
 import {
-  Card,
   Col,
   Row,
   Button,
@@ -27,9 +27,12 @@ import {
 import { request } from "@/utils/request";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
-import { getPetCoverImage } from "@/lib/petImage";
+import {
+  getLocalDefaultPetCoverBySpecies,
+  getPetCoverImage,
+} from "@/lib/petImage";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 interface AdoptionRecord {
   apply_id: number;
@@ -48,11 +51,15 @@ interface AdoptionRecord {
 
 export default function MyAdoptionsPage() {
   const router = useRouter();
+  const [failedImageByPetId, setFailedImageByPetId] = useState<
+    Record<number, string>
+  >({});
 
   const { data, loading } = useRequest(
     () => request.get("/api/adoption/my-list"),
     {
       onSuccess: (res) => {
+        setFailedImageByPetId({});
         if (res.businessCode !== 0) {
           message.error(res.message);
         }
@@ -133,25 +140,36 @@ export default function MyAdoptionsPage() {
                             router.push(`/pet/detail?pet_id=${item.pet_id}`)
                           }
                         >
+                          {/* 左侧缩略图统一封面容器：圆角/溢出/相对定位 */}
+                          <div className="pet-list-card__cover" style={{ padding: 16 }}>
                           <img
-                            src={imageUrl}
+                            src={
+                              failedImageByPetId[item.pet_id] ?? imageUrl
+                            }
                             alt={item.pet_name}
-                            style={{
-                              width: "100%",
-                              height: 180,
-                              borderRadius: 20,
-                              objectFit: "cover",
-                              boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                            className="pet-card-img pet-list-card__thumb"
+                            referrerPolicy="no-referrer"
+                            onError={() => {
+                              setFailedImageByPetId((prev) => {
+                                if (prev[item.pet_id]) return prev;
+                                return {
+                                  ...prev,
+                                  [item.pet_id]:
+                                    getLocalDefaultPetCoverBySpecies(
+                                      item.species
+                                    ),
+                                };
+                              });
                             }}
                           />
                           <div
-                            style={{ position: "absolute", top: 12, left: 12 }}
+                            style={{ position: "absolute", top: 16, left: 16 }}
                           >
                             <Tag
                               color={status.color}
                               style={{
                                 borderRadius: 8,
-                                padding: "4px 12px",
+                                padding: "4px 16px",
                                 fontWeight: 600,
                                 border: "none",
                                 boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
@@ -159,6 +177,7 @@ export default function MyAdoptionsPage() {
                             >
                               {status.text}
                             </Tag>
+                          </div>
                           </div>
                         </div>
                       </Col>
@@ -236,7 +255,7 @@ export default function MyAdoptionsPage() {
 
                         <div
                           style={{
-                            padding: "16px 20px",
+                            padding: "16px 24px",
                             background: "var(--bg-main)",
                             borderRadius: 16,
                             display: "flex",

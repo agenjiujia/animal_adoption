@@ -100,6 +100,77 @@ body {
   border-radius: 16px;
 }
 
+/* ===== Module 1: 宠物卡片列表统一样式（封面/角标/内容间距）===== */
+.pet-list-card__cover {
+  position: relative;
+  overflow: hidden;
+  padding: 16px; /* 16 = 2*8 */
+}
+
+.pet-list-card__badge {
+  position: absolute;
+  top: 24px; /* 24 = 3*8 */
+  left: 24px;
+  background: var(--primary);
+  color: #fff;
+  padding: 8px 16px; /* 8/16 均为 8px 网格整数 */
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.pet-list-card__content {
+  padding: 0 16px 24px; /* 左右 16，底部 24 */
+}
+
+.pet-list-card__title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px; /* 8 */
+}
+
+.pet-list-card__species-tag {
+  font-size: 13px;
+  color: var(--primary);
+  background: rgba(79, 70, 229, 0.1);
+  padding: 4px 8px; /* 紧凑：4px 允许，左右 8px */
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.pet-list-card__desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 16px; /* 16 */
+  height: 40px; /* 40 = 5*8 */
+}
+
+.pet-list-card__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* 8 */
+}
+
+/* 列表缩略图统一：阴影与圆角 */
+.pet-list-card__thumb {
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* 卡片右上角悬浮操作按钮（收藏/更多操作等统一外观） */
+.pet-card__float-action {
+  position: absolute;
+  top: 24px; /* 24 = 3*8 */
+  right: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
 
 /* 极致留白 */
 .section-spacing {

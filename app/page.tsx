@@ -51,9 +51,21 @@ export default function HomePage() {
   const router = useRouter();
 
   const loadingRef = useRef(false);
+  // 防止首屏内容高度不足时，“最后一张卡片”在未滚动前就触发 IntersectionObserver，
+  // 导致分页接口（pageNum=2）在用户刚打开页面时就被额外请求。
+  const scrolledRef = useRef(false);
   useEffect(() => {
     loadingRef.current = loading;
   }, [loading]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (window.scrollY > 120) scrolledRef.current = true;
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // 预检测卡片图片可用性：避免首屏在 React 绑定 onError 前就已失败，导致默认图不生效
   useEffect(() => {
@@ -82,7 +94,8 @@ export default function HomePage() {
         if (
           entries[0].isIntersecting &&
           hasMore &&
-          !loadingRef.current
+          !loadingRef.current &&
+          scrolledRef.current
         ) {
           setPageNum((prev) => prev + 1);
         }
@@ -336,13 +349,7 @@ export default function HomePage() {
                       router.push(`/pet/detail?pet_id=${pet.pet_id}`)
                     }
                   >
-                    <div
-                      style={{
-                        position: "relative",
-                        overflow: "hidden",
-                        padding: 12,
-                      }}
-                    >
+                    <div className="pet-list-card__cover">
                       <motion.div
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.4 }}
@@ -369,59 +376,25 @@ export default function HomePage() {
                         />
                       </motion.div>
                       {pet.is_applied === 1 && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: 24,
-                            left: 24,
-                            background: "var(--primary)",
-                            color: "#fff",
-                            padding: "6px 14px",
-                            borderRadius: 10,
-                            fontSize: 12,
-                            fontWeight: 600,
-                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                          }}
-                        >
+                        <div className="pet-list-card__badge">
                           已申请
                         </div>
                       )}
                     </div>
-                    <div style={{ padding: "0 20px 24px" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: 8,
-                        }}
-                      >
-                        <Title
-                          style={{ margin: 0, fontSize: 20, fontWeight: 700 }}
-                        >
+                    <div className="pet-list-card__content">
+                      <div className="pet-list-card__title-row">
+                        <Title style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>
                           {pet.name}
                         </Title>
                         <span
-                          style={{
-                            fontSize: 13,
-                            color: "var(--primary)",
-                            background: "rgba(79, 70, 229, 0.1)",
-                            padding: "4px 10px",
-                            borderRadius: 8,
-                            fontWeight: 600,
-                          }}
+                          className="pet-list-card__species-tag"
                         >
                           {pet.breed || pet.species}
                         </span>
                       </div>
                       <Paragraph
                         ellipsis={{ rows: 2 }}
-                        style={{
-                          fontSize: 14,
-                          color: "var(--text-secondary)",
-                          marginBottom: 16,
-                          height: 40,
-                        }}
+                        className="pet-list-card__desc"
                       >
                         {pet.description}
                       </Paragraph>
@@ -429,7 +402,7 @@ export default function HomePage() {
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 12,
+                          gap: 8,
                         }}
                       >
                         <Text
