@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { resolveDatabaseUrl } from "@/lib/prisma";
+import { cleanEnvValue, resolveDatabaseUrl } from "@/lib/prisma";
 
 describe("resolveDatabaseUrl", () => {
   const saved = { ...process.env };
@@ -31,5 +31,27 @@ describe("resolveDatabaseUrl", () => {
     expect(resolveDatabaseUrl()).toBe(
       "mysql://root:p%40ss%3Aword@127.0.0.1:3306/animal_adoption"
     );
+  });
+
+  it("strips inline # comment from MYSQL_PASSWORD", () => {
+    delete process.env.DATABASE_URL;
+    process.env.MYSQL_PASSWORD = "secret # not part of password";
+    expect(resolveDatabaseUrl()).toContain(
+      encodeURIComponent("secret") + "@127.0.0.1"
+    );
+    expect(resolveDatabaseUrl()).not.toContain("not%20part");
+  });
+
+  it("maps localhost to 127.0.0.1 for MySQL bind compatibility", () => {
+    delete process.env.DATABASE_URL;
+    process.env.MYSQL_HOST = "localhost";
+    expect(resolveDatabaseUrl()).toContain("@127.0.0.1:3306/");
+  });
+});
+
+describe("cleanEnvValue", () => {
+  it("trims and removes trailing inline comment", () => {
+    expect(cleanEnvValue("root       # MySQL用户名")).toBe("root");
+    expect(cleanEnvValue("ygygAdmin@123 # MySQL密码")).toBe("ygygAdmin@123");
   });
 });

@@ -15,11 +15,16 @@ export function mapRegisterPrismaError(
   console.error(logPrefix, e);
 
   if (e instanceof Prisma.PrismaClientInitializationError) {
+    const detail =
+      process.env.NODE_ENV === "development"
+        ? ` 详情：${e.message || e.errorCode || ""}`
+        : "";
     return {
       businessCode: BusinessCodeEnum.ServerBusinessError,
       httpCode: HttpCodeEnum.ServerError,
       message:
-        "数据库未正确配置或无法连接，请检查 MYSQL_* / DATABASE_URL 及 MySQL 是否已启动",
+        "数据库未正确配置或无法连接，请检查 MYSQL_* / DATABASE_URL、MySQL 是否已启动；若 .env 里密码/用户名后写了 # 注释，请改成单独一行或去掉行内注释。" +
+        detail,
     };
   }
 
