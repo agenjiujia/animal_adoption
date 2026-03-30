@@ -22,6 +22,8 @@ describe("getPetImageList", () => {
   it("cover falls back by species", () => {
     expect(getPetCoverImage([], "猫")).toBe(PET_DEFAULT_COVER.cat);
     expect(getPetCoverImage([], "狗")).toBe(PET_DEFAULT_COVER.dog);
+    expect(getPetCoverImage([], "1")).toBe(PET_DEFAULT_COVER.cat);
+    expect(getPetCoverImage([], 2)).toBe(PET_DEFAULT_COVER.dog);
     expect(getPetCoverImage([], "兔子")).toBe(PET_DEFAULT_COVER.other);
     expect(getDefaultPetCoverBySpecies(null)).toBe(PET_DEFAULT_COVER.other);
   });
