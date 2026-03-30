@@ -218,10 +218,37 @@ export default function HomePage() {
   }, [pageNum]);
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", overflow: "hidden" }}>
+      {/* 背景层：提升质感，避免页面显得过素 */}
+      <div
+        style={{
+          position: "absolute",
+          top: -140,
+          left: -120,
+          width: 320,
+          height: 320,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(79,70,229,0.22), transparent 65%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 120,
+          right: -110,
+          width: 300,
+          height: 300,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(244,63,94,0.16), transparent 65%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
       {/* Hero Section - 温暖治愈的开场 */}
       <section
-        style={{ marginBottom: 100, paddingTop: 40, textAlign: "center" }}
+        style={{ marginBottom: 18, paddingTop: 0, textAlign: "center", position: "relative", zIndex: 1 }}
       >
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -230,50 +257,53 @@ export default function HomePage() {
         >
           <div
             style={{
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 600,
               color: "var(--primary)",
-              marginBottom: 16,
+              marginBottom: 8,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
             }}
           >
-            开启温暖的陪伴之旅
+            今日可领养
           </div>
           <Title
             className="brand-title"
             style={{
-              fontSize: "clamp(36px, 6vw, 64px)",
-              marginBottom: 24,
+              fontSize: "clamp(28px, 4.5vw, 42px)",
+              marginBottom: 10,
               lineHeight: 1.2,
             }}
           >
-            每一个生命
-            <br />
-            都值得被温柔对待
+            先看小可爱
+            <br />再决定是否领养
           </Title>
           <Paragraph
             style={{
-              fontSize: 18,
+              fontSize: 14,
               color: "var(--text-secondary)",
-              marginBottom: 48,
-              maxWidth: 640,
+              marginBottom: 12,
+              maxWidth: 520,
               marginInline: "auto",
-              lineHeight: 1.8,
+              lineHeight: 1.6,
             }}
           >
-            萌宠之家不仅是一个领养平台，更是一个充满爱与责任的社区。
-            在这里，我们帮每一只寻找依靠的小可爱，遇见那个命中注定的你。
+            首屏优先展示在领养宠物卡片，快速浏览年龄、疫苗、绝育与健康信息。
           </Paragraph>
-          <Space size={24}>
+          <Space size={8} style={{ marginBottom: 14 }} wrap>
+            <span className="pet-list-card__species-tag">真实待领养信息</span>
+            <span className="pet-list-card__species-tag">发布者直接审批</span>
+            <span className="pet-list-card__species-tag">今日在寻家：{total}</span>
+          </Space>
+          <Space size={16}>
             <Button
               className="btn-primary"
               type="primary"
               size="large"
               style={{
-                height: 56,
-                padding: "0 40px",
-                fontSize: 16,
+                height: 44,
+                padding: "0 24px",
+                fontSize: 15,
               }}
               onClick={() =>
                 document
@@ -287,9 +317,9 @@ export default function HomePage() {
               type="default"
               size="large"
               style={{
-                height: 56,
-                padding: "0 40px",
-                fontSize: 16,
+                height: 44,
+                padding: "0 24px",
+                fontSize: 15,
                 borderRadius: 12,
                 fontWeight: 600,
               }}
@@ -302,13 +332,13 @@ export default function HomePage() {
       </section>
 
       {/* Collection Grid - 现代卡片展示 */}
-      <section id="collection" style={{ paddingBottom: 100 }}>
+      <section id="collection" style={{ paddingBottom: 72, position: "relative", zIndex: 1 }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-end",
-            marginBottom: 48,
+            marginBottom: 24,
           }}
         >
           <div>
@@ -323,7 +353,7 @@ export default function HomePage() {
             >
               正在寻找新家
             </div>
-            <Title style={{ margin: 0, fontSize: 32, fontWeight: 700 }}>
+            <Title style={{ margin: 0, fontSize: 28, fontWeight: 750 }}>
               待领养的小家伙们
             </Title>
           </div>
@@ -337,7 +367,7 @@ export default function HomePage() {
           </Text>
         </div>
 
-        <Row gutter={[24, 32]}>
+        <Row gutter={[20, 20]}>
           {pets.map((pet, index) => {
             const imageUrl =
               failedImageByPetId[pet.pet_id] ??
@@ -352,7 +382,12 @@ export default function HomePage() {
                   transition={{ duration: 0.5, delay: (index % 4) * 0.1 }}
                   ref={index === pets.length - 1 ? lastPetElementRef : null}
                   className="modern-card"
-                  style={{ overflow: "hidden", height: "100%" }}
+                  style={{
+                    overflow: "hidden",
+                    height: "100%",
+                    border: "1px solid rgba(15,23,42,0.06)",
+                    background: "linear-gradient(180deg, #fff 0%, #fcfdff 100%)",
+                  }}
                 >
                   <div
                     style={{ cursor: "pointer" }}
@@ -360,7 +395,7 @@ export default function HomePage() {
                       router.push(`/pet/detail?pet_id=${pet.pet_id}`)
                     }
                   >
-                    <div className="pet-list-card__cover">
+                    <div className="pet-list-card__cover" style={{ padding: 12 }}>
                       <motion.div
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.4 }}
@@ -383,7 +418,7 @@ export default function HomePage() {
                             });
                           }}
                           className="pet-card-img"
-                          style={{ width: "100%" }}
+                          style={{ width: "100%", aspectRatio: "4 / 3", borderRadius: 14 }}
                         />
                       </motion.div>
                       {pet.is_applied === 1 && (
@@ -392,9 +427,9 @@ export default function HomePage() {
                         </div>
                       )}
                     </div>
-                    <div className="pet-list-card__content">
+                    <div className="pet-list-card__content" style={{ padding: "0 12px 14px" }}>
                       <div className="pet-list-card__title-row">
-                        <Title style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>
+                        <Title style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
                           {pet.name}
                         </Title>
                         <span
@@ -404,8 +439,9 @@ export default function HomePage() {
                         </span>
                       </div>
                       <Paragraph
-                        ellipsis={{ rows: 2 }}
+                        ellipsis={{ rows: 1 }}
                         className="pet-list-card__desc"
+                        style={{ marginBottom: 10, height: "auto" }}
                       >
                         {pet.description}
                       </Paragraph>
@@ -477,12 +513,13 @@ export default function HomePage() {
                               : "绝育未知"}
                         </Text>
                       </div>
-                      <div style={{ marginTop: 8 }}>
+                      <div style={{ marginTop: 6 }}>
                         <Text
                           style={{
                             fontSize: 12,
                             color: "var(--text-muted)",
                           }}
+                          ellipsis
                         >
                           {pet.health_status
                             ? `健康状况：${pet.health_status}`

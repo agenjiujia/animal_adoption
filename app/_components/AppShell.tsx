@@ -330,7 +330,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {!isAuthPage && (
         <Footer
           style={{
-            padding: "32px 40px",
+            padding: "20px 32px",
             background: "white",
             borderTop: "1px solid var(--border-light)",
           }}
@@ -340,13 +340,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 40,
+                gap: 20,
               }}
             >
               <div style={{ gridColumn: "span 2" }}>
                 <div
                   className="brand-title"
-                  style={{ fontSize: 24, marginBottom: 16 }}
+                  style={{ fontSize: 20, marginBottom: 8 }}
                 >
                   萌宠之家
                 </div>
@@ -354,7 +354,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   style={{
                     color: "var(--text-secondary)",
                     maxWidth: 360,
-                    lineHeight: 1.8,
+                    lineHeight: 1.6,
+                    fontSize: 14,
                   }}
                 >
                   我们致力于为每一只流浪的小动物寻找一个温暖的家。在这里，每一个生命都值得被尊重和珍爱。
@@ -362,29 +363,32 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>
               <div>
                 <div
-                  style={{ fontWeight: 600, marginBottom: 20, fontSize: 16 }}
+                  style={{ fontWeight: 600, marginBottom: 10, fontSize: 15 }}
                 >
                   快速链接
                 </div>
-                <Space orientation="vertical" size={12}>
-                  <Link href="/" style={{ color: "var(--text-secondary)" }}>
+                <Space orientation="vertical" size={8}>
+                  <Link
+                    href="/"
+                    style={{ color: "var(--text-secondary)", fontSize: 14 }}
+                  >
                     发现宠物
                   </Link>
                   <Link
                     href="/pet/new"
-                    style={{ color: "var(--text-secondary)" }}
+                    style={{ color: "var(--text-secondary)", fontSize: 14 }}
                   >
                     发布领养
                   </Link>
                   <Link
                     href="/pet/my-publish"
-                    style={{ color: "var(--text-secondary)" }}
+                    style={{ color: "var(--text-secondary)", fontSize: 14 }}
                   >
                     我的发布
                   </Link>
                   <Link
                     href="/profile"
-                    style={{ color: "var(--text-secondary)" }}
+                    style={{ color: "var(--text-secondary)", fontSize: 14 }}
                   >
                     个人中心
                   </Link>
@@ -392,15 +396,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>
               <div>
                 <div
-                  style={{ fontWeight: 600, marginBottom: 20, fontSize: 16 }}
+                  style={{ fontWeight: 600, marginBottom: 10, fontSize: 15 }}
                 >
                   关于我们
                 </div>
-                <Space orientation="vertical" size={12}>
-                  <div style={{ color: "var(--text-secondary)" }}>
+                <Space orientation="vertical" size={8}>
+                  <div style={{ color: "var(--text-secondary)", fontSize: 14 }}>
                     联系我们：paws@home.com
                   </div>
-                  <div style={{ color: "var(--text-secondary)" }}>
+                  <div style={{ color: "var(--text-secondary)", fontSize: 14 }}>
                     加入志愿者
                   </div>
                 </Space>
@@ -408,12 +412,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <div
               style={{
-                marginTop: 32,
-                paddingTop: 32,
+                marginTop: 16,
+                paddingTop: 14,
                 borderTop: "1px solid var(--border-light)",
                 textAlign: "center",
                 color: "var(--text-muted)",
-                fontSize: 14,
+                fontSize: 12,
               }}
             >
               © 2026 PawHouse 萌宠之家. All rights reserved.
