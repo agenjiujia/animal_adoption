@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BusinessCodeEnum, HttpCodeEnum, UserRoleEnum } from "@/types";
+import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
 import { serializePetForApi } from "@/lib/petSerialize";
@@ -11,7 +11,6 @@ import { serializePetForApi } from "@/lib/petSerialize";
 export async function POST(req: NextRequest) {
   const auth = resolveAuth(req);
   const currentUserId = auth.ok ? auth.user.userId : null;
-  const isAdmin = auth.ok ? auth.user.role === UserRoleEnum.Admin : false;
 
   let body: { pageNum?: number; pageSize?: number } = {};
   try {
@@ -89,24 +88,28 @@ export async function POST(req: NextRequest) {
           type: "USER",
         })) as Record<string, unknown>[];
 
-        if (isAdmin) {
-          const adminNotif = await prisma.adoptionApply.findMany({
-            where: { is_admin_read: 0, status: 0 },
-            include: {
-              pet: { select: { name: true } },
-              applicant: { select: { username: true } },
-            },
-          });
-          notifications = [
-            ...notifications,
-            ...adminNotif.map((a) => ({
-              ...a,
-              pet_name: a.pet?.name,
-              applicant_name: a.applicant?.username,
-              type: "ADMIN",
-            })),
-          ];
-        }
+        // 发布者待审批通知：每个发布者只收到自己发布宠物的审批队列
+        const ownerNotif = await prisma.adoptionApply.findMany({
+          where: {
+            pet_user_id: currentUserId,
+            is_admin_read: 0, // 复用字段：表示“发布者是否已读”
+            status: 0, // 待审核
+          },
+          include: {
+            pet: { select: { name: true } },
+            applicant: { select: { username: true } },
+          },
+        });
+
+        notifications = [
+          ...notifications,
+          ...ownerNotif.map((a) => ({
+            ...a,
+            pet_name: a.pet?.name,
+            applicant_name: a.applicant?.username,
+            type: "OWNER",
+          })),
+        ];
       } catch (e) {
         console.error("Public pet list: skip notifications:", e);
       }

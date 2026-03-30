@@ -147,7 +147,9 @@ export default function HomePage() {
                 const url =
                   notif.type === "USER"
                     ? "/api/adoption/mark-read"
-                    : "/api/admin/adoption/mark-read";
+                    : notif.type === "OWNER"
+                      ? "/api/adoption/owner/mark-read"
+                      : "/api/admin/adoption/mark-read";
                 void fetch(url, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -173,7 +175,11 @@ export default function HomePage() {
                 onClick: () => {
                   markNotifRead();
                   router.push(
-                    notif.type === "USER" ? "/my/adoptions" : "/admin/adoptions"
+                    notif.type === "USER"
+                      ? "/my/adoptions"
+                      : notif.type === "OWNER"
+                        ? "/my/adoption-approvals"
+                        : "/admin/adoptions"
                   );
                 },
                 onClose: () => {

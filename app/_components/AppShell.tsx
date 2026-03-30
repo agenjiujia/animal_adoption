@@ -145,6 +145,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       label: <Link href="/my/adoptions">我的领养申请</Link>,
     },
     {
+      key: "adoption-approvals",
+      icon: <DashboardOutlined style={{ fontSize: 14 }} />,
+      label: <Link href="/my/adoption-approvals">领养审批队列</Link>,
+    },
+    {
       type: "divider",
     },
     {
