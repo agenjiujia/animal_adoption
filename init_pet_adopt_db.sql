@@ -3,16 +3,16 @@
 -- 目标: MySQL 8.0+
 -- 用法示例:
 --   mysql -h <HOST> -P <PORT> -u <USER> -p < init_pet_adopt_db.sql
--- 说明: 将下方数据库名 pet_adopt 替换为实际库名时，请同步环境变量 MYSQL_DATABASE / DATABASE_URL
+-- 说明: 下方数据库名已按项目默认设置为 animal_adoption，请同步环境变量 MYSQL_DATABASE / DATABASE_URL
 -- ============================================================
 
 SET NAMES utf8mb4;
 
-CREATE DATABASE IF NOT EXISTS `pet_adopt`
+CREATE DATABASE IF NOT EXISTS `animal_adoption`
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE `pet_adopt`;
+USE `animal_adoption`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
