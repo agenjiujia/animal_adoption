@@ -6,13 +6,12 @@ import {
   message,
   Card,
   Upload,
-  Avatar,
   Typography,
   Row,
   Col,
 } from "antd";
 import type { UploadChangeParam } from "antd/es/upload";
-import { PlusOutlined, UserOutlined } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRequest } from "ahooks";
@@ -49,11 +48,39 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[var(--bg-main)] py-12">
+    <div
+      className="flex items-center justify-center min-h-screen py-12"
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        background:
+          "linear-gradient(135deg, rgba(79,70,229,0.55), rgba(244,63,94,0.30), rgba(15,23,42,0.55))",
+        backgroundSize: "400% 400%",
+        animation: "registerGradient 16s ease-in-out infinite",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 0,
+          background:
+            "radial-gradient(1000px circle at 15% 15%, rgba(79,70,229,0.45), transparent 58%), radial-gradient(900px circle at 85% 30%, rgba(244,63,94,0.30), transparent 52%), radial-gradient(900px circle at 45% 90%, rgba(34,197,94,0.15), transparent 55%)",
+          animation: "registerFloat 11s ease-in-out infinite",
+        }}
+      />
       <Card
         bordered={false}
         className="w-full max-w-lg standard-card"
-        style={{ padding: 20 }}
+        style={{
+          padding: 20,
+          position: "relative",
+          zIndex: 1,
+          background: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(10px)",
+          borderRadius: 20,
+          boxShadow: "0 20px 60px rgba(2,6,23,0.18)",
+        }}
       >
         <div className="text-center mb-10">
           <Title
@@ -223,6 +250,18 @@ const RegisterPage = () => {
           </div>
         </Form>
       </Card>
+      <style>{`
+        @keyframes registerGradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes registerFloat {
+          0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.9; }
+          50% { transform: translate3d(0, -10px, 0) scale(1.03); opacity: 1; }
+          100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.9; }
+        }
+      `}</style>
     </div>
   );
 };
