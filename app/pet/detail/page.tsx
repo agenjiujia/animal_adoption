@@ -35,6 +35,8 @@ import {
   getLocalDefaultPetCoverBySpecies,
   getPetImageList,
 } from "@/lib/petImage";
+import { PetSpeciesMap } from "@/app/_constant";
+import { PetSpeciesEnum } from "@/app/_types";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -278,10 +280,31 @@ export default function PetDetailPage() {
                       marginBottom: 4,
                     }}
                   >
+                    物种
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>
+                    {PetSpeciesMap[Number(petDetail.species) as PetSpeciesEnum]?.label}
+                  </div>
+                </div>
+                <div
+                  className="modern-card"
+                  style={{
+                    padding: "16px 24px",
+                    borderRadius: 16,
+                    boxShadow: "none",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-muted)",
+                      marginBottom: 4,
+                    }}
+                  >
                     品种
                   </div>
                   <div style={{ fontSize: 16, fontWeight: 700 }}>
-                    {petDetail.breed || petDetail.species}
+                    {petDetail.breed || '- -'}
                   </div>
                 </div>
                 <div
