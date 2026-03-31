@@ -134,7 +134,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isAdmin = userInfo.role === UserRoleEnum.Admin;
 
   const menuItems = useMemo(() => {
-    const items = [
+    const items: NonNullable<MenuProps["items"]> = [
       {
         key: "/",
         label: <Link href="/">发现宠物</Link>,
@@ -152,8 +152,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
     if (isAdmin) {
       items.push({
-        key: "/admin/pets",
-        label: <Link href="/admin/pets">管理后台</Link>,
+        key: "/admin",
+        label: <span>管理中心</span>,
+        children: [
+          {
+            key: "/admin/pets",
+            label: <Link href="/admin/pets">宠物管理</Link>,
+          },
+          {
+            key: "/admin/users",
+            label: <Link href="/admin/users">用户管理</Link>,
+          },
+          {
+            key: "/admin/adoptions",
+            label: <Link href="/admin/adoptions">审批管理</Link>,
+          },
+        ],
       });
     }
     return items;

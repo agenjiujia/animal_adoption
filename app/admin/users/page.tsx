@@ -153,7 +153,7 @@ export default function AdminUsersPage() {
   ];
 
   return (
-    <div style={{ padding: "32px" }}>
+    <div >
       <div className="modern-card" style={{ padding: '20px 20px 0', marginBottom: 32 }}>
         <Form form={form} onFinish={submit} layout="vertical">
           <Row gutter={24}>

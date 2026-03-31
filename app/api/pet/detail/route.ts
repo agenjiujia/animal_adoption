@@ -58,9 +58,22 @@ const getPetDetailHandler = async (
 
     const ownerId = row.user_id;
     const isAdmin = authUser?.role === UserRoleEnum.Admin;
-    const canView =
+    let canView =
       Number(row.status) === PetStatusEnum.ForAdoption ||
       (!!authUser && (isAdmin || ownerId === authUser.userId));
+
+    // 收藏用户允许查看非待领养状态详情（如已领养/已下架），避免收藏页跳详情被 403。
+    if (!canView && authUser) {
+      try {
+        const fav = await prisma.petFavorite.findFirst({
+          where: { user_id: authUser.userId, pet_id: petId },
+          select: { favorite_id: true },
+        });
+        canView = !!fav;
+      } catch (e) {
+        console.error("pet/detail: skip favorite permission check", e);
+      }
+    }
 
     if (!canView) {
       return {
