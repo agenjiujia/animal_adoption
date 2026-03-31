@@ -198,7 +198,7 @@ export default function CreatePet() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div style={{ marginBottom: 40, textAlign: "center" }}>
+        <div style={{ marginBottom: 24, textAlign: "center" }}>
           <Title
             level={2}
           >
@@ -303,7 +303,7 @@ export default function CreatePet() {
               />
             </Form.Item>
 
-            <Divider style={{ margin: "40px 0" }} />
+            <Divider style={{ margin: "24px 0" }} />
 
             <Title
               level={5}
@@ -371,7 +371,7 @@ export default function CreatePet() {
               />
             </Form.Item>
 
-            <Divider style={{ margin: "40px 0" }} />
+            <Divider style={{ margin: "24px 0" }} />
 
             <Title
               level={5}

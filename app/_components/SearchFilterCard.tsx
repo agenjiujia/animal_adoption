@@ -27,12 +27,12 @@ export default function SearchFilterCard({
   onReset,
   filterList,
   actionSpan = 6,
-  marginBottom = 32,
+  marginBottom = 24,
 }: SearchFilterCardProps) {
   return (
-    <div className="modern-card" style={{ padding: '24px 24px 0', marginBottom }}>
+    <div className="modern-card" style={{ padding: "16px 16px 0", marginBottom }}>
       <Form form={form} layout="vertical" onFinish={onSearch}>
-        <Row gutter={24}>
+        <Row gutter={16}>
           {filterList.map((item) => (
             <Col span={item.span ?? 6} key={item.field}>
               <Form.Item name={item.field} {...item.formItemProps}>

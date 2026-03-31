@@ -171,7 +171,7 @@ export default function MyPublishPage() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 40,
+          marginBottom: 24,
         }}
       >
         <div>

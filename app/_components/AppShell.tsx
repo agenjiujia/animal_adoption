@@ -228,11 +228,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "0 40px",
-            height: 72,
+            padding: "0 16px",
+            height: 64,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 64 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="brand-title"
@@ -334,7 +334,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
             className={!isAuthPage ? "main-container" : ""}
-            style={{ padding: !isAuthPage ? "28px 0" : 0 }}
+            style={{ padding: !isAuthPage ? "24px 0" : 0 }}
           >
             {children}
           </motion.div>
@@ -344,7 +344,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {!isAuthPage && (
         <Footer
           style={{
-            padding: "20px 32px",
+            padding: "16px",
             background: "white",
             borderTop: "1px solid var(--border-light)",
           }}

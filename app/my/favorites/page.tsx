@@ -87,13 +87,13 @@ export default function MyFavoritesPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 0" }}>
+    <div style={{ margin: "0 auto", paddingBottom:0 }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div style={{ marginBottom: 48, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <div>
             <Title style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>我的收藏</Title>
             <Text style={{ color: "var(--text-secondary)", fontSize: 16 }}>

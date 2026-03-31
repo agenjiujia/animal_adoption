@@ -166,7 +166,7 @@ export default function ProfilePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div style={{ marginBottom: 40 }}>
+        <div style={{ marginBottom: 24 }}>
           <Title level={2}>
             个人中心
           </Title>
@@ -182,7 +182,7 @@ export default function ProfilePage() {
               <Col xs={24} md={8}>
                 <div
                   className="modern-card"
-                  style={{ textAlign: "center", padding: "48px 24px" }}
+                  style={{ textAlign: "center", padding: "24px" }}
                 >
                   <div
                     style={{
@@ -247,7 +247,7 @@ export default function ProfilePage() {
                       : "爱心领养人"}
                   </Tag>
 
-                  <Divider style={{ margin: "32px 0" }} />
+                  <Divider style={{ margin: "24px 0" }} />
 
                   <div style={{ textAlign: "left", padding: "0 8px" }}>
                     <Space
