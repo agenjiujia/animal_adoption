@@ -245,9 +245,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               }}
               onClick={() => router.push("/")}
             >
-              <HeartOutlined
-                style={{ fontSize: 24, color: "var(--secondary)" }}
-              />
+              <span style={{ fontSize: 22, lineHeight: 1 }}>🐾</span>
               萌宠之家
             </motion.div>
 

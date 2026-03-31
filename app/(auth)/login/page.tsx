@@ -85,7 +85,7 @@ function LoginForm() {
           }}
         >
           <div className="text-center mb-10">
-            <div className="text-4xl mb-4">🐾</div>
+            <div className="text-4xl mb-3">🐾</div>
             <Title
               level={2}
               style={{
