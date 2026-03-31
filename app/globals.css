@@ -194,3 +194,8 @@ body {
     margin-bottom: var(--section-gap);
   }
 }
+
+/* Table 分页栏（常被称为 footer）内边距统一 */
+.ant-table-wrapper .ant-table-pagination {
+  padding: 0 16px;
+}
