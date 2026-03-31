@@ -293,7 +293,7 @@ export default function HomePage() {
             </Text>
           </div>
 
-        <Row gutter={[20, 20]}>
+        <Row gutter={[24, 24]}>
           {pets.map((pet, index) => {
             const imageUrl =
               failedImageByPetId[pet.pet_id] ??

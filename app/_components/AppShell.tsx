@@ -349,7 +349,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             borderTop: "1px solid var(--border-light)",
           }}
         >
-          <div className="main-container">
+          <div className="main-container" style={{ padding: 0 }}>
             <div
               style={{
                 display: "grid",

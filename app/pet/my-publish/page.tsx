@@ -198,7 +198,7 @@ export default function MyPublishPage() {
 
       <Spin spinning={loading} description="正在同步发布状态...">
         {list.length > 0 ? (
-          <Row gutter={[32, 32]}>
+          <Row gutter={[24, 24]}>
             {list.map((pet) => {
               const imageUrl =
                 failedImageByPetId[pet.pet_id] ??

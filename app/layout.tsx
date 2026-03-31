@@ -1,6 +1,7 @@
 import AppShell from "@/app/_components/AppShell";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConfigProvider } from "antd";
+import zhCN from "antd/locale/zh_CN";
 import theme from "@/lib/antdTheme";
 import "./globals.css";
 
@@ -22,7 +23,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <ConfigProvider theme={theme}>
+        <ConfigProvider theme={theme} locale={zhCN}>
           <AppShell>{children}</AppShell>
         </ConfigProvider>
       </body>

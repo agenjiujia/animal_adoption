@@ -112,7 +112,7 @@ export default function MyFavoritesPage() {
 
         <Spin spinning={loading} tip="正在加载收藏列表...">
           {pets.length > 0 ? (
-            <Row gutter={[24, 32]}>
+            <Row gutter={[24, 24]}>
               {pets.map((pet, index) => {
                 const imageUrl =
                   failedImageByPetId[pet.pet_id] ??

@@ -35,7 +35,7 @@ export default function SearchFilterCard({
         <Row gutter={16}>
           {filterList.map((item) => (
             <Col span={item.span ?? 6} key={item.field}>
-              <Form.Item name={item.field} {...item.formItemProps}>
+              <Form.Item name={item.field} {...item.formItemProps} style={{marginBottom:16}}>
                 {item.component}
               </Form.Item>
             </Col>
