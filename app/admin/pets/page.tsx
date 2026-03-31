@@ -12,8 +12,6 @@ import {
   message,
   Typography,
   Tag,
-  Row,
-  Col,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useAntdTable } from "ahooks";
@@ -21,8 +19,10 @@ import { request } from "@/utils/request";
 import { PetStatusEnum, PetOperateTypeEnum } from "@/types";
 import { PetOperateTypeMap } from "@/constant";
 import { motion } from "framer-motion";
-import { ArrowRightOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import SearchFilterCard, {
+  type SearchFilterItem,
+} from "@/app/_components/SearchFilterCard";
 
 const { Text, Title } = Typography;
 
@@ -175,56 +175,56 @@ export default function AdminPetsPage() {
     },
   ];
 
+  const filterList: SearchFilterItem[] = [
+    {
+      field: "name",
+      component: (
+        <Input
+          allowClear
+          placeholder="输入名称搜索"
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>名称</span>}
+        />
+      ),
+    },
+    {
+      field: "species",
+      component: (
+        <Input
+          allowClear
+          placeholder="如：猫、狗"
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>种类</span>}
+        />
+      ),
+    },
+    {
+      field: "status",
+      component: (
+        <Select
+          allowClear
+          placeholder="全部状态"
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>状态</span>}
+          options={[
+            { label: "待领养", value: PetStatusEnum.ForAdoption },
+            { label: "已领养", value: PetStatusEnum.Adopted },
+            { label: "下架", value: PetStatusEnum.Offline },
+          ]}
+        />
+      ),
+    },
+  ];
+
   return (
     <div >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="modern-card" style={{ padding: '20px 20px 0', marginBottom: 32 }}>
-          <Form form={form} onFinish={submit} layout="vertical">
-            <Row gutter={24}>
-              <Col span={6}>
-                <Form.Item name="name" label="宠物名称">
-                  <Input allowClear placeholder="输入名称搜索" />
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item name="species" label="宠物种类">
-                  <Input allowClear placeholder="如：猫、狗" />
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item name="status" label="当前状态">
-                  <Select
-                    allowClear
-                    placeholder="全部状态"
-                    options={[
-                      { label: "待领养", value: PetStatusEnum.ForAdoption },
-                      { label: "已领养", value: PetStatusEnum.Adopted },
-                      { label: "下架", value: PetStatusEnum.Offline },
-                    ]}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item label=" ">
-                  <Space>
-                    <Button
-                      type="primary"
-                      className="btn-primary"
-                      onClick={submit}
-                      icon={<ArrowRightOutlined />}
-                    >
-                      查询
-                    </Button>
-                    <Button onClick={reset}>重置</Button>
-                  </Space>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        </div>
+        <SearchFilterCard
+          form={form}
+          onSearch={submit}
+          onReset={reset}
+          filterList={filterList}
+        />
 
         <div className="modern-card" style={{ padding: 0, overflow: "hidden" }}>
           <Table<PetRow>

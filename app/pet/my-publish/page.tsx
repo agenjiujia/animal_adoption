@@ -8,7 +8,6 @@ import {
   Input,
   Select,
   Button,
-  Space,
   Typography,
   Modal,
   Spin,
@@ -34,6 +33,7 @@ import {
   getLocalDefaultPetCoverBySpecies,
   getPetCoverImage,
 } from "@/lib/petImage";
+import SearchFilterCard from "@/app/_components/SearchFilterCard";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -126,6 +126,44 @@ export default function MyPublishPage() {
     }
   };
 
+  const filterList = [
+    {
+      field: "name",
+      component: (
+        <Input
+          placeholder="输入昵称搜索"
+          allowClear
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>昵称</span>}
+        />
+      ),
+    },
+    {
+      field: "species",
+      component: (
+        <Select
+          placeholder="宠物种类"
+          options={PetSpeciesOptions}
+          allowClear
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>种类</span>}
+        />
+      ),
+    },
+    {
+      field: "status",
+      component: (
+        <Select
+          placeholder="状态"
+          allowClear
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>状态</span>}
+        >
+          <Select.Option value={0}>待领养</Select.Option>
+          <Select.Option value={1}>已领养</Select.Option>
+          <Select.Option value={2}>已下架</Select.Option>
+        </Select>
+      ),
+    },
+  ];
+
   return (
     <div>
       <div
@@ -151,45 +189,12 @@ export default function MyPublishPage() {
         </Button>
       </div>
 
-      <div className="modern-card" style={{ padding: 24, marginBottom: 32 }}>
-        <Form form={form} layout="vertical" onFinish={onSearch}>
-          <Row gutter={24}>
-            <Col span={6}>
-              <Form.Item name="name" label="宠物昵称">
-                <Input placeholder="输入昵称搜索" allowClear />
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item name="species" label="宠物种类">
-                <Select
-                  placeholder="全部种类"
-                  options={PetSpeciesOptions}
-                  allowClear
-                />
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item name="status" label="状态">
-                <Select placeholder="全部状态" allowClear>
-                  <Select.Option value={0}>待领养</Select.Option>
-                  <Select.Option value={1}>已领养</Select.Option>
-                  <Select.Option value={2}>已下架</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item label=" ">
-                <Space>
-                  <Button type="primary" htmlType="submit" className="btn-primary">
-                    查询
-                  </Button>
-                  <Button onClick={onReset}>重置</Button>
-                </Space>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </div>
+      <SearchFilterCard
+        form={form}
+        onSearch={onSearch}
+        onReset={onReset}
+        filterList={filterList}
+      />
 
       <Spin spinning={loading} description="正在同步发布状态...">
         {list.length > 0 ? (

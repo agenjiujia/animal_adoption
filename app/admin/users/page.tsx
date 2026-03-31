@@ -6,8 +6,6 @@ import {
   Button,
   Space,
   Form,
-  Row,
-  Col,
   Input,
   Select,
   Modal,
@@ -21,6 +19,9 @@ import { useAntdTable } from "ahooks";
 import { request } from "@/utils/request";
 import { UserRoleEnum, UserStatusEnum } from "@/types";
 import { UserRoleMap, UserStatusMap } from "@/constant";
+import SearchFilterCard, {
+  type SearchFilterItem,
+} from "@/app/_components/SearchFilterCard";
 
 const { Text } = Typography;
 
@@ -152,61 +153,70 @@ export default function AdminUsersPage() {
     },
   ];
 
+  const filterList: SearchFilterItem[] = [
+    {
+      field: "username",
+      component: (
+        <Input
+          allowClear
+          placeholder="用户名"
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>用户名</span>}
+        />
+      ),
+      span: 4,
+    },
+    {
+      field: "phone",
+      component: (
+        <Input
+          allowClear
+          placeholder="手机号"
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>手机</span>}
+        />
+      ),
+      span: 4,
+    },
+    {
+      field: "role",
+      component: (
+        <Select
+          allowClear
+          placeholder="角色"
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>角色</span>}
+          options={[
+            { label: "普通用户", value: UserRoleEnum.OrdinaryAdopter },
+            { label: "管理员", value: UserRoleEnum.Admin },
+          ]}
+        />
+      ),
+      span: 4,
+    },
+    {
+      field: "status",
+      component: (
+        <Select
+          allowClear
+          placeholder="状态"
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>状态</span>}
+          options={[
+            { label: "禁用", value: UserStatusEnum.Disabled },
+            { label: "正常", value: UserStatusEnum.Normal },
+          ]}
+        />
+      ),
+      span: 4,
+    },
+  ];
+
   return (
     <div >
-      <div className="modern-card" style={{ padding: '20px 20px 0', marginBottom: 32 }}>
-        <Form form={form} onFinish={submit} layout="vertical">
-          <Row gutter={24}>
-            <Col span={4}>
-              <Form.Item name="username" label="用户名">
-                <Input allowClear />
-              </Form.Item>
-            </Col>
-            <Col span={4}>
-              <Form.Item name="phone" label="手机">
-                <Input allowClear />
-              </Form.Item>
-            </Col>
-            <Col span={4}>
-              <Form.Item name="role" label="角色">
-                <Select
-                  allowClear
-                  options={[
-                    { label: "普通用户", value: UserRoleEnum.OrdinaryAdopter },
-                    { label: "管理员", value: UserRoleEnum.Admin },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={4}>
-              <Form.Item name="status" label="状态">
-                <Select
-                  allowClear
-                  options={[
-                    { label: "禁用", value: UserStatusEnum.Disabled },
-                    { label: "正常", value: UserStatusEnum.Normal },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={4}>
-              <Form.Item label=" ">
-                <Space>
-                  <Button
-                    type="primary"
-                    className="btn-primary"
-                    htmlType="submit"
-                  >
-                    查询
-                  </Button>
-                  <Button onClick={reset}>重置</Button>
-                </Space>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </div>
+      <SearchFilterCard
+        form={form}
+        onSearch={submit}
+        onReset={reset}
+        filterList={filterList}
+        actionSpan={4}
+      />
 
       <Table<UserRow>
         rowKey="user_id"

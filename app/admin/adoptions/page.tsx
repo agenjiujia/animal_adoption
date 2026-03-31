@@ -4,14 +4,11 @@ import { useState, useEffect } from "react";
 import {
   Table,
   Tag,
-  Button,
   Space,
   Modal,
   Input,
   Form,
   Select,
-  Row,
-  Col,
   message,
   Typography,
   Avatar,
@@ -20,10 +17,11 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import SearchFilterCard, {
+  type SearchFilterItem,
+} from "@/app/_components/SearchFilterCard";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -259,45 +257,34 @@ export default function AdminAdoptionsPage() {
     // },
   ];
 
+  const filterList: SearchFilterItem[] = [
+    {
+      field: "status",
+      component: (
+        <Select
+          allowClear
+          placeholder="全部状态"
+          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>状态</span>}
+          options={[
+            { label: "待审核", value: 0 },
+            { label: "已通过", value: 1 },
+            { label: "已拒绝", value: 2 },
+          ]}
+        />
+      ),
+    },
+  ];
+
   return (
     <div >
-      <div className="modern-card" style={{ padding: '20px 20px 0', marginBottom: 32 }}>
-        <Form
-          form={searchForm}
-          layout="vertical"
-          onFinish={handleSearch}
-        >
-          <Row gutter={24}>
-            <Col span={6}>
-              <Form.Item name="status" label="状态">
-                <Select
-                  allowClear
-                  placeholder="全部状态"
-                  options={[
-                    { label: "待审核", value: 0 },
-                    { label: "已通过", value: 1 },
-                    { label: "已拒绝", value: 2 },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item label=" ">
-                <Space>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className="btn-primary"
-                  >
-                    查询
-                  </Button>
-                  <Button onClick={handleReset}>重置</Button>
-                </Space>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </div>
+      <SearchFilterCard
+        form={searchForm}
+        onSearch={() => {
+          void searchForm.submit();
+        }}
+        onReset={handleReset}
+        filterList={filterList}
+      />
 
       <Modal
         title={
