@@ -121,15 +121,14 @@ const editPetHandler = async (req: NextRequest) => {
   updateData.name = String(name).trim();
 
   const sEnum = Number(species);
-  const sLabel = PetSpeciesMap[sEnum as PetSpeciesEnum]?.label;
-  if (!sLabel) {
+  if (PetSpeciesMap[sEnum as PetSpeciesEnum] === undefined) {
     return {
       businessCode: BusinessCodeEnum.ParameterValidationFailed,
       httpCode: HttpCodeEnum.BadRequest,
       message: "物种类型非法",
     };
   }
-  updateData.species = sLabel;
+  updateData.species = sEnum;
 
   const g = Number(gender);
   if (![0, 1].includes(g)) {

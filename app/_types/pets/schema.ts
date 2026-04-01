@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const petCreateSchema = z.object({
   name: z.string().min(1, "名称不能为空").max(50),
-  species: z.string().min(1, "种类不能为空").max(30),
+  species: z.number().int().min(1).max(3),
   breed: z.string().max(50).optional(),
   age: z.number().int().min(0).optional(),
   gender: z.number().int().min(0).max(1).optional(),

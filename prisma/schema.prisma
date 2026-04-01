@@ -42,7 +42,7 @@ model Pet {
   pet_id        Int       @id @default(autoincrement()) @db.UnsignedInt
   user_id       Int       @db.UnsignedInt
   name          String    @db.VarChar(50)
-  species       String    @db.VarChar(30)
+  species       Int       @db.TinyInt
   breed         String?   @db.VarChar(50)
   age           Int?
   gender        Int?      @default(0) @db.TinyInt

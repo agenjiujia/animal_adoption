@@ -26,8 +26,8 @@ import {
   ArrowRightOutlined,
 } from "@ant-design/icons";
 import { request } from "@/utils/request";
-import { PetSpeciesOptions } from "@/constant";
-import { PetStatusEnum } from "@/types";
+import { PetSpeciesMap, PetSpeciesOptions } from "@/constant";
+import { PetSpeciesEnum, PetStatusEnum } from "@/types";
 import { motion } from "framer-motion";
 import {
   getLocalDefaultPetCoverBySpecies,
@@ -41,7 +41,7 @@ interface PetItem {
   pet_id: number;
   user_id: number;
   name: string;
-  species: string;
+  species: number;
   breed?: string;
   age?: number;
   gender: number;
@@ -258,7 +258,7 @@ export default function MyPublishPage() {
                         >
                           <EnvironmentOutlined />
                           <span>
-                            {pet.species} · {pet.breed || "普通"}
+                            {PetSpeciesMap[pet.species as PetSpeciesEnum]?.label || "其他"} · {pet.breed || "普通"}
                           </span>
                         </div>
 

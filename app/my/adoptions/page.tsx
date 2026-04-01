@@ -31,6 +31,8 @@ import {
   getLocalDefaultPetCoverBySpecies,
   getPetCoverImage,
 } from "@/lib/petImage";
+import { PetSpeciesMap } from "@/constant";
+import { PetSpeciesEnum } from "@/types";
 
 const { Title, Text } = Typography;
 
@@ -38,7 +40,7 @@ interface AdoptionRecord {
   apply_id: number;
   pet_id: number;
   pet_name: string;
-  species: string;
+  species: number;
   breed?: string;
   image_urls?: string | string[];
   owner_name: string;
@@ -203,7 +205,7 @@ export default function MyAdoptionsPage() {
                                 fontWeight: 500,
                               }}
                             >
-                              {item.species} · {item.breed || "普通品种"}
+                              {PetSpeciesMap[item.species as PetSpeciesEnum]?.label || "其他"} · {item.breed || "普通品种"}
                             </Text>
                           </div>
                           <div style={{ textAlign: "right" }}>

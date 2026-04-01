@@ -27,7 +27,6 @@ import {
   PetNeuteredOptions,
   PetGenderOptions,
   PetSpeciesOptions,
-  PetSpeciesMap,
 } from "@/constant";
 import { request } from "@/utils/request";
 import { motion } from "framer-motion";
@@ -38,7 +37,7 @@ const { Title, Text } = Typography;
 // 表单字段类型定义
 type CreatePetFormValues = {
   name: string;
-  species: string;
+  species: number;
   breed: string;
   age: number;
   gender: number;
@@ -135,11 +134,10 @@ export default function CreatePet() {
         const d = res.data as Record<string, unknown> | undefined;
         if (!d) return;
 
-        // 反向映射物种：从字符串 "猫" 映射回枚举值 1
-        const speciesEntry = Object.entries(PetSpeciesMap).find(
-          ([, v]) => v.label === d.species
-        );
-        const speciesValue = speciesEntry ? Number(speciesEntry[0]) : undefined;
+        const speciesValue =
+          d.species !== undefined && d.species !== null
+            ? Number(d.species)
+            : undefined;
 
         form.setFieldsValue({
           ...d,

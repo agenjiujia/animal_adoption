@@ -44,7 +44,7 @@ interface PetDetail {
   pet_id: number;
   user_id: number;
   name: string;
-  species: string;
+  species: number;
   breed: string;
   age: number;
   gender: number;
@@ -283,7 +283,7 @@ export default function PetDetailPage() {
                     物种
                   </div>
                   <div style={{ fontSize: 16, fontWeight: 700 }}>
-                    {PetSpeciesMap[Number(petDetail.species) as PetSpeciesEnum]?.label}
+                    {PetSpeciesMap[petDetail.species as PetSpeciesEnum]?.label}
                   </div>
                 </div>
                 <div

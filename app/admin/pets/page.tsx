@@ -17,7 +17,7 @@ import type { ColumnsType } from "antd/es/table";
 import { useAntdTable } from "ahooks";
 import { request } from "@/utils/request";
 import { PetStatusEnum, PetOperateTypeEnum } from "@/types";
-import { PetOperateTypeMap } from "@/constant";
+import { PetOperateTypeMap, PetSpeciesMap, PetSpeciesOptions } from "@/constant";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
 import SearchFilterCard, {
@@ -30,7 +30,7 @@ type PetRow = {
   pet_id: number;
   user_id: number;
   name: string;
-  species: string;
+  species: number;
   breed?: string;
   status: number;
   update_time: string;
@@ -132,7 +132,12 @@ export default function AdminPetsPage() {
     { title: "ID", dataIndex: "pet_id", width: 70 },
     { title: "发布者", dataIndex: "user_id", width: 80 },
     { title: "名称", dataIndex: "name" },
-    { title: "种类", dataIndex: "species", width: 100 },
+    {
+      title: "种类",
+      dataIndex: "species",
+      width: 100,
+      render: (s: number) => PetSpeciesMap[s as keyof typeof PetSpeciesMap]?.label ?? s,
+    },
     {
       title: "状态",
       dataIndex: "status",
@@ -189,10 +194,11 @@ export default function AdminPetsPage() {
     {
       field: "species",
       component: (
-        <Input
+        <Select
           allowClear
-          placeholder="如：猫、狗"
+          placeholder="全部种类"
           prefix={<span style={{ color: "#64748b", fontSize: 12 }}>种类</span>}
+          options={PetSpeciesOptions}
         />
       ),
     },

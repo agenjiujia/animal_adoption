@@ -20,6 +20,8 @@ import {
   getLocalDefaultPetCoverBySpecies,
   getPetCoverImage,
 } from "@/lib/petImage";
+import { PetSpeciesMap } from "@/constant";
+import { PetSpeciesEnum } from "@/types";
 
 const { Title, Text } = Typography;
 
@@ -27,7 +29,7 @@ interface Pet {
   pet_id: number;
   user_id: number;
   name: string;
-  species: string;
+  species: number;
   breed: string;
   age: number;
   gender: number;
@@ -163,7 +165,7 @@ export default function MyFavoritesPage() {
                               {pet.name}
                             </Title>
                             <span className="pet-list-card__species-tag">
-                              {pet.breed || pet.species}
+                              {pet.breed || PetSpeciesMap[pet.species as PetSpeciesEnum]?.label || "其他"}
                             </span>
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

@@ -81,8 +81,17 @@ async function handler(
   if (body.name && String(body.name).trim()) {
     where.name = { contains: String(body.name).trim() };
   }
-  if (body.species && String(body.species).trim()) {
-    where.species = { contains: String(body.species).trim() };
+  if (body.species !== undefined && body.species !== null && body.species !== "") {
+    const speciesNum = Number(body.species);
+    if (![1, 2, 3].includes(speciesNum)) {
+      return {
+        businessCode: BusinessCodeEnum.ParameterValidationFailed,
+        httpCode: HttpCodeEnum.BadRequest,
+        message: "species 只能 1/2/3",
+        data: empty(pageNum, pageSizeNum),
+      };
+    }
+    where.species = speciesNum;
   }
   if (body.status !== undefined && body.status !== null && body.status !== "") {
     const st = Number(body.status);

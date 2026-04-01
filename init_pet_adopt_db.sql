@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `pet` (
   `pet_id` INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '宠物ID',
   `user_id` INT UNSIGNED NOT NULL COMMENT '发布者ID',
   `name` VARCHAR(50) NOT NULL COMMENT '宠物名字',
-  `species` VARCHAR(30) NOT NULL COMMENT '物种 (如: 猫, 狗)',
+  `species` TINYINT NOT NULL COMMENT '物种：1-猫，2-狗，3-其他',
   `breed` VARCHAR(50) DEFAULT NULL COMMENT '品种',
   `age` INT DEFAULT NULL COMMENT '年龄(月)，非负',
   `gender` TINYINT DEFAULT 0 COMMENT '性别：0-母，1-公',

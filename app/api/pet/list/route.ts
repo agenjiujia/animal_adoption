@@ -46,6 +46,7 @@ const getPetListHandler = async (
 
   const numericFields = [
     "pet_id",
+    "species",
     "age",
     "gender",
     "vaccine_status",
@@ -65,6 +66,7 @@ const getPetListHandler = async (
         };
       }
       const valid: Record<string, number[]> = {
+        species: [1, 2, 3],
         gender: [0, 1],
         vaccine_status: [0, 1, 2],
         neutered: [0, 1, 2],
@@ -107,7 +109,7 @@ const getPetListHandler = async (
     where.weight = weightNum;
   }
 
-  for (const field of ["name", "species", "breed"] as const) {
+  for (const field of ["name", "breed"] as const) {
     const value = requestData[field];
     if (value !== undefined && value !== null) {
       const strValue = String(value).trim();

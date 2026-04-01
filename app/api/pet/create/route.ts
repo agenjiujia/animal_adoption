@@ -73,12 +73,12 @@ const createPetHandler = async (req: NextRequest) => {
   }
 
   const speciesEnum = Number(species);
-  // species 统一按枚举值入库（"1" | "2" | "3"），与列表筛选参数保持一致
+  // species 统一按枚举值入库（1 | 2 | 3），与 TINYINT 字段保持一致
   const speciesValue = [PetSpeciesEnum.Cat, PetSpeciesEnum.Dog, PetSpeciesEnum.Other].includes(
     speciesEnum as PetSpeciesEnum
   )
-    ? String(speciesEnum)
-    : String(PetSpeciesEnum.Other);
+    ? speciesEnum
+    : PetSpeciesEnum.Other;
 
   const genderNum = Number(gender);
   if (PetGenderMap[genderNum as PetGenderEnum] === undefined) {
