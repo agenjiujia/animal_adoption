@@ -25,7 +25,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { request } from "@/utils/request";
-import dayjs from "dayjs";
+import { formatDateTime } from "@/lib/formatDate";
 import { motion } from "framer-motion";
 import {
   getLocalDefaultPetCoverBySpecies,
@@ -220,7 +220,7 @@ export default function MyAdoptionsPage() {
                               申请时间
                             </Text>
                             <Text style={{ fontSize: 14, fontWeight: 600 }}>
-                              {dayjs(item.create_time).format("YYYY-MM-DD")}
+                              {formatDateTime(item.create_time)}
                             </Text>
                           </div>
                         </div>

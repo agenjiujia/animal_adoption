@@ -22,6 +22,7 @@ import { UserRoleMap, UserStatusMap } from "@/constant";
 import SearchFilterCard, {
   type SearchFilterItem,
 } from "@/app/_components/SearchFilterCard";
+import { formatDateTime } from "@/lib/formatDate";
 
 const { Text } = Typography;
 
@@ -126,12 +127,21 @@ export default function AdminUsersPage() {
       dataIndex: "status",
       width: 88,
       render: (s: number) => (
-        <Tag color={s === UserStatusEnum.Normal ? "green" : "red"}>
+        <Tag
+          color={s === UserStatusEnum.Normal ? "green" : "red"}
+          bordered={false}
+          style={{ borderRadius: 8 }}
+        >
           {UserStatusMap[s as UserStatusEnum]?.label}
         </Tag>
       ),
     },
-    { title: "注册时间", dataIndex: "create_time", width: 170 },
+    {
+      title: "注册时间",
+      dataIndex: "create_time",
+      width: 178,
+      render: (t: string) => formatDateTime(t),
+    },
     {
       title: "操作",
       key: "op",
@@ -160,7 +170,7 @@ export default function AdminUsersPage() {
         <Input
           allowClear
           placeholder="用户名"
-          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>用户名</span>}
+          prefix={<span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>用户名</span>}
         />
       ),
       span: 4,
@@ -171,7 +181,7 @@ export default function AdminUsersPage() {
         <Input
           allowClear
           placeholder="手机号"
-          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>手机</span>}
+          prefix={<span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>手机</span>}
         />
       ),
       span: 4,
@@ -182,7 +192,7 @@ export default function AdminUsersPage() {
         <Select
           allowClear
           placeholder="角色"
-          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>角色</span>}
+          prefix={<span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>角色</span>}
           options={[
             { label: "普通用户", value: UserRoleEnum.OrdinaryAdopter },
             { label: "管理员", value: UserRoleEnum.Admin },
@@ -197,7 +207,7 @@ export default function AdminUsersPage() {
         <Select
           allowClear
           placeholder="状态"
-          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>状态</span>}
+          prefix={<span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>状态</span>}
           options={[
             { label: "禁用", value: UserStatusEnum.Disabled },
             { label: "正常", value: UserStatusEnum.Normal },
@@ -209,27 +219,31 @@ export default function AdminUsersPage() {
   ];
 
   return (
-    <div >
+    <div className="admin-layout-stack">
       <SearchFilterCard
         form={form}
         onSearch={submit}
         onReset={reset}
         filterList={filterList}
         actionSpan={4}
+        marginBottom={16}
       />
 
-      <Table<UserRow>
-        rowKey="user_id"
-        columns={columns}
-        {...tableProps}
-        pagination={{
-          ...tableProps.pagination,
-          showQuickJumper: true,
-          showSizeChanger: true,
-          showTotal: (total) => <Text type="secondary">共 {total} 条</Text>,
-        }}
-        scroll={{ x: 960 }}
-      />
+      <div className="admin-table-shell admin-table-wrap">
+        <Table<UserRow>
+          rowKey="user_id"
+          columns={columns}
+          {...tableProps}
+          size="middle"
+          pagination={{
+            ...tableProps.pagination,
+            showQuickJumper: true,
+            showSizeChanger: true,
+            showTotal: (total) => <Text type="secondary">共 {total} 条</Text>,
+          }}
+          scroll={{ x: 960 }}
+        />
+      </div>
 
       <Modal
         title="用户详情"
@@ -242,6 +256,10 @@ export default function AdminUsersPage() {
         width={640}
         destroyOnHidden
         centered
+        styles={{
+          root: { borderRadius: 16, overflow: "hidden" },
+          header: { borderRadius: "16px 16px 0 0" },
+        }}
       >
         {detailLoading ? (
           <div style={{ padding: 24, textAlign: "center" }}>加载中…</div>
@@ -271,10 +289,10 @@ export default function AdminUsersPage() {
               {UserStatusMap[detail.status as UserStatusEnum]?.label}
             </Descriptions.Item>
             <Descriptions.Item label="创建时间">
-              {detail.create_time}
+              {formatDateTime(detail.create_time)}
             </Descriptions.Item>
             <Descriptions.Item label="更新时间">
-              {detail.update_time || "-"}
+              {formatDateTime(detail.update_time)}
             </Descriptions.Item>
           </Descriptions>
         ) : null}

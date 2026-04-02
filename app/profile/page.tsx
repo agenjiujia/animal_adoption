@@ -37,8 +37,8 @@ import Link from "next/link";
 import { request } from "@/utils/request";
 import { UserRoleMap, UserStatusMap } from "@/constant";
 import { UserRoleEnum, UserStatusEnum } from "@/types";
-import dayjs from "dayjs";
 import type { UploadChangeParam } from "antd/es/upload";
+import { formatDateTime } from "@/lib/formatDate";
 
 import { motion } from "framer-motion";
 
@@ -369,9 +369,9 @@ export default function ProfilePage() {
               {/* 右侧：详细内容 */}
               <Col xs={24} md={16}>
                 <div
-                  style={{ display: "flex", flexDirection: "column", gap: 32 }}
+                  style={{ display: "flex", flexDirection: "column", gap: 16 }}
                 >
-                  <div className="modern-card" style={{ padding: 32 }}>
+                  <div className="modern-card" style={{ padding: 24 }}>
                     <Title
                       level={4}
                       style={{
@@ -402,7 +402,7 @@ export default function ProfilePage() {
                     </Space>
                   </div>
 
-                  <div className="modern-card" style={{ padding: 32 }}>
+                  <div className="modern-card" style={{ padding: 24 }}>
                     <Title
                       level={4}
                       style={{
@@ -486,12 +486,12 @@ export default function ProfilePage() {
                       </Descriptions.Item>
                       <Descriptions.Item label="注册时间">
                         <Text style={{ fontWeight: 500 }}>
-                          {dayjs(u.create_time).format("YYYY-MM-DD HH:mm")}
+                          {formatDateTime(u.create_time)}
                         </Text>
                       </Descriptions.Item>
                       <Descriptions.Item label="资料更新">
                         <Text style={{ fontWeight: 500 }}>
-                          {dayjs(u.update_time).format("YYYY-MM-DD HH:mm")}
+                          {formatDateTime(u.update_time)}
                         </Text>
                       </Descriptions.Item>
                     </Descriptions>

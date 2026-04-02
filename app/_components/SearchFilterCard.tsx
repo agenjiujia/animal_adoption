@@ -32,21 +32,27 @@ export default function SearchFilterCard({
   return (
     <div className="modern-card" style={{ padding: "16px 16px 0", marginBottom }}>
       <Form form={form} layout="vertical" onFinish={onSearch}>
-        <Row gutter={16}>
+        <Row gutter={16} align="middle">
           {filterList.map((item) => (
             <Col span={item.span ?? 6} key={item.field}>
-              <Form.Item name={item.field} {...item.formItemProps} style={{marginBottom:16}}>
+              <Form.Item
+                name={item.field}
+                {...item.formItemProps}
+                style={{ marginBottom: 16 }}
+              >
                 {item.component}
               </Form.Item>
             </Col>
           ))}
           <Col span={actionSpan}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
               <Space>
                 <Button type="primary" htmlType="submit" className="btn-primary">
                   查询
                 </Button>
                 <Button onClick={onReset}>重置</Button>
               </Space>
+            </div>
           </Col>
         </Row>
       </Form>

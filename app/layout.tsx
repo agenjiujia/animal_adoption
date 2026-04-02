@@ -1,18 +1,20 @@
 import AppShell from "@/app/_components/AppShell";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito_Sans, Varela_Round } from "next/font/google";
 import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import theme from "@/lib/antdTheme";
 import "./globals.css";
 import type { Metadata } from "next";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunitoSans = Nunito_Sans({
+  variable: "--font-nunito-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const varelaRound = Varela_Round({
+  variable: "--font-varela-round",
   subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -29,7 +31,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${nunitoSans.variable} ${varelaRound.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <ConfigProvider theme={theme} locale={zhCN}>

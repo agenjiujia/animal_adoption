@@ -49,13 +49,15 @@ const RegisterPage = () => {
 
   return (
     <div
-      className="flex items-center justify-center min-h-screen py-12"
+      className="auth-glow-bg"
       style={{
-        position: "relative",
-        overflow: "hidden",
-        background:
-          "linear-gradient(135deg, rgba(79,70,229,0.55), rgba(244,63,94,0.30), rgba(15,23,42,0.55))",
-        backgroundSize: "400% 400%",
+        minHeight: "100dvh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        overflowX: "hidden",
+        backgroundSize: "320% 320%",
         animation: "registerGradient 16s ease-in-out infinite",
       }}
     >
@@ -70,19 +72,23 @@ const RegisterPage = () => {
         }}
       />
       <Card
-        bordered={false}
-        className="w-full max-w-lg standard-card"
+        variant="borderless"
+        className="w-full standard-card auth-brand-card"
         style={{
-          padding: 20,
+          maxWidth: 1120,
+          width: "min(1120px, 100%)",
+          padding: 16,
           position: "relative",
           zIndex: 1,
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(10px)",
-          borderRadius: 20,
-          boxShadow: "0 20px 60px rgba(2,6,23,0.18)",
         }}
+        styles={{ body: { padding: 24 } }}
       >
-        <div className="text-center mb-10">
+        <div className="text-center" style={{ marginBottom: 20 }}>
+          <img
+            src="/icon.svg"
+            alt="萌宠之家"
+            style={{ width: 42, height: 42, margin: "0 auto 12px" }}
+          />
           <Title
             level={2}
             style={{
@@ -107,7 +113,7 @@ const RegisterPage = () => {
           layout="vertical"
           requiredMark={false}
         >
-          <div className="flex flex-col items-center mb-10">
+          <div className="flex flex-col items-center" style={{ marginBottom: 18 }}>
             <Upload
               name="file"
               listType="picture-circle"
@@ -145,51 +151,54 @@ const RegisterPage = () => {
             </Upload>
           </div>
 
-          <Form.Item
-            name="username"
-            label={<span className="font-semibold text-slate-700">用户名</span>}
-            rules={[{ required: true, message: "请输入用户名" }]}
-          >
-            <Input placeholder="请设置您的独特昵称" size="large" />
-          </Form.Item>
-
-          <Form.Item
-            name="password"
-            label={
-              <span className="font-semibold text-slate-700">登录密码</span>
-            }
-            rules={[{ required: true, message: "请输入密码" }]}
-          >
-            <Input.Password placeholder="至少6位字符" size="large" />
-          </Form.Item>
-
-          <Form.Item
-            name="phone"
-            label={
-              <span className="font-semibold text-slate-700">手机号码</span>
-            }
-            rules={[{ required: true, message: "请输入手机号" }]}
-          >
-            <Input placeholder="用于接收领养通知" size="large" />
-          </Form.Item>
-
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} md={8}>
+              <Form.Item
+                name="username"
+                label={<span className="font-semibold" style={{ color: "var(--text-secondary)" }}>用户名</span>}
+                rules={[{ required: true, message: "请输入用户名" }]}
+              >
+                <Input placeholder="请设置您的独特昵称" size="large" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item
+                name="password"
+                label={
+                  <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>登录密码</span>
+                }
+                rules={[{ required: true, message: "请输入密码" }]}
+              >
+                <Input.Password placeholder="至少6位字符" size="large" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item
+                name="phone"
+                label={
+                  <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>手机号码</span>
+                }
+                rules={[{ required: true, message: "请输入手机号" }]}
+              >
+                <Input placeholder="用于接收领养通知" size="large" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="real_name"
                 label={
-                  <span className="font-semibold text-slate-700">真实姓名</span>
+                  <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>真实姓名</span>
                 }
                 rules={[{ required: true, message: "请输入真实姓名" }]}
               >
                 <Input placeholder="用于身份核验" size="large" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="identityCard"
                 label={
-                  <span className="font-semibold text-slate-700">身份证号</span>
+                  <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>身份证号</span>
                 }
                 rules={[
                   { required: true, message: "请输入身份证号" },
@@ -202,28 +211,30 @@ const RegisterPage = () => {
                 <Input placeholder="用于资质认证" size="large" />
               </Form.Item>
             </Col>
+            <Col xs={24} md={8}>
+              <Form.Item
+                name="email"
+                label={
+                  <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>电子邮箱</span>
+                }
+                rules={[{ type: "email", message: "邮箱格式错误" }]}
+              >
+                <Input placeholder="用于接收重要邮件" size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item
+                name="address"
+                label={
+                  <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>居住地址</span>
+                }
+              >
+                <Input.TextArea placeholder="请输入您的常住地址" rows={2} />
+              </Form.Item>
+            </Col>
           </Row>
 
-          <Form.Item
-            name="email"
-            label={
-              <span className="font-semibold text-slate-700">电子邮箱</span>
-            }
-            rules={[{ type: "email", message: "邮箱格式错误" }]}
-          >
-            <Input placeholder="用于接收重要邮件" size="large" />
-          </Form.Item>
-
-          <Form.Item
-            name="address"
-            label={
-              <span className="font-semibold text-slate-700">居住地址</span>
-            }
-          >
-            <Input.TextArea placeholder="请输入您的常住地址" rows={2} />
-          </Form.Item>
-
-          <Form.Item className="mt-8">
+          <Form.Item style={{ marginTop: 8 }}>
             <Button
               type="primary"
               htmlType="submit"
@@ -237,7 +248,7 @@ const RegisterPage = () => {
             </Button>
           </Form.Item>
 
-          <div className="text-center mt-4">
+          <div className="text-center" style={{ marginTop: 8 }}>
             <Text style={{ color: "var(--text-tertiary)" }}>
               已有账号？{" "}
               <Link

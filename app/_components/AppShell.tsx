@@ -23,7 +23,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { UserRoleEnum } from "@/types";
 import { request } from "@/utils/request";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import "@/app/globals.css";
 
 const { Header, Content, Footer } = Layout;
@@ -230,11 +230,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             justifyContent: "space-between",
             padding: "0 16px",
             height: 64,
+            boxShadow: "0 1px 0 rgba(15,23,42,0.05)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             <motion.div
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ opacity: 0.92 }}
               className="brand-title"
               style={{
                 fontSize: 24,
@@ -245,7 +246,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               }}
               onClick={() => router.push("/")}
             >
-              <span style={{ fontSize: 22, lineHeight: 1 }}>🐾</span>
+              <img
+                src="/icon.svg"
+                alt="萌宠之家"
+                style={{ width: 22, height: 22, display: "block" }}
+              />
               萌宠之家
             </motion.div>
 
@@ -296,7 +301,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     size={40}
                     style={{
                       border: "2px solid var(--primary)",
-                      background: "white",
+                      background: "#fff",
                     }}
                   />
                 </motion.div>
@@ -324,113 +329,58 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       <Content style={{ position: "relative" }}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={pathname}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-            className={!isAuthPage ? "main-container" : ""}
-            style={{ padding: !isAuthPage ? "24px 0" : 0 }}
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+        {/* 不做全局 route 进出场动画：mode="wait" + opacity 0 会让切换时先看不见 DOM */}
+        <div
+          className={!isAuthPage ? "main-container" : ""}
+          style={{ padding: !isAuthPage ? "24px 0" : 0 }}
+        >
+          {children}
+        </div>
       </Content>
 
       {!isAuthPage && (
         <Footer
-          style={{
-            padding: "16px",
-            background: "white",
-            borderTop: "1px solid var(--border-light)",
-          }}
+          className="footer-shell"
+          style={{ padding: "12px 16px" }}
         >
           <div className="main-container" style={{ padding: 0 }}>
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
+                gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr)",
                 gap: 20,
               }}
             >
-              <div style={{ gridColumn: "span 2" }}>
-                <div
-                  className="brand-title"
-                  style={{ fontSize: 20, marginBottom: 8 }}
-                >
+              <div>
+                <div className="brand-title" style={{ fontSize: 18, marginBottom: 6 }}>
                   萌宠之家
                 </div>
-                <div
-                  style={{
-                    color: "var(--text-secondary)",
-                    maxWidth: 360,
-                    lineHeight: 1.6,
-                    fontSize: 14,
-                  }}
-                >
-                  我们致力于为每一只流浪的小动物寻找一个温暖的家。在这里，每一个生命都值得被尊重和珍爱。
+                <div style={{ color: "var(--text-secondary)", fontSize: 13, lineHeight: 1.6 }}>
+                  我们致力于为每一只流浪的小动物寻找温暖的家，让领养更透明、更安心。
                 </div>
               </div>
+
               <div>
-                <div
-                  style={{ fontWeight: 600, marginBottom: 10, fontSize: 15 }}
-                >
-                  快速链接
-                </div>
-                <Space orientation="vertical" size={8}>
-                  <Link
-                    href="/"
-                    style={{ color: "var(--text-secondary)", fontSize: 14 }}
-                  >
-                    发现宠物
-                  </Link>
-                  <Link
-                    href="/pet/new"
-                    style={{ color: "var(--text-secondary)", fontSize: 14 }}
-                  >
-                    发布领养
-                  </Link>
-                  <Link
-                    href="/pet/my-publish"
-                    style={{ color: "var(--text-secondary)", fontSize: 14 }}
-                  >
-                    我的发布
-                  </Link>
-                  <Link
-                    href="/profile"
-                    style={{ color: "var(--text-secondary)", fontSize: 14 }}
-                  >
-                    个人中心
-                  </Link>
+                <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 14 }}>快速入口</div>
+                <Space orientation="vertical" size={4}>
+                  <Link className="footer-link" href="/">发现宠物</Link>
+                  <Link className="footer-link" href="/pet/new">发布领养</Link>
+                  <Link className="footer-link" href="/pet/my-publish">我的发布</Link>
                 </Space>
               </div>
+
               <div>
-                <div
-                  style={{ fontWeight: 600, marginBottom: 10, fontSize: 15 }}
-                >
-                  关于我们
-                </div>
-                <Space orientation="vertical" size={8}>
-                  <div style={{ color: "var(--text-secondary)", fontSize: 14 }}>
-                    联系我们：paws@home.com
-                  </div>
-                  <div style={{ color: "var(--text-secondary)", fontSize: 14 }}>
-                    加入志愿者
-                  </div>
+                <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 14 }}>关于平台</div>
+                <Space orientation="vertical" size={4}>
+                  <div className="footer-link">联系我们：paws@home.com</div>
+                  <div className="footer-link">服务时间：09:00 - 21:00</div>
                 </Space>
               </div>
             </div>
+
             <div
-              style={{
-                marginTop: 16,
-                paddingTop: 14,
-                borderTop: "1px solid var(--border-light)",
-                textAlign: "center",
-                color: "var(--text-muted)",
-                fontSize: 12,
-              }}
+              className="footer-bottom"
+              style={{ marginTop: 12, paddingTop: 10, fontSize: 12 }}
             >
               © 2026 PawHouse 萌宠之家. All rights reserved.
             </div>

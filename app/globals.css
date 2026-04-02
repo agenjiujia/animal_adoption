@@ -2,24 +2,30 @@
 @import "tailwindcss";
 
 :root {
-  /* 4.0 温暖治愈与现代简约色值体系 */
-  --primary: #4F46E5;
-  --primary-hover: #4338CA;
-  --secondary: #F43F5E;
-  
-  --bg-main: #F8FAFC;
+  /* 柔和奶紫粉：偏女性用户审美，降低视觉压力 */
+  --primary: #7C6EE6;
+  --primary-hover: #6D5FDD;
+  --secondary: #F38FB2;
+  --accent: #7ED3C1;
+
+  --bg-main: #FAF8FF;
   --bg-card: #FFFFFF;
   
   --text-primary: #0F172A;
   --text-secondary: #475569;
   --text-muted: #94A3B8;
+  --text-tertiary: #64748B;
   
   --border-light: #E2E8F0;
   --border-base: #CBD5E1;
   --section-gap: 12px;
 
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Lexend", "Inter", sans-serif; /* 更加圆润现代的标题字体 */
+  --font-sans: var(--font-nunito-sans), "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-varela-round), "Varela Round", var(--font-sans);
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 12px 28px rgba(15, 23, 42, 0.1);
 }
 
 @theme inline {
@@ -36,7 +42,11 @@
 }
 
 body {
-  background-color: var(--bg-main);
+  background:
+    radial-gradient(1200px circle at 0% 0%, rgba(124, 110, 230, 0.12), transparent 42%),
+    radial-gradient(1000px circle at 100% 0%, rgba(243, 143, 178, 0.12), transparent 44%),
+    radial-gradient(900px circle at 50% 100%, rgba(126, 211, 193, 0.08), transparent 48%),
+    var(--bg-main);
   color: var(--text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -47,7 +57,7 @@ body {
   font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--primary) 0%, #818CF8 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -55,36 +65,55 @@ body {
 /* 现代简约卡片 */
 .modern-card {
   background: var(--bg-card);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.24s ease;
 }
 
 .modern-card:hover {
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
 }
 
 /* 柔和毛玻璃 */
 .soft-glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 245, 255, 0.94));
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  border-bottom: 1px solid rgba(124, 110, 230, 0.16);
+}
+
+.soft-glass .ant-menu {
+  color: var(--text-secondary) !important;
+}
+
+.soft-glass .ant-menu-item a,
+.soft-glass .ant-menu-submenu-title {
+  color: var(--text-secondary) !important;
+}
+
+.soft-glass .ant-menu-item-selected a {
+  color: var(--primary) !important;
 }
 
 /* 主行动按钮 */
 .btn-primary {
-  background: var(--primary) !important;
+  background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
   color: white !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius-md) !important;
   font-weight: 600 !important;
   transition: all 0.2s ease !important;
+  border: none !important;
+  box-shadow: 0 8px 18px rgba(124, 110, 230, 0.24);
 }
 
 .btn-primary:hover {
-  background: var(--primary-hover) !important;
-  transform: scale(1.02);
+  background: linear-gradient(135deg, var(--primary-hover), #EA7FA8) !important;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* 容器规范 */
@@ -92,6 +121,43 @@ body {
   max-width: 1280px;
   margin: 0 auto;
   padding: 24px 0;
+}
+
+/* 统一控件质感 */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker,
+.ant-btn {
+  border-radius: var(--radius-md) !important;
+}
+
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker {
+  border-color: #d9e2f0 !important;
+}
+
+.ant-input-affix-wrapper:hover,
+.ant-select:hover .ant-select-selector,
+.ant-picker:hover {
+  border-color: #b7c7eb !important;
+}
+
+/* 全局表格风格 */
+.ant-table-wrapper .ant-table {
+  border-radius: var(--radius-lg);
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th {
+  background: #f8faff !important;
+  color: #334155 !important;
+  font-weight: 600;
+  border-bottom: 1px solid #e6edf8 !important;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #eef3fb !important;
 }
 
 /* 宠物卡片图片比例 */
@@ -112,6 +178,7 @@ body {
   position: absolute;
   top: 24px; /* 24 = 3*8 */
   left: 24px;
+  z-index: 2;
   background: var(--primary);
   color: #fff;
   padding: 8px 16px; /* 8/16 均为 8px 网格整数 */
@@ -135,7 +202,7 @@ body {
 .pet-list-card__species-tag {
   font-size: 13px;
   color: var(--primary);
-  background: rgba(79, 70, 229, 0.1);
+  background: rgba(124, 110, 230, 0.12);
   padding: 4px 8px; /* 紧凑：4px 允许，左右 8px */
   border-radius: 8px;
   font-weight: 600;
@@ -166,6 +233,7 @@ body {
   position: absolute;
   top: 24px; /* 24 = 3*8 */
   right: 24px;
+  z-index: 2;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(8px);
   border: none;
@@ -198,4 +266,287 @@ body {
 /* Table 分页栏（常被称为 footer）内边距统一 */
 .ant-table-wrapper .ant-table-pagination {
   padding: 0 16px;
+}
+
+.admin-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.admin-page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ===== 管理中心：与主站一致的软玻璃面包屑条 ===== */
+.admin-breadcrumb-bar {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(124, 110, 230, 0.09) 0%,
+    rgba(255, 255, 255, 0.92) 55%,
+    rgba(243, 143, 178, 0.07) 100%
+  );
+  border: 1px solid rgba(124, 110, 230, 0.14);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-breadcrumb-bar .ant-breadcrumb {
+  font-size: 14px;
+}
+
+.admin-breadcrumb-bar .ant-breadcrumb a {
+  color: var(--primary);
+  font-weight: 600;
+  transition: color 0.18s ease, opacity 0.18s ease;
+}
+
+.admin-breadcrumb-bar .ant-breadcrumb a:hover {
+  color: var(--primary-hover);
+}
+
+.admin-breadcrumb-bar .ant-breadcrumb-separator {
+  color: var(--text-muted);
+}
+
+.admin-breadcrumb-bar li:last-child {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* 管理列表：主内容纵向节奏 */
+.admin-layout-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 表格外层：与 pet-surface-card 同系，分页区轻微分隔 */
+.admin-table-shell {
+  border: 1px solid rgba(124, 110, 230, 0.12);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfaff 100%);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-table-shell .ant-table-wrapper .ant-table {
+  background: transparent;
+}
+
+.admin-table-shell .ant-table-wrapper .ant-table-pagination.ant-pagination {
+  margin: 0;
+  padding: 12px 16px 16px;
+  background: rgba(250, 248, 255, 0.65);
+  border-top: 1px solid rgba(124, 110, 230, 0.08);
+}
+
+.admin-table-wrap {
+  padding: 0;
+  overflow: hidden;
+}
+
+.auth-glow-bg {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(124, 110, 230, 0.56), rgba(243, 143, 178, 0.36), rgba(126, 211, 193, 0.28));
+  background-size: 300% 300%;
+}
+
+.auth-brand-card {
+  background: rgba(255, 255, 255, 0.93) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 22px 50px rgba(2, 6, 23, 0.2) !important;
+}
+
+.footer-shell {
+  background: linear-gradient(180deg, #fdfbff 0%, #f8f4ff 100%);
+  border-top: 1px solid rgba(124, 110, 230, 0.16);
+}
+
+.footer-main {
+  padding: 0 !important;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.footer-title {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.footer-desc {
+  color: var(--text-secondary);
+  line-height: 1.65;
+  font-size: 14px;
+  max-width: 460px;
+}
+
+.footer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.footer-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #5d4fc3;
+  background: rgba(124, 110, 230, 0.12);
+}
+
+.footer-col-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.footer-link {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.footer-link:hover {
+  color: var(--primary);
+}
+
+.footer-bottom {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(124, 110, 230, 0.14);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.pet-surface-card {
+  border: 1px solid rgba(124, 110, 230, 0.12);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfaff 100%);
+}
+
+.pet-chip-accent {
+  background: linear-gradient(90deg, rgba(124, 110, 230, 0.14), rgba(243, 143, 178, 0.16));
+  color: #5d4fc3;
+}
+
+.pet-owner-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--bg-main);
+  border-radius: 14px;
+  border: 1px solid #e8edf8;
+}
+
+.pet-form-hero {
+  margin-bottom: 16px;
+  text-align: center;
+  padding: 14px 16px;
+  border: 1px solid rgba(124, 110, 230, 0.16);
+  background: linear-gradient(90deg, rgba(124, 110, 230, 0.1), rgba(243, 143, 178, 0.1));
+  border-radius: 16px;
+}
+
+.pet-form-card {
+  border: 1px solid rgba(124, 110, 230, 0.12);
+}
+
+.pet-form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px !important;
+  font-weight: 700 !important;
+}
+
+.pet-form-section-title::before {
+  content: "";
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--primary), var(--secondary));
+}
+
+.pet-gender-group .ant-radio-button-wrapper {
+  border-radius: 10px !important;
+  margin-right: 8px;
+  border-inline-start-width: 1px !important;
+}
+
+.pet-gender-group .ant-radio-button-wrapper-checked {
+  background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* 统一交互反馈 */
+a,
+button,
+[role="button"],
+.ant-btn,
+.ant-card,
+.modern-card {
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 220ms ease, color 180ms ease, transform 180ms ease;
+}
+
+/* 键盘可见焦点（无障碍） */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+.ant-btn:focus-visible,
+.ant-input:focus-visible,
+.ant-input-affix-wrapper:focus-visible,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  outline: 2px solid rgba(79, 70, 229, 0.45);
+  outline-offset: 2px;
+}
+
+/* 避免卡片悬浮导致布局突变 */
+.modern-card {
+  will-change: transform, box-shadow;
+}
+
+/* 尊重用户“减少动画”系统偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    padding: 12px 0;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .footer-desc {
+    max-width: none;
+  }
 }

@@ -191,25 +191,30 @@ export default function CreatePet() {
     isCreate ? submitPet(values) : editPet(values);
 
   return (
-    <div style={{  margin: "0 auto", }}>
+    <div style={{ margin: "0 auto" }}>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div style={{ marginBottom: 24, textAlign: "center" }}>
-          <Title
-            level={2}
-          >
+        <div className="pet-form-hero">
+          <img
+            src="/icon.svg"
+            alt="萌宠之家"
+            style={{ width: 26, height: 26, margin: "0 auto 6px" }}
+          />
+          <Title level={2} style={{ marginBottom: 6 }}>
             {isCreate ? "发布" : "编辑"}
             <span className="text-gradient">领养信息</span>
           </Title>
-          <Text className="page-title-sub">您的每一份详细描述，都能帮助小生命更快找到家</Text>
+          <Text className="page-title-sub">
+            您的每一份详细描述，都能帮助小生命更快找到家
+          </Text>
         </div>
 
         <Card
-          bordered={false}
-          className="standard-card"
-          bodyStyle={{ padding: 40 }}
+          variant="borderless"
+          className="standard-card modern-card pet-form-card"
+          styles={{ body: { padding: 24 } }}
           loading={detailLoading}
         >
           <Form
@@ -223,23 +228,7 @@ export default function CreatePet() {
             }}
             requiredMark={false}
           >
-            <Title
-              level={5}
-              style={{
-                marginBottom: 24,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 4,
-                  height: 16,
-                  background: "var(--primary)",
-                  borderRadius: 2,
-                }}
-              />
+            <Title level={5} className="pet-form-section-title">
               基本信息
             </Title>
 
@@ -295,6 +284,7 @@ export default function CreatePet() {
               rules={[{ required: true, message: "请选择宠物性别" }]}
             >
               <Radio.Group
+                className="pet-gender-group"
                 options={PetGenderOptions}
                 optionType="button"
                 buttonStyle="solid"
@@ -303,23 +293,7 @@ export default function CreatePet() {
 
             <Divider style={{ margin: "24px 0" }} />
 
-            <Title
-              level={5}
-              style={{
-                marginBottom: 24,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 4,
-                  height: 16,
-                  background: "var(--primary)",
-                  borderRadius: 2,
-                }}
-              />
+            <Title level={5} className="pet-form-section-title">
               健康状况
             </Title>
 
@@ -371,23 +345,7 @@ export default function CreatePet() {
 
             <Divider style={{ margin: "24px 0" }} />
 
-            <Title
-              level={5}
-              style={{
-                marginBottom: 24,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 4,
-                  height: 16,
-                  background: "var(--primary)",
-                  borderRadius: 2,
-                }}
-              />
+            <Title level={5} className="pet-form-section-title">
               生活照展示
             </Title>
 
@@ -431,7 +389,7 @@ export default function CreatePet() {
               />
             </Form.Item>
 
-            <Form.Item style={{ marginTop: 48, marginBottom: 0 }}>
+            <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>
               <Space
                 size={16}
                 style={{ width: "100%", justifyContent: "center" }}

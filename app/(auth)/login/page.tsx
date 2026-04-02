@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Form, Input, Button, message, Card, Typography } from "antd";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { request } from "@/utils/request";
 import { useRequest } from "ahooks";
 import { motion } from "framer-motion";
+import NeuralNetwork from "@/app/_components/NeuralNetwork";
+import LoginPeekingPets from "@/app/_components/LoginPeekingPets";
 
 const { Title, Text } = Typography;
 
 function LoginForm() {
   const [form] = Form.useForm();
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [authErrorNonce, setAuthErrorNonce] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/";
@@ -41,29 +45,50 @@ function LoginForm() {
           localStorage.setItem("userInfo", JSON.stringify(payload.user));
         router.replace(redirectTo.startsWith("/") ? redirectTo : "/");
       },
+      onError: () => {
+        setAuthErrorNonce((n) => n + 1);
+      },
     }
   );
 
   return (
-    <div
-      className="flex items-center justify-center min-h-screen"
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        background:
-          "linear-gradient(135deg, rgba(79,70,229,0.55), rgba(244,63,94,0.30), rgba(15,23,42,0.55))",
-        backgroundSize: "400% 400%",
-        animation: "loginGradient 14s ease-in-out infinite",
-      }}
-    >
+    <div style={{ position: "relative", minHeight: "100dvh" }}>
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: "auto",
+        }}
+      >
+        <NeuralNetwork
+          cameraPosition={{ x: 5, y: 9, z: 26 }}
+          orbitTarget={{ x: 11, y: -3.5, z: 5 }}
+          pulseOnMount
+          pulseOnMountViewport={{ x: 0.26, y: 0.34 }}
+        />
+      </div>
+      <div
+        className="flex"
+        style={{
+          position: "relative",
+          zIndex: 2,
+          minHeight: "100dvh",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          padding:
+            "max(20px, env(safe-area-inset-top)) max(28px, min(64px, 8vw), env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left))",
+          pointerEvents: "none",
+        }}
+      >
       <div
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 0,
+          pointerEvents: "none",
           background:
-            "radial-gradient(900px circle at 20% 10%, rgba(79,70,229,0.45), transparent 55%), radial-gradient(900px circle at 85% 35%, rgba(244,63,94,0.30), transparent 50%), radial-gradient(800px circle at 40% 90%, rgba(34,197,94,0.18), transparent 55%)",
-          animation: "loginFloat 10s ease-in-out infinite",
+            "radial-gradient(1100px circle at 22% 28%, rgba(124,110,230,0.14), transparent 52%), radial-gradient(800px circle at 78% 88%, rgba(243,143,178,0.08), transparent 48%), radial-gradient(640px circle at 12% 72%, rgba(196,181,253,0.07), transparent 46%)",
         }}
       />
 
@@ -72,20 +97,49 @@ function LoginForm() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
         className="w-full max-w-md px-4"
-        style={{ position: "relative", zIndex: 1 }}
+        style={{
+          position: "relative",
+          zIndex: 1,
+          pointerEvents: "auto",
+          maxWidth: "min(448px, 100%)",
+          marginRight: 160,
+          marginTop: 160,
+        }}
       >
+        <div style={{ position: "relative", overflow: "visible" }}>
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: "100%",
+              transform: "translateY(34px)",
+              zIndex: 4,
+              pointerEvents: "auto",
+              paddingInline: "clamp(4px, 5%, 28px)",
+              boxSizing: "border-box",
+            }}
+          >
+            <LoginPeekingPets
+              passwordVisible={passwordVisible}
+              authErrorNonce={authErrorNonce}
+            />
+          </div>
         <Card
-          bordered={false}
-          className="standard-card"
-          bodyStyle={{ padding: "24px" }}
+          variant="borderless"
+          className="standard-card auth-brand-card"
+          styles={{ body: { padding: 24 } }}
           style={{
-            background: "rgba(255,255,255,0.9)",
-            backdropFilter: "blur(8px)",
-            borderRadius: 20,
+            position: "relative",
+            overflow: "visible",
           }}
         >
           <div className="text-center mb-10">
-            <div className="text-4xl mb-3">🐾</div>
+            <img
+              src="/icon.svg"
+              alt="萌宠之家"
+              style={{ width: 42, height: 42, margin: "0 auto 12px" }}
+            />
             <Title
               level={2}
               style={{
@@ -110,7 +164,7 @@ function LoginForm() {
             requiredMark={false}
           >
             <Form.Item
-              label={<span className="font-semibold text-slate-700">手机号码</span>}
+              label={<span className="font-semibold" style={{ color: "var(--text-secondary)" }}>手机号码</span>}
               name="phone"
               rules={[
                 { required: true, message: "请输入手机号" },
@@ -121,11 +175,18 @@ function LoginForm() {
             </Form.Item>
 
             <Form.Item
-              label={<span className="font-semibold text-slate-700">登录密码</span>}
+              label={<span className="font-semibold" style={{ color: "var(--text-secondary)" }}>登录密码</span>}
               name="password"
               rules={[{ required: true, message: "请输入密码" }]}
             >
-              <Input.Password placeholder="请输入密码" size="large" />
+              <Input.Password
+                placeholder="请输入密码"
+                size="large"
+                visibilityToggle={{
+                  visible: passwordVisible,
+                  onVisibleChange: setPasswordVisible,
+                }}
+              />
             </Form.Item>
 
             <Form.Item className="mt-10">
@@ -147,7 +208,8 @@ function LoginForm() {
                 还没有账号？{" "}
                 <Link
                   href="/register"
-                  className="text-indigo-600 font-bold hover:underline"
+                  className="font-bold hover:underline"
+                  style={{ color: "var(--primary)" }}
                 >
                   立即加入
                 </Link>
@@ -155,20 +217,9 @@ function LoginForm() {
             </div>
           </Form>
         </Card>
+        </div>
       </motion.div>
-
-      <style>{`
-        @keyframes loginGradient {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        @keyframes loginFloat {
-          0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.9; }
-          50% { transform: translate3d(0, -10px, 0) scale(1.03); opacity: 1; }
-          100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.9; }
-        }
-      `}</style>
+      </div>
     </div>
   );
 }

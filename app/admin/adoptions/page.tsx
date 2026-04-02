@@ -12,10 +12,9 @@ import {
   message,
   Typography,
   Avatar,
-  Card,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import dayjs from "dayjs";
+import { formatDateTime } from "@/lib/formatDate";
 import {
   UserOutlined,
 } from "@ant-design/icons";
@@ -194,7 +193,7 @@ export default function AdminAdoptionsPage() {
       title: "申请时间",
       dataIndex: "create_time",
       key: "create_time",
-      render: (time) => dayjs(time).format("YYYY-MM-DD HH:mm"),
+      render: (time) => formatDateTime(time),
     },
     {
       title: "状态",
@@ -264,7 +263,7 @@ export default function AdminAdoptionsPage() {
         <Select
           allowClear
           placeholder="全部状态"
-          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>状态</span>}
+          prefix={<span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>状态</span>}
           options={[
             { label: "待审核", value: 0 },
             { label: "已通过", value: 1 },
@@ -276,7 +275,7 @@ export default function AdminAdoptionsPage() {
   ];
 
   return (
-    <div >
+    <div className="admin-layout-stack">
       <SearchFilterCard
         form={searchForm}
         onSearch={() => {
@@ -284,6 +283,7 @@ export default function AdminAdoptionsPage() {
         }}
         onReset={handleReset}
         filterList={filterList}
+        marginBottom={16}
       />
 
       <Modal
@@ -295,12 +295,17 @@ export default function AdminAdoptionsPage() {
         okText="提交审核"
         cancelText="取消"
         confirmLoading={auditSubmitting}
+        centered
         onCancel={() => {
           setAuditModalOpen(false);
           setAuditTarget(null);
         }}
         onOk={handleAuditSubmit}
         destroyOnHidden
+        styles={{
+          root: { borderRadius: 16, overflow: "hidden" },
+          header: { borderRadius: "16px 16px 0 0" },
+        }}
       >
         <Form form={auditForm} layout="vertical" style={{ marginTop: 8 }}>
           <Form.Item
@@ -325,12 +330,14 @@ export default function AdminAdoptionsPage() {
         </Form>
       </Modal>
 
-      <Card className="standard-card" bodyStyle={{ padding: 0 }}>
+      <div className="admin-table-shell admin-table-wrap">
         <Table
           columns={columns}
           dataSource={data}
           rowKey="apply_id"
           loading={loading}
+          size="middle"
+          scroll={{ x: 1040 }}
           pagination={{
             current: pageNum,
             pageSize: pageSize,
@@ -340,9 +347,11 @@ export default function AdminAdoptionsPage() {
               setPageSize(size);
             },
             showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (n) => <Text type="secondary">共 {n} 条</Text>,
           }}
         />
-      </Card>
+      </div>
     </div>
   );
 }

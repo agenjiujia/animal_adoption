@@ -15,7 +15,7 @@ import {
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import dayjs from "dayjs";
+import { formatDateTime } from "@/lib/formatDate";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -164,7 +164,7 @@ export default function AdoptionApprovalsPage() {
       title: "申请时间",
       dataIndex: "create_time",
       key: "create_time",
-      render: (time) => dayjs(time).format("YYYY-MM-DD HH:mm"),
+      render: (time) => formatDateTime(time),
     },
     {
       title: "状态",

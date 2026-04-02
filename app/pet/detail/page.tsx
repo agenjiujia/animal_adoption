@@ -169,8 +169,8 @@ export default function PetDetailPage() {
   const isOwner = petDetail.user_id === uid;
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 100 }}>
-      <Row gutter={[64, 64]}>
+    <div style={{ maxWidth: 1240, margin: "0 auto", paddingBottom: 32 }}>
+      <Row gutter={[24, 24]}>
         {/* 左侧：宠物美照 */}
         <Col xs={24} lg={12}>
           <motion.div
@@ -184,9 +184,10 @@ export default function PetDetailPage() {
               nextArrow={<CustomNextArrow />}
               arrows
               style={{
-                borderRadius: 32,
+                borderRadius: 20,
                 overflow: "hidden",
-                boxShadow: "0 20px 40px -20px rgba(0,0,0,0.1)",
+                border: "1px solid #e6edf8",
+                boxShadow: "0 14px 28px -20px rgba(0,0,0,0.18)",
               }}
             >
               {images.map((url: string, index: number) => (
@@ -203,7 +204,7 @@ export default function PetDetailPage() {
                       if (img.src.includes(localFallback)) return;
                       img.src = localFallback;
                     }}
-                    style={{ width: "100%", height: 640, objectFit: "cover" }}
+                    style={{ width: "100%", height: 560, objectFit: "cover" }}
                   />
                 </div>
               ))}
@@ -218,7 +219,7 @@ export default function PetDetailPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <div style={{ marginBottom: 48 }}>
+            <div style={{ marginBottom: 24 }}>
               <div
                 style={{
                   fontSize: 14,
@@ -237,7 +238,7 @@ export default function PetDetailPage() {
                   marginBottom: 32,
                 }}
               >
-                <Title style={{ margin: 0, fontSize: 48, fontWeight: 800 }}>
+                <Title style={{ margin: 0, fontSize: 40, fontWeight: 800 }}>
                   {petDetail.name}
                 </Title>
                 <motion.div whileTap={{ scale: 0.9 }}>
@@ -264,12 +265,12 @@ export default function PetDetailPage() {
                 </motion.div>
               </div>
 
-              <Space size={24} style={{ marginBottom: 40 }}>
+              <Space size={12} wrap style={{ marginBottom: 20 }}>
                 <div
-                  className="modern-card"
+                  className="modern-card pet-surface-card"
                   style={{
-                    padding: "16px 24px",
-                    borderRadius: 16,
+                    padding: "12px 16px",
+                    borderRadius: 12,
                     boxShadow: "none",
                   }}
                 >
@@ -287,10 +288,10 @@ export default function PetDetailPage() {
                   </div>
                 </div>
                 <div
-                  className="modern-card"
+                  className="modern-card pet-surface-card"
                   style={{
-                    padding: "16px 24px",
-                    borderRadius: 16,
+                    padding: "12px 16px",
+                    borderRadius: 12,
                     boxShadow: "none",
                   }}
                 >
@@ -308,10 +309,10 @@ export default function PetDetailPage() {
                   </div>
                 </div>
                 <div
-                  className="modern-card"
+                  className="modern-card pet-surface-card"
                   style={{
-                    padding: "16px 24px",
-                    borderRadius: 16,
+                    padding: "12px 16px",
+                    borderRadius: 12,
                     boxShadow: "none",
                   }}
                 >
@@ -329,10 +330,10 @@ export default function PetDetailPage() {
                   </div>
                 </div>
                 <div
-                  className="modern-card"
+                  className="modern-card pet-surface-card"
                   style={{
-                    padding: "16px 24px",
-                    borderRadius: 16,
+                    padding: "12px 16px",
+                    borderRadius: 12,
                     boxShadow: "none",
                   }}
                 >
@@ -356,24 +357,23 @@ export default function PetDetailPage() {
               </Title>
               <Paragraph
                 style={{
-                  fontSize: 16,
+                  fontSize: 15,
                   color: "var(--text-secondary)",
-                  lineHeight: 1.8,
-                  marginBottom: 40,
+                  lineHeight: 1.75,
+                  marginBottom: 20,
                 }}
               >
                 {petDetail.description || "主人很懒，还没有给它写介绍哦~"}
               </Paragraph>
 
-              <Row gutter={[16, 16]} style={{ marginBottom: 48 }}>
+              <Row gutter={[12, 12]} style={{ marginBottom: 20 }}>
                 <Col span={12}>
                   <div
                     className="modern-card"
                     style={{
-                      padding: 20,
-                      borderRadius: 16,
+                      padding: 14,
+                      borderRadius: 12,
                       background: "var(--bg-main)",
-                      border: "none",
                     }}
                   >
                     <div
@@ -387,8 +387,8 @@ export default function PetDetailPage() {
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 600 }}>
                       {petDetail.vaccine_status === 1
-                        ? "✅ 已接种"
-                        : "⏳ 待接种"}
+                        ? "已接种"
+                        : "待接种"}
                     </div>
                   </div>
                 </Col>
@@ -396,10 +396,9 @@ export default function PetDetailPage() {
                   <div
                     className="modern-card"
                     style={{
-                      padding: 20,
-                      borderRadius: 16,
+                      padding: 14,
+                      borderRadius: 12,
                       background: "var(--bg-main)",
-                      border: "none",
                     }}
                   >
                     <div
@@ -412,23 +411,13 @@ export default function PetDetailPage() {
                       绝育情况
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 600 }}>
-                      {petDetail.neutered === 1 ? "✅ 已绝育" : "⏳ 未绝育"}
+                      {petDetail.neutered === 1 ? "已绝育" : "未绝育"}
                     </div>
                   </div>
                 </Col>
               </Row>
 
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 16,
-                  marginBottom: 48,
-                  padding: 24,
-                  background: "var(--bg-main)",
-                  borderRadius: 24,
-                }}
-              >
+              <div className="pet-owner-box">
                 <Avatar
                   size={56}
                   src={petDetail.owner_avatar}
@@ -452,8 +441,8 @@ export default function PetDetailPage() {
                   size="large"
                   block
                   style={{
-                    height: 64,
-                    fontSize: 18,
+                    height: 52,
+                    fontSize: 16,
                   }}
                   onClick={handleAdopt}
                   disabled={
@@ -474,9 +463,9 @@ export default function PetDetailPage() {
                   size="large"
                   icon={<ShareAltOutlined />}
                   style={{
-                    height: 64,
-                    width: 64,
-                    borderRadius: 16,
+                    height: 52,
+                    width: 52,
+                    borderRadius: 12,
                   }}
                 />
               </div>

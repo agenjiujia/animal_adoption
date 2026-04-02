@@ -18,8 +18,7 @@ import { useAntdTable } from "ahooks";
 import { request } from "@/utils/request";
 import { PetStatusEnum, PetOperateTypeEnum } from "@/types";
 import { PetOperateTypeMap, PetSpeciesMap, PetSpeciesOptions } from "@/constant";
-import { motion } from "framer-motion";
-import dayjs from "dayjs";
+import { formatDateTime } from "@/lib/formatDate";
 import SearchFilterCard, {
   type SearchFilterItem,
 } from "@/app/_components/SearchFilterCard";
@@ -144,10 +143,19 @@ export default function AdminPetsPage() {
       width: 100,
       render: (s: number) => {
         const m = statusTag[s] ?? { text: String(s), color: "default" };
-        return <Tag color={m.color}>{m.text}</Tag>;
+        return (
+          <Tag color={m.color} bordered={false} style={{ borderRadius: 8 }}>
+            {m.text}
+          </Tag>
+        );
       },
     },
-    { title: "更新时间", dataIndex: "update_time", width: 170 },
+    {
+      title: "更新时间",
+      dataIndex: "update_time",
+      width: 240,
+      render: (t: string) => formatDateTime(t),
+    },
     {
       title: "操作",
       key: "op",
@@ -187,7 +195,7 @@ export default function AdminPetsPage() {
         <Input
           allowClear
           placeholder="输入名称搜索"
-          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>名称</span>}
+          prefix={<span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>名称</span>}
         />
       ),
     },
@@ -197,7 +205,7 @@ export default function AdminPetsPage() {
         <Select
           allowClear
           placeholder="全部种类"
-          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>种类</span>}
+          prefix={<span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>种类</span>}
           options={PetSpeciesOptions}
         />
       ),
@@ -208,7 +216,7 @@ export default function AdminPetsPage() {
         <Select
           allowClear
           placeholder="全部状态"
-          prefix={<span style={{ color: "#64748b", fontSize: 12 }}>状态</span>}
+          prefix={<span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>状态</span>}
           options={[
             { label: "待领养", value: PetStatusEnum.ForAdoption },
             { label: "已领养", value: PetStatusEnum.Adopted },
@@ -220,41 +228,36 @@ export default function AdminPetsPage() {
   ];
 
   return (
-    <div >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+    <div className="admin-layout-stack">
         <SearchFilterCard
           form={form}
           onSearch={submit}
           onReset={reset}
           filterList={filterList}
+          marginBottom={16}
         />
 
-        <div className="modern-card" style={{ padding: 0, overflow: "hidden" }}>
+        <div className="admin-table-shell admin-table-wrap">
           <Table<PetRow>
             rowKey="pet_id"
             columns={columns}
             {...tableProps}
+            size="middle"
             scroll={{ x: 880 }}
             pagination={{
               ...tableProps.pagination,
               showQuickJumper: true,
               showSizeChanger: true,
               showTotal: (total) => (
-                <Text type="secondary" style={{ marginLeft: 16 }}>
-                  共 {total} 条记录
-                </Text>
+                <Text type="secondary">共 {total} 条</Text>
               ),
             }}
           />
         </div>
-      </motion.div>
 
       <Modal
         title={
-          <Title level={4} style={{ margin: 0 }}>
+          <Title level={4} style={{ margin: 0, fontWeight: 750 }}>
             修改历史 — {histPet?.name}
           </Title>
         }
@@ -264,7 +267,10 @@ export default function AdminPetsPage() {
         footer={null}
         destroyOnClose
         centered
-        style={{ borderRadius: 24 }}
+        styles={{
+          root: { borderRadius: 16, overflow: "hidden" },
+          header: { borderRadius: "16px 16px 0 0" },
+        }}
       >
         <Table<HistoryRow>
           loading={histLoading}
@@ -277,7 +283,7 @@ export default function AdminPetsPage() {
               title: "时间",
               dataIndex: "operate_time",
               width: 180,
-              render: (t) => dayjs(t).format("YYYY-MM-DD HH:mm:ss"),
+              render: (t) => formatDateTime(t),
             },
             {
               title: "操作类型",

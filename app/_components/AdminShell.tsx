@@ -18,15 +18,17 @@ export default function AdminShell({
       : "宠物管理";
 
   return (
-    <div>
-      <div style={{ marginBottom: 20 }}>
-        <Breadcrumb
-          items={[
-            { title: <Link href="/admin/pets">管理中心</Link> },
-            { title: currentLabel },
-          ]}
-        />
-      </div>
+    <div className="admin-layout-stack">
+      <nav aria-label="管理中心导航">
+        <div className="admin-breadcrumb-bar">
+          <Breadcrumb
+            items={[
+              { title: <Link href="/admin/pets">管理中心</Link> },
+              { title: currentLabel },
+            ]}
+          />
+        </div>
+      </nav>
       {children}
     </div>
   );
