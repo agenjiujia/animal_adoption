@@ -18,6 +18,14 @@ function jitterBrandColor(base: THREE.Color) {
 }
 
 /** 加法混合下偶尔 G 通道偏高会显“ mint ”，压一手绿主导 */
+function disposeMeshMaterial(material: THREE.Material | THREE.Material[]) {
+  if (Array.isArray(material)) {
+    material.forEach((m) => m.dispose());
+  } else {
+    material.dispose();
+  }
+}
+
 function clampNoGreenDominant(c: THREE.Color) {
   const r = c.r;
   const g = c.g;
@@ -28,6 +36,59 @@ function clampNoGreenDominant(c: THREE.Color) {
   }
   return c;
 }
+
+type NeuralGraphConnection = {
+  node: NeuralGraphNode;
+  strength: number;
+};
+
+/** 避免与 DOM 的 `Node` 类型冲突 */
+class NeuralGraphNode {
+  position: THREE.Vector3;
+  connections: NeuralGraphConnection[];
+  level: number;
+  type: number;
+  size: number;
+  distanceFromRoot: number;
+
+  constructor(position: THREE.Vector3, level = 0, type = 0) {
+    this.position = position;
+    this.connections = [];
+    this.level = level;
+    this.type = type;
+    this.size =
+      type === 0
+        ? THREE.MathUtils.randFloat(0.8, 1.4)
+        : THREE.MathUtils.randFloat(0.5, 1.0);
+    this.distanceFromRoot = 0;
+  }
+
+  addConnection(node: NeuralGraphNode, strength = 1.0): void {
+    if (!this.isConnectedTo(node)) {
+      this.connections.push({ node, strength });
+      node.connections.push({ node: this, strength });
+    }
+  }
+
+  isConnectedTo(node: NeuralGraphNode): boolean {
+    return this.connections.some((conn) => conn.node === node);
+  }
+}
+
+type NeuralNetworkGraph = {
+  nodes: NeuralGraphNode[];
+  rootNode: NeuralGraphNode | undefined;
+};
+
+/** 与 useEffect 内 pulseUniforms 结构一致，供 createNetworkVisualization / triggerPulse 使用 */
+type PulseUniformsState = {
+  uTime: { value: number };
+  uPulsePositions: { value: THREE.Vector3[] };
+  uPulseTimes: { value: number[] };
+  uPulseColors: { value: THREE.Color[] };
+  uPulseSpeed: { value: number };
+  uBaseNodeSize: { value: number };
+};
 
 export type NeuralNetworkProps = {
   /** 相机位置（世界坐标），默认正对场景中心 */
@@ -46,22 +107,21 @@ const NeuralNetworkBackground = ({
   pulseOnMount = false,
   pulseOnMountViewport = { x: 0.26, y: 0.34 },
 }: NeuralNetworkProps) => {
-  const containerRef = useRef(null);
-  const canvasRef = useRef(null);
-  
-  // Three.js 对象引用
-  const sceneRef = useRef(null);
-  const cameraRef = useRef(null);
-  const rendererRef = useRef(null);
-  const controlsRef = useRef(null);
-  const composerRef = useRef(null);
-  const nodesMeshRef = useRef(null);
-  const connectionsMeshRef = useRef(null);
-  const neuralNetworkRef = useRef(null);
-  const clockRef = useRef(null);
-  const animationIdRef = useRef(null);
-  const starFieldRef = useRef(null);
-  const bloomPassRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const composerRef = useRef<EffectComposer | null>(null);
+  const nodesMeshRef = useRef<THREE.Points | null>(null);
+  const connectionsMeshRef = useRef<THREE.LineSegments | null>(null);
+  const neuralNetworkRef = useRef<NeuralNetworkGraph | null>(null);
+  const clockRef = useRef<THREE.Clock | null>(null);
+  const animationIdRef = useRef<number | null>(null);
+  const starFieldRef = useRef<THREE.Points | null>(null);
+  const bloomPassRef = useRef<UnrealBloomPass | null>(null);
   const lastPulseIndexRef = useRef(0);
 
   // 与 globals.css 主题一致：紫 / 粉 / 丁香辅色（不含绿色）
@@ -322,34 +382,13 @@ const NeuralNetworkBackground = ({
     }`
   };
 
-  // 节点类
-  class Node {
-    constructor(position, level = 0, type = 0) {
-      this.position = position;
-      this.connections = [];
-      this.level = level;
-      this.type = type;
-      this.size = type === 0 ? THREE.MathUtils.randFloat(0.8, 1.4) : THREE.MathUtils.randFloat(0.5, 1.0);
-      this.distanceFromRoot = 0;
-    }
-    addConnection(node, strength = 1.0) {
-      if (!this.isConnectedTo(node)) {
-        this.connections.push({ node, strength });
-        node.connections.push({ node: this, strength });
-      }
-    }
-    isConnectedTo(node) {
-      return this.connections.some(conn => conn.node === node);
-    }
-  }
-
   // 生成神经网络结构
-  const generateNeuralNetwork = useCallback((densityFactor = 1.0) => {
-    let nodes = [];
-    let rootNode;
+  const generateNeuralNetwork = useCallback((densityFactor = 1.0): NeuralNetworkGraph => {
+    let nodes: NeuralGraphNode[] = [];
+    let rootNode: NeuralGraphNode | undefined;
 
     const generateCrystallineSphere = () => {
-      rootNode = new Node(new THREE.Vector3(0, 0, 0), 0, 0);
+      rootNode = new NeuralGraphNode(new THREE.Vector3(0, 0, 0), 0, 0);
       rootNode.size = 2.0;
       nodes.push(rootNode);
       const layers = 5;
@@ -366,7 +405,7 @@ const NeuralNetworkBackground = ({
             radius * Math.cos(phi)
           );
           const isLeaf = layer === layers || Math.random() < 0.3;
-          const node = new Node(pos, layer, isLeaf ? 1 : 0);
+          const node = new NeuralGraphNode(pos, layer, isLeaf ? 1 : 0);
           node.distanceFromRoot = radius;
           nodes.push(node);
           if (layer > 1) {
@@ -420,8 +459,10 @@ const NeuralNetworkBackground = ({
         toKeep.add(sortedNodes[i]);
       }
       nodes = nodes.filter(n => toKeep.has(n));
-      nodes.forEach(node => {
-        node.connections = node.connections.filter(conn => toKeep.has(conn.node));
+      nodes.forEach((node) => {
+        node.connections = node.connections.filter((conn) =>
+          toKeep.has(conn.node),
+        );
       });
     }
 
@@ -429,19 +470,19 @@ const NeuralNetworkBackground = ({
   }, []);
 
   // 创建网络可视化
-  const createNetworkVisualization = useCallback((pulseUniforms) => {
+  const createNetworkVisualization = useCallback((pulseUniforms: PulseUniformsState) => {
     const scene = sceneRef.current;
     if (!scene) return;
 
     if (nodesMeshRef.current) {
       scene.remove(nodesMeshRef.current);
       nodesMeshRef.current.geometry.dispose();
-      nodesMeshRef.current.material.dispose();
+      disposeMeshMaterial(nodesMeshRef.current.material);
     }
     if (connectionsMeshRef.current) {
       scene.remove(connectionsMeshRef.current);
       connectionsMeshRef.current.geometry.dispose();
-      connectionsMeshRef.current.material.dispose();
+      disposeMeshMaterial(connectionsMeshRef.current.material);
     }
 
     const neuralNetwork = generateNeuralNetwork(1.0);
@@ -450,11 +491,11 @@ const NeuralNetworkBackground = ({
     if (!neuralNetwork || neuralNetwork.nodes.length === 0) return;
 
     const nodesGeometry = new THREE.BufferGeometry();
-    const nodePositions = [];
-    const nodeTypes = [];
-    const nodeSizes = [];
-    const nodeColors = [];
-    const distancesFromRoot = [];
+    const nodePositions: number[] = [];
+    const nodeTypes: number[] = [];
+    const nodeSizes: number[] = [];
+    const nodeColors: number[] = [];
+    const distancesFromRoot: number[] = [];
     const palette = defaultPalette;
 
     neuralNetwork.nodes.forEach((node) => {
@@ -489,17 +530,17 @@ const NeuralNetworkBackground = ({
     nodesMeshRef.current = nodesMesh;
 
     const connectionsGeometry = new THREE.BufferGeometry();
-    const connectionColors = [];
-    const connectionStrengths = [];
-    const connectionPositions = [];
-    const startPoints = [];
-    const endPoints = [];
-    const pathIndices = [];
+    const connectionColors: number[] = [];
+    const connectionStrengths: number[] = [];
+    const connectionPositions: number[] = [];
+    const startPoints: number[] = [];
+    const endPoints: number[] = [];
+    const pathIndices: number[] = [];
     const processedConnections = new Set();
     let pathIndex = 0;
 
     neuralNetwork.nodes.forEach((node, nodeIndex) => {
-      node.connections.forEach(connection => {
+      node.connections.forEach((connection: NeuralGraphConnection) => {
         const connectedNode = connection.node;
         const connectedIndex = neuralNetwork.nodes.indexOf(connectedNode);
         if (connectedIndex === -1) return;
@@ -556,12 +597,16 @@ const NeuralNetworkBackground = ({
   }, [generateNeuralNetwork]);
 
   // 触发脉冲
-  const triggerPulse = useCallback((clientX, clientY, pulseUniforms) => {
+  const triggerPulse = useCallback(
+    (clientX: number, clientY: number, _pulseUniforms: PulseUniformsState) => {
     const camera = cameraRef.current;
     const nodesMesh = nodesMeshRef.current;
     const connectionsMesh = connectionsMeshRef.current;
     const clock = clockRef.current;
     if (!camera || !nodesMesh || !connectionsMesh || !clock) return;
+
+    const nodesMat = nodesMesh.material as THREE.ShaderMaterial;
+    const connectionsMat = connectionsMesh.material as THREE.ShaderMaterial;
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -572,7 +617,9 @@ const NeuralNetworkBackground = ({
     pointer.y = -(clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     interactionPlane.normal.copy(camera.position).normalize();
-    interactionPlane.constant = -interactionPlane.normal.dot(camera.position) + camera.position.length() * 0.5;
+    interactionPlane.constant =
+      -interactionPlane.normal.dot(camera.position) +
+      camera.position.length() * 0.5;
 
     if (raycaster.ray.intersectPlane(interactionPlane, interactionPoint)) {
       const time = clock.getElapsedTime();
@@ -580,17 +627,21 @@ const NeuralNetworkBackground = ({
       const newIndex = (lastPulseIndex + 1) % 3;
       lastPulseIndexRef.current = newIndex;
 
-      nodesMesh.material.uniforms.uPulsePositions.value[newIndex].copy(interactionPoint);
-      nodesMesh.material.uniforms.uPulseTimes.value[newIndex] = time;
-      connectionsMesh.material.uniforms.uPulsePositions.value[newIndex].copy(interactionPoint);
-      connectionsMesh.material.uniforms.uPulseTimes.value[newIndex] = time;
+      nodesMat.uniforms.uPulsePositions.value[newIndex].copy(interactionPoint);
+      nodesMat.uniforms.uPulseTimes.value[newIndex] = time;
+      connectionsMat.uniforms.uPulsePositions.value[newIndex].copy(
+        interactionPoint,
+      );
+      connectionsMat.uniforms.uPulseTimes.value[newIndex] = time;
 
       const palette = defaultPalette;
       const randomColor = palette[Math.floor(Math.random() * palette.length)];
-      nodesMesh.material.uniforms.uPulseColors.value[newIndex].copy(randomColor);
-      connectionsMesh.material.uniforms.uPulseColors.value[newIndex].copy(randomColor);
+      nodesMat.uniforms.uPulseColors.value[newIndex].copy(randomColor);
+      connectionsMat.uniforms.uPulseColors.value[newIndex].copy(randomColor);
     }
-  }, []);
+  },
+  [],
+);
 
   // 窗口大小变化
   const handleWindowResize = useCallback(() => {
@@ -772,14 +823,18 @@ const NeuralNetworkBackground = ({
     }
 
     // 事件绑定
-    const handleCanvasClick = (e) => {
+    const handleCanvasClick = (e: MouseEvent) => {
       triggerPulse(e.clientX, e.clientY, pulseUniforms);
     };
 
-    const handleCanvasTouch = (e) => {
+    const handleCanvasTouch = (e: TouchEvent) => {
       e.preventDefault();
       if (e.touches.length > 0) {
-        triggerPulse(e.touches[0].clientX, e.touches[0].clientY, pulseUniforms);
+        triggerPulse(
+          e.touches[0].clientX,
+          e.touches[0].clientY,
+          pulseUniforms,
+        );
       }
     };
 
@@ -797,21 +852,22 @@ const NeuralNetworkBackground = ({
       const composer = composerRef.current;
 
       if (nodesMesh) {
-        nodesMesh.material.uniforms.uTime.value = t;
+        (nodesMesh.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
         nodesMesh.rotation.y = Math.sin(t * 0.04) * 0.05;
       }
       if (connectionsMesh) {
-        connectionsMesh.material.uniforms.uTime.value = t;
+        (connectionsMesh.material as THREE.ShaderMaterial).uniforms.uTime.value =
+          t;
         connectionsMesh.rotation.y = Math.sin(t * 0.04) * 0.05;
       }
 
       if (starField) {
         starField.rotation.y += 0.0002;
-        starField.material.uniforms.uTime.value = t;
+        (starField.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
       }
 
-      controls.update();
-      composer.render();
+      controls?.update();
+      composer?.render();
       animationIdRef.current = requestAnimationFrame(animate);
     };
     animate();
@@ -823,7 +879,10 @@ const NeuralNetworkBackground = ({
         window.removeEventListener('load', onWindowLoad);
       }
 
-      cancelAnimationFrame(animationIdRef.current);
+      if (animationIdRef.current != null) {
+        cancelAnimationFrame(animationIdRef.current);
+        animationIdRef.current = null;
+      }
       
       renderer.domElement.removeEventListener('click', handleCanvasClick);
       renderer.domElement.removeEventListener('touchstart', handleCanvasTouch);
