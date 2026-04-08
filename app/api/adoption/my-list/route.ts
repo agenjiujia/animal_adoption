@@ -4,6 +4,10 @@ import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
 import { imageUrlsToApiField } from "@/lib/imageUrls";
+import {
+  rewriteLocalUploadUrlForApi,
+  rewritePetImageUrlListForApi,
+} from "@/lib/uploadStorage";
 
 /**
  * 获取当前用户的领养申请记录
@@ -37,10 +41,14 @@ export async function GET(req: NextRequest) {
       pet_name: a.pet?.name,
       species: a.pet?.species,
       breed: a.pet?.breed,
-      image_urls: imageUrlsToApiField(a.pet?.image_urls),
+      image_urls: rewritePetImageUrlListForApi(
+        imageUrlsToApiField(a.pet?.image_urls)
+      ),
       pet_description: a.pet?.description,
       owner_name: a.pet?.publisher?.username,
-      owner_avatar: a.pet?.publisher?.avatar,
+      owner_avatar: a.pet?.publisher?.avatar
+        ? rewriteLocalUploadUrlForApi(a.pet.publisher.avatar)
+        : a.pet?.publisher?.avatar,
     }));
 
     return NextResponse.json({

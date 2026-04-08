@@ -4,6 +4,7 @@ import { withApiHandler } from "@/utils/response/hoc";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
+import { rewriteLocalUploadUrlForApi } from "@/lib/uploadStorage";
 
 /**
  * 个人中心：当前登录用户资料（不含密码）
@@ -40,7 +41,13 @@ export const GET = withApiHandler(async (req: NextRequest) => {
     businessCode: BusinessCodeEnum.Success,
     httpCode: HttpCodeEnum.Success,
     message: "查询成功",
-    data: row,
+    data: {
+      ...row,
+      avatar:
+        typeof row.avatar === "string"
+          ? rewriteLocalUploadUrlForApi(row.avatar)
+          : row.avatar,
+    },
   };
 });
 

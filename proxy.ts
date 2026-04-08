@@ -15,7 +15,9 @@ const openApiPaths = [
 ];
 
 function isOpenApi(path: string) {
-  return openApiPaths.includes(path);
+  if (openApiPaths.includes(path)) return true;
+  if (path.startsWith("/api/upload/file/")) return true;
+  return false;
 }
 
 function isAdminApi(path: string) {

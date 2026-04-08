@@ -4,6 +4,10 @@ import { join } from "path";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import { resolveAuth } from "@/lib/auth";
 import prisma from "@/lib/db";
+import {
+  publicUrlForSavedFile,
+  resolveUploadDir,
+} from "@/lib/uploadStorage";
 
 export const runtime = "nodejs";
 
@@ -48,7 +52,7 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = join(process.cwd(), "public", "uploads");
+    const uploadDir = resolveUploadDir();
     try {
       await mkdir(uploadDir, { recursive: true });
     } catch (e) {
@@ -60,7 +64,7 @@ export async function POST(req: NextRequest) {
     const filePath = join(uploadDir, fileName);
 
     await writeFile(filePath, buffer);
-    const fileUrl = `/uploads/${fileName}`;
+    const fileUrl = publicUrlForSavedFile(fileName);
 
     await prisma.user.update({
       where: { user_id: userId },

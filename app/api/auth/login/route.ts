@@ -10,6 +10,7 @@ import {
   AUTH_COOKIE_NAME,
   AUTH_COOKIE_MAX_AGE,
 } from "@/lib/constants/auth";
+import { rewriteLocalUploadUrlForApi } from "@/lib/uploadStorage";
 
 /**
  * 用户登录：校验账号密码，签发 JWT，并写入 HttpOnly Cookie（供服务端校验 /admin）
@@ -81,7 +82,10 @@ export async function POST(req: NextRequest) {
           user_id: user.user_id,
           username: user.username,
           phone: user.phone,
-          avatar: user.avatar,
+          avatar:
+            typeof user.avatar === "string"
+              ? rewriteLocalUploadUrlForApi(user.avatar)
+              : user.avatar,
           address: user.address,
           email: user.email,
           role: user.role,

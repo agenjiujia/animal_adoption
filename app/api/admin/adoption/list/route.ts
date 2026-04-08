@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { BusinessCodeEnum, HttpCodeEnum, UserRoleEnum } from "@/types";
 import prisma from "@/lib/db";
 import { resolveAuth } from "@/lib/auth";
+import { rewriteLocalUploadUrlForApi } from "@/lib/uploadStorage";
 
 /**
  * 管理员获取领养申请列表（分页、按状态筛选）
@@ -82,7 +83,9 @@ export async function POST(req: NextRequest) {
       applicant_name: a.applicant?.username,
       applicant_real_name: a.applicant?.real_name,
       applicant_phone: a.applicant?.phone,
-      applicant_avatar: a.applicant?.avatar,
+      applicant_avatar: a.applicant?.avatar
+        ? rewriteLocalUploadUrlForApi(a.applicant.avatar)
+        : a.applicant?.avatar,
     }));
 
     return NextResponse.json({

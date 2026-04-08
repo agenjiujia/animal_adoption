@@ -3,6 +3,10 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { BusinessCodeEnum, HttpCodeEnum } from "@/types";
 import { resolveAuth } from "@/lib/auth";
+import {
+  publicUrlForSavedFile,
+  resolveUploadDir,
+} from "@/lib/uploadStorage";
 
 // 强制为 Node.js 运行时
 export const runtime = "nodejs";
@@ -55,8 +59,7 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // 确保上传目录存在
-    const uploadDir = join(process.cwd(), "public", "uploads");
+    const uploadDir = resolveUploadDir();
     try {
       await mkdir(uploadDir, { recursive: true });
     } catch (e) {
@@ -73,8 +76,7 @@ export async function POST(req: NextRequest) {
     // 写入文件
     await writeFile(filePath, buffer);
 
-    // 返回文件可访问的 URL
-    const fileUrl = `/uploads/${fileName}`;
+    const fileUrl = publicUrlForSavedFile(fileName);
 
     return NextResponse.json({
       businessCode: BusinessCodeEnum.Success,
