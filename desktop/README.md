@@ -33,6 +33,7 @@ ELECTRON_DISABLE_GPU=1 npm start
 | macOS | `npm run dist:mac` | `.dmg`、`.zip` |
 | macOS（仅zip兜底） | `npm run dist:mac:zip` | `.zip` |
 | Windows | `npm run dist:win` | NSIS `Setup.exe`（x64） |
+| Windows（便携版） | `npm run dist:win:portable` | 免安装 `*.exe`（portable） |
 
 未签名安装包：macOS 可能需在「隐私与安全性」中允许打开；Windows 可能提示 SmartScreen，选「仍要运行」即可。
 
@@ -59,7 +60,21 @@ $env:CSC_IDENTITY_AUTO_DISCOVERY='false'
    或打标签 `desktop-任意版本` 推送触发。
 3. 结束后在 **Actions 运行页 → Artifacts** 下载：
    - `animal-adoption-macos`：DMG / ZIP  
-   - `animal-adoption-windows`：安装 exe  
+   - `animal-adoption-windows-installer`：Windows 安装版 `Setup.exe`  
+   - `animal-adoption-windows-portable`：Windows 便携版 `Portable.exe`  
+
+## 发布命名规范（建议）
+
+- Git Tag：`desktop-vX.Y.Z`（例如 `desktop-v1.0.1`）
+- Release 标题：`萌宠之家 Desktop vX.Y.Z`
+- 产物分发建议：
+  - mac：`萌宠之家-X.Y.Z-arm64.dmg` + `萌宠之家-X.Y.Z-arm64-mac.zip`
+  - win-installer：`萌宠之家 Setup X.Y.Z.exe`
+  - win-portable：`萌宠之家 Portable X.Y.Z.exe`
+- 发布说明模板：
+  - 新功能/修复（3-5条）
+  - 已知限制（无证书可能被系统拦截）
+  - 安装指引（mac 放行 / Windows SmartScreen）
 
 
 ## 停止工作排查（Windows）
@@ -68,6 +83,14 @@ $env:CSC_IDENTITY_AUTO_DISCOVERY='false'
 - 若双击即闪退，请先使用本仓库当前版本重新打包（已关闭 GPU 与沙箱，兼容性更好）。
 - 首次运行若被系统拦截，先在 SmartScreen 里选择“更多信息 -> 仍要运行”。
 - 若仍崩溃，通常是系统组件或驱动问题：更新显卡驱动、安装最新版 Microsoft Visual C++ 运行库后重试。
+- 学习用途分发建议优先使用 `dist:win:portable` 产物，减少安装器权限与 Defender 误报带来的失败概率。
+
+## 学习分发（无证书）说明
+
+- 证书不是 GitHub 发放，GitHub 只负责托管安装包；真正签名证书需向 Apple（mac）或证书机构（Windows）申请。
+- 学习阶段可无证书分发，但需提示接收者：
+  - macOS：若提示“已损坏”，按提示在系统设置放行，或执行 `xattr -dr com.apple.quarantine "/Applications/萌宠之家.app"`。
+  - Windows：若 SmartScreen 拦截，点“更多信息 -> 仍要运行”；推荐使用便携版 `dist:win:portable`。
 
 ## 修改打包后默认打开的网址
 

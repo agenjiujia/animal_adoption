@@ -11,6 +11,7 @@
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",
     "dist:win": "electron-builder --win",
+    "dist:win:portable": "electron-builder --win portable",
     "dist:mac:zip": "electron-builder --mac zip"
   },
   "build": {
