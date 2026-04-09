@@ -35,6 +35,8 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     title: "萌宠之家",
+    // Windows 隐藏原生菜单栏（File/Edit/View...）
+    autoHideMenuBar: process.platform === "win32",
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
@@ -47,6 +49,11 @@ function createWindow() {
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
   });
+
+  if (process.platform === "win32") {
+    // 强制隐藏菜单栏（即使按 Alt 也不显示）
+    mainWindow.setMenuBarVisibility(false);
+  }
 
   mainWindow.loadURL(APP_URL);
 
