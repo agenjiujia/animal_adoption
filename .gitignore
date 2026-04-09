@@ -20,6 +20,11 @@
 # production
 /build
 
+# Electron 桌面包
+desktop/node_modules
+desktop/release
+desktop/.env
+
 # misc
 .DS_Store
 *.pem

@@ -1,0 +1,60 @@
+# 在云端分别打 macOS / Windows 安装包（无需本机跨平台）
+name: Desktop installers
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "desktop-*"
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install and build (macOS)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run dist:mac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: animal-adoption-macos
+          path: desktop/release/*.*
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install and build (Windows)
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run dist:win
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: animal-adoption-windows
+          path: desktop/release/*.exe
+          if-no-files-found: error

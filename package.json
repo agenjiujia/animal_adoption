@@ -15,7 +15,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:db": "tsx scripts/db-smoke.ts",
-    "db:fix-adoption-apply": "tsx scripts/run-fix-adoption-apply.ts"
+    "db:fix-adoption-apply": "tsx scripts/run-fix-adoption-apply.ts",
+    "desktop:install": "npm install --prefix desktop",
+    "desktop:start": "npm start --prefix desktop",
+    "desktop:dist:mac": "npm run dist:mac --prefix desktop",
+    "desktop:dist:win": "npm run dist:win --prefix desktop"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",

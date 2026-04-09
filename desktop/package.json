@@ -1,0 +1,48 @@
+{
+  "name": "animal-adoption-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "萌宠之家 — 桌面壳（加载线上或本地 Next 站点）",
+  "author": "animal-adoption",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "top.animal-adoption.desktop",
+    "productName": "萌宠之家",
+    "copyright": "Copyright © animal-adoption",
+    "directories": {
+      "output": "release"
+    },
+    "files": ["main.cjs", "preload.cjs"],
+    "mac": {
+      "category": "public.app-category.lifestyle",
+      "target": ["dmg", "zip"],
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "identity": null
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.4.0",
+    "electron-builder": "^25.1.8"
+  }
+}
