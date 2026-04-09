@@ -10,7 +10,6 @@ import {
   Select,
   Button,
   Card,
-  Space,
   Typography,
   message,
   Upload,
@@ -191,7 +190,15 @@ export default function CreatePet() {
     isCreate ? submitPet(values) : editPet(values);
 
   return (
-    <div style={{ margin: "0 auto" }}>
+    <div
+      className="pet-form-page"
+      style={{
+        margin: "0 auto",
+        /* 为底部固定提交栏留出空间，避免最后一项表单项被遮挡 */
+        paddingBottom:
+          "calc(84px + max(12px, env(safe-area-inset-bottom, 0px)))",
+      }}
+    >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -388,34 +395,33 @@ export default function CreatePet() {
                 rows={5}
               />
             </Form.Item>
-
-            <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>
-              <Space
-                size={16}
-                style={{ width: "100%", justifyContent: "center" }}
-              >
-                <Button
-                  size="large"
-                  onClick={() => router.back()}
-                  style={{ width: 120 }}
-                >
-                  取消
-                </Button>
-                <Button
-                  className="btn-primary"
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  loading={isCreate ? loading : editLoading}
-                  style={{ width: 200, fontWeight: 700 }}
-                >
-                  {isCreate ? "确认发布" : "保存修改"}
-                </Button>
-              </Space>
-            </Form.Item>
           </Form>
         </Card>
       </motion.div>
+
+      <div className="pet-form-submit-bar" role="region" aria-label="提交表单">
+        <div className="pet-form-submit-bar__inner">
+          <div className="pet-form-submit-bar__actions">
+            <Button
+              type="default"
+              size="middle"
+              className="pet-form-submit-bar__cancel"
+              onClick={() => router.back()}
+            >
+              取消
+            </Button>
+            <Button
+              className="btn-primary pet-form-submit-bar__submit"
+              type="primary"
+              size="middle"
+              loading={isCreate ? loading : editLoading}
+              onClick={() => form.submit()}
+            >
+              {isCreate ? "确认发布" : "保存修改"}
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <Modal
         open={previewOpen}

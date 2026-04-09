@@ -338,7 +338,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </Content>
 
-      {!isAuthPage && (
+      {/* {!isAuthPage && (
         <Footer
           className="footer-shell"
           style={{ padding: "12px 16px" }}
@@ -386,7 +386,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </Footer>
-      )}
+      )} */}
     </Layout>
   );
 }

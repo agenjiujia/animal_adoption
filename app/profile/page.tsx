@@ -32,6 +32,7 @@ import {
   FormOutlined,
   HeartOutlined,
   AppstoreOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { request } from "@/utils/request";
@@ -39,6 +40,7 @@ import { UserRoleMap, UserStatusMap } from "@/constant";
 import { UserRoleEnum, UserStatusEnum } from "@/types";
 import type { UploadChangeParam } from "antd/es/upload";
 import { formatDateTime } from "@/lib/formatDate";
+import PageHeroHeader from "@/app/_components/PageHeroHeader";
 
 import { motion } from "framer-motion";
 
@@ -166,14 +168,22 @@ export default function ProfilePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div style={{ marginBottom: 24 }}>
-          <Title level={2}>
-            个人中心
-          </Title>
-          <Text className="page-title-sub">
-            管理您的账号信息、身份认证与偏好设置
-          </Text>
-        </div>
+        <PageHeroHeader
+          title="个人中心"
+          subtitle="管理您的账号信息、身份认证与偏好设置"
+          action={
+            <Button
+              className="btn-primary"
+              type="primary"
+              size="large"
+              icon={<PlusOutlined />}
+              onClick={openEditModal}
+              disabled={!u || loading}
+            >
+              编辑资料
+            </Button>
+          }
+        />
 
         <Spin spinning={loading}>
           {u && (

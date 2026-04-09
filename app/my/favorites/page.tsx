@@ -11,7 +11,7 @@ import {
   message,
   Spin,
 } from "antd";
-import { HeartFilled, ArrowRightOutlined } from "@ant-design/icons";
+import { HeartFilled, PlusOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -22,6 +22,7 @@ import { PetSpeciesMap } from "@/constant";
 import { PetSpeciesEnum } from "@/types";
 import { PET_CARD_PAGE_SIZE } from "@/lib/petListing";
 import { usePetCardInfiniteLoadMore } from "@/lib/usePetCardInfiniteLoadMore";
+import PageHeroHeader from "@/app/_components/PageHeroHeader";
 
 const { Title, Text } = Typography;
 
@@ -145,38 +146,38 @@ export default function MyFavoritesPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div
+        <PageHeroHeader
+          title="我的收藏"
+          subtitle="查看与管理您收藏的宠物领养信息"
+          action={
+            <Button
+              type="primary"
+              className="btn-primary"
+              size="large"
+              icon={<PlusOutlined />}
+              onClick={() => router.push("/")}
+            >
+              去发现更多
+            </Button>
+          }
+        />
+        <Text
           style={{
-            marginBottom: 24,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
+            color: "var(--text-secondary)",
+            fontSize: 16,
+            display: "block",
+            marginBottom: 16,
           }}
         >
-          <div>
-            <Title style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>
-              我的收藏
-            </Title>
-            <Text style={{ color: "var(--text-secondary)", fontSize: 16 }}>
-              您一共关注了{" "}
-              <Text strong style={{ color: "var(--primary)" }}>
-                {total}
-              </Text>{" "}
-              只可爱的小伙伴
-              <Text type="secondary" style={{ fontSize: 13, marginLeft: 8 }}>
-                · 每次加载 {PET_CARD_PAGE_SIZE} 条
-              </Text>
-            </Text>
-          </div>
-          <Button
-            type="primary"
-            className="btn-primary"
-            onClick={() => router.push("/")}
-            icon={<ArrowRightOutlined />}
-          >
-            去发现更多
-          </Button>
-        </div>
+          您一共关注了{" "}
+          <Text strong style={{ color: "var(--primary)" }}>
+            {total}
+          </Text>{" "}
+          只可爱的小伙伴
+          <Text type="secondary" style={{ fontSize: 13, marginLeft: 8 }}>
+            · 每次加载 {PET_CARD_PAGE_SIZE} 条
+          </Text>
+        </Text>
 
         <Spin spinning={loading && pets.length === 0} tip="正在加载收藏列表...">
           {pets.length > 0 ? (

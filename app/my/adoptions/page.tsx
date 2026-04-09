@@ -19,6 +19,7 @@ import {
 import {
   HistoryOutlined,
   ArrowRightOutlined,
+  PlusOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/petImage";
 import { PetSpeciesMap } from "@/constant";
 import { PetSpeciesEnum } from "@/types";
+import PageHeroHeader from "@/app/_components/PageHeroHeader";
 
 const { Title, Text } = Typography;
 
@@ -106,10 +108,21 @@ export default function MyAdoptionsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="page-title-wrap">
-          <Title level={2}>我的领养申请</Title>
-          <Text className="page-title-sub">追踪您的每一份爱心传递进度</Text>
-        </div>
+        <PageHeroHeader
+          title="我的领养申请"
+          subtitle="追踪您的每一份爱心传递进度"
+          action={
+            <Button
+              type="primary"
+              className="btn-primary"
+              size="large"
+              icon={<PlusOutlined />}
+              onClick={() => router.push("/")}
+            >
+              去发现更多
+            </Button>
+          }
+        />
 
         <Spin spinning={loading} tip="正在同步申请进度...">
           {list.length > 0 ? (

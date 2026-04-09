@@ -19,10 +19,12 @@ import { formatDateTime } from "@/lib/formatDate";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
+  PlusOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import PageHeroHeader from "@/app/_components/PageHeroHeader";
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
 interface AdoptionApplication {
@@ -229,12 +231,21 @@ export default function AdoptionApprovalsPage() {
 
   return (
     <div>
-      <div className="page-title-wrap" style={{ marginBottom: 24 }}>
-        <Title level={2}>领养申请审批队列</Title>
-        <Text className="page-title-sub">
-          处理与您发布宠物相关的领养申请
-        </Text>
-      </div>
+      <PageHeroHeader
+        title="领养审批队列"
+        subtitle="处理与您发布宠物相关的领养申请"
+        action={
+          <Button
+            type="primary"
+            className="btn-primary"
+            size="large"
+            icon={<PlusOutlined />}
+            onClick={() => fetchData()}
+          >
+            刷新列表
+          </Button>
+        }
+      />
 
       <Modal
         title={

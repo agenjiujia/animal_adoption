@@ -33,6 +33,7 @@ import {
   getPetCoverImage,
 } from "@/lib/petImage";
 import SearchFilterCard from "@/app/_components/SearchFilterCard";
+import PageHeroHeader from "@/app/_components/PageHeroHeader";
 import { PET_CARD_PAGE_SIZE } from "@/lib/petListing";
 import { usePetCardInfiniteLoadMore } from "@/lib/usePetCardInfiniteLoadMore";
 
@@ -200,35 +201,21 @@ export default function MyPublishPage() {
 
   return (
     <div>
-      <div
-        className="modern-card"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-          padding: "16px",
-          background:
-            "linear-gradient(90deg, rgba(124, 110, 230, 0.08) 0%, rgba(243, 143, 178, 0.08) 100%)",
-          border: "1px solid rgba(124, 110, 230, 0.14)",
-        }}
-      >
-        <div>
-          <Title level={2} style={{ margin: 0 }}>
-            我的发布
-          </Title>
-          <Text className="page-title-sub">管理您发布的宠物领养信息</Text>
-        </div>
-        <Button
-          className="btn-primary"
-          type="primary"
-          size="large"
-          icon={<PlusOutlined />}
-          onClick={() => router.push("/pet/new")}
-        >
-          发布新宠
-        </Button>
-      </div>
+      <PageHeroHeader
+        title="我的发布"
+        subtitle="管理您发布的宠物领养信息"
+        action={
+          <Button
+            className="btn-primary"
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            onClick={() => router.push("/pet/new")}
+          >
+            发布新宠
+          </Button>
+        }
+      />
 
       <SearchFilterCard
         form={form}
