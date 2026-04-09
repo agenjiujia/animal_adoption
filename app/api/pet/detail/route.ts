@@ -75,6 +75,22 @@ const getPetDetailHandler = async (
       }
     }
 
+    // 申请人允许查看自己申请过的宠物详情（含已通过/已拒绝），避免“我的领养申请”跳详情被 403。
+    if (!canView && authUser) {
+      try {
+        const applied = await prisma.adoptionApply.findFirst({
+          where: {
+            apply_user_id: authUser.userId,
+            pet_id: petId,
+          },
+          select: { apply_id: true },
+        });
+        canView = !!applied;
+      } catch (e) {
+        console.error("pet/detail: skip applicant permission check", e);
+      }
+    }
+
     if (!canView) {
       return {
         businessCode: BusinessCodeEnum.DataPermissionDenied,
