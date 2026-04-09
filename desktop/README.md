@@ -16,6 +16,14 @@ npm start
 APP_URL=http://localhost:3000 npm start
 ```
 
+若应用在个别 Windows 机器闪退，可临时关闭 GPU：
+
+```bash
+ELECTRON_DISABLE_GPU=1 npm start
+```
+
+（打包后可在启动脚本或系统环境变量里设置 `ELECTRON_DISABLE_GPU=1`。）
+
 （本地需已执行仓库根目录的 `npm run dev` 或 `npm run start`。）
 
 ## 本机打包
@@ -23,9 +31,12 @@ APP_URL=http://localhost:3000 npm start
 | 系统 | 命令 | 产物（在 `desktop/release/`） |
 |------|------|-------------------------------|
 | macOS | `npm run dist:mac` | `.dmg`、`.zip` |
+| macOS（仅zip兜底） | `npm run dist:mac:zip` | `.zip` |
 | Windows | `npm run dist:win` | NSIS `Setup.exe`（x64） |
 
 未签名安装包：macOS 可能需在「隐私与安全性」中允许打开；Windows 可能提示 SmartScreen，选「仍要运行」即可。
+
+若本机 `hdiutil` 偶发失败，可先用 `npm run dist:mac:zip` 产出可分发的 zip（双击解压后拖到 Applications 即可）。
 
 首次打包前：
 
@@ -49,6 +60,14 @@ $env:CSC_IDENTITY_AUTO_DISCOVERY='false'
 3. 结束后在 **Actions 运行页 → Artifacts** 下载：
    - `animal-adoption-macos`：DMG / ZIP  
    - `animal-adoption-windows`：安装 exe  
+
+
+## 停止工作排查（Windows）
+
+- 系统建议 **Windows 10/11 x64**。若是 Windows 7/8/8.1，现代 Electron 版本容易直接崩溃。
+- 若双击即闪退，请先使用本仓库当前版本重新打包（已关闭 GPU 与沙箱，兼容性更好）。
+- 首次运行若被系统拦截，先在 SmartScreen 里选择“更多信息 -> 仍要运行”。
+- 若仍崩溃，通常是系统组件或驱动问题：更新显卡驱动、安装最新版 Microsoft Visual C++ 运行库后重试。
 
 ## 修改打包后默认打开的网址
 

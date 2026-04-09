@@ -10,7 +10,8 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",
-    "dist:win": "electron-builder --win"
+    "dist:win": "electron-builder --win",
+    "dist:mac:zip": "electron-builder --mac zip"
   },
   "build": {
     "appId": "top.animal-adoption.desktop",
@@ -19,10 +20,16 @@
     "directories": {
       "output": "release"
     },
-    "files": ["main.cjs", "preload.cjs"],
+    "files": [
+      "main.cjs",
+      "preload.cjs"
+    ],
     "mac": {
       "category": "public.app-category.lifestyle",
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "identity": null
@@ -31,7 +38,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -39,10 +48,15 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "perMachine": false
+    },
+    "dmg": {
+      "title": "animal-adoption ${version}-${arch}",
+      "format": "UDZO",
+      "writeUpdateInfo": false
     }
   },
   "devDependencies": {
-    "electron": "^33.4.0",
+    "electron": "22.3.27",
     "electron-builder": "^25.1.8"
   }
 }

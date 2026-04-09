@@ -8,6 +8,24 @@ const path = require("path");
  */
 const APP_URL = process.env.APP_URL || "https://www.animal-adoption.top";
 
+/**
+ * 默认开启硬件加速以保证流畅度。
+ * 仅在兼容性问题机器上通过环境变量手动关闭：
+ *   ELECTRON_DISABLE_GPU=1
+ */
+const DISABLE_GPU = process.env.ELECTRON_DISABLE_GPU === "1";
+if (DISABLE_GPU) {
+  app.disableHardwareAcceleration();
+  app.commandLine.appendSwitch("disable-gpu");
+}
+
+process.on("uncaughtException", (err) => {
+  console.error("[desktop uncaughtException]", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[desktop unhandledRejection]", reason);
+});
+
 let mainWindow;
 
 function createWindow() {
@@ -22,7 +40,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: false,
     },
   });
 
