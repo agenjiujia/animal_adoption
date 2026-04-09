@@ -63,5 +63,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: animal-adoption-windows-portable
-          path: desktop/release/*Portable*.exe
+          path: |
+            desktop/release/*.exe
+            !desktop/release/*Setup*.exe
           if-no-files-found: error
