@@ -30,7 +30,10 @@ ELECTRON_DISABLE_GPU=1 npm start
 
 | 系统 | 命令 | 产物（在 `desktop/release/`） |
 |------|------|-------------------------------|
-| macOS | `npm run dist:mac` | `.dmg`、`.zip` |
+| macOS（当前机器架构） | `npm run dist:mac` | 当前架构 `.dmg`、`.zip` |
+| macOS Intel | `npm run dist:mac:x64` | `*-x64.dmg`、`*-x64-mac.zip` |
+| macOS Apple 芯片 | `npm run dist:mac:arm64` | `*-arm64.dmg`、`*-arm64-mac.zip` |
+| macOS 通用包（体积更大） | `npm run dist:mac:universal` | `*-universal.dmg`、`*-universal-mac.zip` |
 | macOS（仅zip兜底） | `npm run dist:mac:zip` | `.zip` |
 | Windows | `npm run dist:win` | NSIS `Setup.exe`（x64） |
 | Windows（便携版） | `npm run dist:win:portable` | 免安装 `*.exe`（portable） |
@@ -59,7 +62,8 @@ $env:CSC_IDENTITY_AUTO_DISCOVERY='false'
 2. 打开 **Actions** → **Desktop installers** → **Run workflow**（手动运行）；  
    或打标签 `desktop-任意版本` 推送触发。
 3. 结束后在 **Actions 运行页 → Artifacts** 下载：
-   - `animal-adoption-macos`：DMG / ZIP  
+   - `animal-adoption-macos-arm64`：Apple 芯片版  
+   - `animal-adoption-macos-x64`：Intel 版  
    - `animal-adoption-windows-installer`：Windows 安装版 `Setup.exe`  
    - `animal-adoption-windows-portable`：Windows 便携版 `Portable.exe`  
 
@@ -68,7 +72,8 @@ $env:CSC_IDENTITY_AUTO_DISCOVERY='false'
 - Git Tag：`desktop-vX.Y.Z`（例如 `desktop-v1.0.1`）
 - Release 标题：`萌宠之家 Desktop vX.Y.Z`
 - 产物分发建议：
-  - mac：`萌宠之家-X.Y.Z-arm64.dmg` + `萌宠之家-X.Y.Z-arm64-mac.zip`
+  - mac-intel：`萌宠之家-X.Y.Z-x64.dmg` + `萌宠之家-X.Y.Z-x64-mac.zip`
+  - mac-apple：`萌宠之家-X.Y.Z-arm64.dmg` + `萌宠之家-X.Y.Z-arm64-mac.zip`
   - win-installer：`萌宠之家 Setup X.Y.Z.exe`
   - win-portable：`萌宠之家 Portable X.Y.Z.exe`
 - 发布说明模板：
