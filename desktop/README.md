@@ -63,7 +63,7 @@ $env:CSC_IDENTITY_AUTO_DISCOVERY='false'
    或打标签 `desktop-任意版本` 推送触发。
 3. 结束后在 **Actions 运行页 → Artifacts** 下载：
    - `animal-adoption-macos-arm64`：Apple 芯片版  
-   - `animal-adoption-macos-x64`：Intel 版  
+   - `animal-adoption-macos-universal`：通用版（Intel + Apple 芯片）  
    - `animal-adoption-windows-installer`：Windows 安装版 `Setup.exe`  
    - `animal-adoption-windows-portable`：Windows 便携版 `Portable.exe`  
 
@@ -72,8 +72,8 @@ $env:CSC_IDENTITY_AUTO_DISCOVERY='false'
 - Git Tag：`desktop-vX.Y.Z`（例如 `desktop-v1.0.1`）
 - Release 标题：`萌宠之家 Desktop vX.Y.Z`
 - 产物分发建议：
-  - mac-intel：`萌宠之家-X.Y.Z-x64.dmg` + `萌宠之家-X.Y.Z-x64-mac.zip`
   - mac-apple：`萌宠之家-X.Y.Z-arm64.dmg` + `萌宠之家-X.Y.Z-arm64-mac.zip`
+  - mac-all（推荐给不区分芯片的用户）：`萌宠之家-X.Y.Z-universal.dmg` + `萌宠之家-X.Y.Z-universal-mac.zip`
   - win-installer：`萌宠之家 Setup X.Y.Z.exe`
   - win-portable：`萌宠之家 Portable X.Y.Z.exe`
 - 发布说明模板：
